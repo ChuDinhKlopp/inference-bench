@@ -117,7 +117,7 @@ def parse_gpu_csv(text: str) -> list[dict[str, Any]]:
 def main() -> int:
     script = Path(__file__).resolve()
     root = script.parents[2]
-    repo = root.parent
+    repo = root
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--mode", choices=("smoke", "accuracy", "performance"), required=True)

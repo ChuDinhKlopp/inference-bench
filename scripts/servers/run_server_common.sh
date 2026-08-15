@@ -46,6 +46,16 @@ case "$precision" in
     ;;
 esac
 
+calculate_kv_scales=${RIVF26_CALCULATE_KV_SCALES:-0}
+if [[ "$calculate_kv_scales" != 0 && "$calculate_kv_scales" != 1 ]]; then
+  echo "RIVF26_CALCULATE_KV_SCALES must be 0 or 1" >&2
+  exit 2
+fi
+if [[ "$calculate_kv_scales" == 1 && "$kv_dtype" != fp8 ]]; then
+  echo "runtime KV-scale calculation is only valid for a KV8 arm" >&2
+  exit 2
+fi
+
 cmd=(
   "$vllm_python" -m vllm.entrypoints.cli.main serve "$model_path"
   --tokenizer "$model_path"
@@ -61,6 +71,10 @@ cmd=(
   --enable-logging-iteration-details
   "${quant_args[@]}"
 )
+
+if [[ "$calculate_kv_scales" == 1 ]]; then
+  cmd+=(--calculate-kv-scales)
+fi
 
 if [[ -n ${RIVF26_MAX_NUM_BATCHED_TOKENS:-} ]]; then
   cmd+=(--max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS")
@@ -127,5 +141,11 @@ done
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3}
+if [[ "$calculate_kv_scales" == 1 ]]; then
+  scale_audit_site=$rivf26_root/scripts/utilities/kv_scale_audit_site
+  export RIVF26_KV_SCALE_AUDIT_DIR=${RIVF26_KV_SCALE_AUDIT_DIR:-$bulk_run_dir/raw/kv_scale_audit}
+  mkdir -p "$RIVF26_KV_SCALE_AUDIT_DIR"
+  export PYTHONPATH=$scale_audit_site${PYTHONPATH:+:$PYTHONPATH}
+fi
 
 exec "${cmd[@]}"
