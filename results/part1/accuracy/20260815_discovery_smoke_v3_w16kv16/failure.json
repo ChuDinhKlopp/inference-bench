@@ -1,0 +1,21 @@
+{
+  "schema_version": "rivf26.failure.v1",
+  "run_id": "20260815_discovery_smoke_v3_w16kv16",
+  "status": "FAILED_STAGE_B_SERVER_INITIALIZATION",
+  "timestamp_iso": "2026-08-15T17:51:15Z",
+  "precision": "w16kv16",
+  "server_log": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260815_discovery_smoke_v3_w16kv16/logs/server.log",
+  "runtime_evidence": {
+    "model_path": "/dev/shm/Qwen3.6-35B-A3B",
+    "model_architecture": "Qwen3_5MoeForConditionalGeneration",
+    "dtype": "torch.bfloat16",
+    "kv_cache_dtype": "bfloat16",
+    "quantization": null,
+    "attention_backend_all_tp_ranks": "FLASHINFER",
+    "tensor_parallel_size": 4,
+    "model_memory_gib_per_gpu": 16.52
+  },
+  "root_cause": "The editable vLLM v0.26.0 Python wrapper calls _moe_C::topk_softmax with 6 arguments, while the installed precompiled extension requires a seventh is_padding argument.",
+  "exception": "RuntimeError: _moe_C::topk_softmax() is missing value for argument 'is_padding'",
+  "cleanup": "Server exited itself; all four GPUs returned to approximately 40442 MiB free."
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": "rivf26.smoke_matrix.v1",
+  "date_utc": "2026-08-15",
+  "vllm_version": "0.27.0+precompiled",
+  "mechanical_smoke_status": "PASS",
+  "full_part1_long_run_gate": "BLOCKED",
+  "blockers": [
+    "FP8 KV scaling is not calibrated and runtime-verified for both KV8 arms.",
+    "The plot-ready schema is validated, but the browser import/render path for latency_plots.html is not yet implemented and visually validated."
+  ],
+  "runs": {
+    "w16kv16": {
+      "run_id": "20260815_smoke_v5_w16kv16",
+      "stage_a": "PASS",
+      "stage_b": "PASS",
+      "requests_successful": 4,
+      "runtime_weights": "bfloat16",
+      "runtime_activations": "bfloat16",
+      "runtime_kv": "bfloat16",
+      "runtime_attention": "FLASHINFER",
+      "kv_capacity_tokens": 1533440,
+      "hbm_samples": 430,
+      "plot_bins": 7,
+      "measured_raw_gb_per_hour": 0.8674974798
+    },
+    "w8kv16": {
+      "run_id": "20260815_smoke_v1_w8kv16",
+      "stage_a": "PASS",
+      "stage_b": "PASS",
+      "requests_successful": 4,
+      "runtime_weights": "fp8_e4m3_weight_only_marlin",
+      "runtime_activations": "bfloat16",
+      "runtime_kv": "bfloat16",
+      "runtime_attention": "FLASHINFER",
+      "kv_capacity_tokens": 2315264,
+      "hbm_samples": 397,
+      "plot_bins": 6,
+      "measured_raw_gb_per_hour": 1.0793971771
+    },
+    "w8kv8": {
+      "run_id": "20260815_smoke_v1_w8kv8",
+      "stage_a": "PASS",
+      "stage_b": "PASS",
+      "requests_successful": 4,
+      "runtime_weights": "fp8_e4m3_weight_only_marlin",
+      "runtime_activations": "bfloat16",
+      "runtime_kv": "float8_e4m3fn",
+      "runtime_attention": "FLASHINFER",
+      "kv_capacity_tokens": 4490208,
+      "hbm_samples": 342,
+      "plot_bins": 6,
+      "measured_raw_gb_per_hour": 1.2471189604,
+      "long_run_eligible": false,
+      "warning": "Checkpoint lacks q scale; vLLM used KV scale 1.0 and uncalibrated q/prob scales 1.0."
+    },
+    "w16kv8": {
+      "run_id": "20260815_smoke_v1_w16kv8",
+      "stage_a": "PASS",
+      "stage_b": "PASS",
+      "requests_successful": 4,
+      "runtime_weights": "bfloat16",
+      "runtime_activations": "bfloat16",
+      "runtime_kv": "float8_e4m3fn",
+      "runtime_attention": "FLASHINFER",
+      "kv_capacity_tokens": 2973944,
+      "hbm_samples": 435,
+      "plot_bins": 7,
+      "measured_raw_gb_per_hour": 0.8506264047,
+      "long_run_eligible": false,
+      "warning": "vLLM warned FP8 KV may reduce accuracy without proper scaling factors; calibrated scale evidence is absent."
+    }
+  }
+}

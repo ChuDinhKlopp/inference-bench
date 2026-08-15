@@ -1,0 +1,5 @@
+timestamp_epoch_s,timestamp_iso,elapsed_trace_s,elapsed_experiment_s,gpu_index,gpu_name,gpu_bus_id,gpu_uuid,peak_hbm_gbps,hbm_read_percent,hbm_write_percent,hbm_aggregate_percent_raw,hbm_utilization_percent,hbm_read_gbps,hbm_write_gbps,hbm_aggregate_gbps
+1000.0,1970-01-01T00:16:40+00:00,0.0,0.0,0,A100,0000:00:00.0,gpu0,1555.2,10,5,15,15,155.52,77.76,233.28
+1000.0,1970-01-01T00:16:40+00:00,0.0,0.0,1,A100,0000:00:00.1,gpu1,1555.2,20,10,30,30,311.04,155.52,466.56
+1002.0,1970-01-01T00:16:42+00:00,2.0,2.0,0,A100,0000:00:00.0,gpu0,1555.2,40,10,50,50,622.08,155.52,777.60
+1002.0,1970-01-01T00:16:42+00:00,2.0,2.0,1,A100,0000:00:00.1,gpu1,1555.2,20,10,30,30,311.04,155.52,466.56

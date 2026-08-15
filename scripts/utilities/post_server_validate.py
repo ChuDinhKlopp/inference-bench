@@ -1,0 +1,193 @@
+#!/home/ducct/repos/vllm/.venv/bin/python
+"""Stage B validation: block request release until the loaded server is credible."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+def run(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(command, text=True, capture_output=True, check=False)
+
+
+def alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--precision", choices=("w16kv16", "w8kv16", "w8kv8", "w16kv8"), required=True)
+    parser.add_argument("--server-log", type=Path, required=True)
+    parser.add_argument("--preflight", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--monitor-pid", type=int, action="append", default=[])
+    parser.add_argument("--min-post-load-free-mib", type=int, default=1024)
+    args = parser.parse_args()
+
+    checks: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
+
+    def check(name: str, passed: bool, detail: str) -> None:
+        checks.append({"name": name, "result": "PASS" if passed else "FAIL", "detail": detail})
+
+    def warn(name: str, detail: str, evidence: list[str]) -> None:
+        warnings.append({"name": name, "detail": detail, "evidence": evidence[:10]})
+
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{args.port}/health", timeout=3) as response:
+            health = response.status
+    except Exception as exc:  # readiness failure needs its exact exception
+        health = 0
+        health_error = str(exc)
+    else:
+        health_error = ""
+    check("server_health", health == 200, f"status={health}; error={health_error}")
+
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{args.port}/metrics", timeout=3) as response:
+            metrics_text = response.read().decode("utf-8", errors="replace")
+    except Exception as exc:
+        metrics_text = ""
+        metrics_error = str(exc)
+    else:
+        metrics_error = ""
+    required_metric_groups = {
+        "requests_running": ("vllm:num_requests_running",),
+        "requests_waiting": ("vllm:num_requests_waiting",),
+        # vLLM 0.27 uses kv_cache_usage_perc; older supported harness versions
+        # exposed gpu_cache_usage_perc. Both have the same 0..1 semantics.
+        "kv_cache_usage": (
+            "vllm:kv_cache_usage_perc",
+            "vllm:gpu_cache_usage_perc",
+        ),
+    }
+    missing_metrics = [
+        alias
+        for alias, candidates in required_metric_groups.items()
+        if not any(name in metrics_text for name in candidates)
+    ]
+    resolved_metrics = {
+        alias: next((name for name in candidates if name in metrics_text), None)
+        for alias, candidates in required_metric_groups.items()
+    }
+    check(
+        "prometheus_metrics",
+        not missing_metrics,
+        f"resolved={resolved_metrics}; missing={missing_metrics}; error={metrics_error}",
+    )
+
+    log_text = args.server_log.read_text(errors="replace") if args.server_log.is_file() else ""
+    expected_kv = "fp8" if args.precision.endswith("kv8") else "bfloat16"
+    kv_patterns = [rf"kv.?cache.?dtype[^\n]*{expected_kv}", rf"cache.?dtype[^\n]*{expected_kv}"]
+    kv_evidence = [match.group(0)[:500] for pattern in kv_patterns for match in re.finditer(pattern, log_text, re.IGNORECASE)]
+    check("kv_dtype_runtime_evidence", bool(kv_evidence), f"expected={expected_kv}; evidence={kv_evidence[:5]}")
+
+    if args.precision.endswith("kv8"):
+        scale_warning_fragments = (
+            "accuracy drop without a proper scaling factor",
+            "Checkpoint does not provide a q scaling factor",
+            "Using KV cache scaling factor 1.0",
+            "Using uncalibrated q_scale",
+        )
+        scale_evidence = [
+            line[:1000]
+            for line in log_text.splitlines()
+            if any(fragment.lower() in line.lower() for fragment in scale_warning_fragments)
+        ]
+        if scale_evidence:
+            warn(
+                "fp8_kv_scale_accuracy_risk",
+                "FP8 KV execution is mechanically valid, but a long accuracy/performance run is blocked until KV/q/prob scales are calibrated and verified.",
+                scale_evidence,
+            )
+
+    backend_evidence = [line[:500] for line in log_text.splitlines() if "flashinfer" in line.lower() and "backend" in line.lower()]
+    check("attention_backend_runtime_evidence", bool(backend_evidence), f"expected=FLASHINFER; evidence={backend_evidence[:5]}")
+
+    expects_fp8_weights = args.precision.startswith("w8")
+    quant_evidence = [line[:500] for line in log_text.splitlines() if "quant" in line.lower() and "fp8" in line.lower()]
+    if expects_fp8_weights:
+        check("weight_format_runtime_evidence", bool(quant_evidence), f"expected=fp8; evidence={quant_evidence[:5]}")
+    else:
+        model_evidence = [line[:500] for line in log_text.splitlines() if "Qwen3.6-35B-A3B" in line and "FP8" not in line]
+        check("weight_format_runtime_evidence", bool(model_evidence), f"expected=BF16 directory; evidence={model_evidence[:5]}")
+
+    capacity_patterns = (
+        r"GPU KV cache size:\s*([0-9,]+) tokens",
+        r"Available KV cache memory:\s*([^\n]+)",
+    )
+    capacity_evidence = [match.group(0) for pattern in capacity_patterns for match in re.finditer(pattern, log_text, re.IGNORECASE)]
+    check("kv_capacity_runtime_evidence", bool(capacity_evidence), f"evidence={capacity_evidence[:5]}")
+
+    query = run([
+        "nvidia-smi",
+        "--query-gpu=index,memory.used,memory.free",
+        "--format=csv,noheader,nounits",
+    ])
+    gpu_rows = []
+    if query.returncode == 0:
+        for line in query.stdout.splitlines():
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) == 3:
+                gpu_rows.append({"index": int(parts[0]), "used_mib": int(parts[1]), "free_mib": int(parts[2])})
+    gpu_ok = len(gpu_rows) == 4 and all(row["used_mib"] > 1000 and row["free_mib"] >= args.min_post_load_free_mib for row in gpu_rows)
+    check("tp4_hbm_after_load", gpu_ok, f"gpus={gpu_rows}; stderr={query.stderr.strip()}")
+
+    dead_monitors = [pid for pid in args.monitor_pid if not alive(pid)]
+    check("monitor_processes", not dead_monitors, f"configured={args.monitor_pid}; dead={dead_monitors}")
+    writable = args.output.parent.is_dir() and os.access(args.output.parent, os.W_OK)
+    stat = os.statvfs(args.output.parent)
+    free_gib = stat.f_bavail * stat.f_frsize / 1024**3
+    check("output_writable_and_headroom", writable and free_gib >= 20.0, f"writable={writable}; free={free_gib:.1f} GiB")
+
+    preflight = json.loads(args.preflight.read_text())
+    model_path = Path(preflight["model"]["local_path"])
+    expected_model = "Qwen3.6-35B-A3B-FP8" if expects_fp8_weights else "Qwen3.6-35B-A3B"
+    check("model_path_identity", model_path.name == expected_model, f"path={model_path}")
+
+    failures = [item["name"] for item in checks if item["result"] == "FAIL"]
+    status = "PASS" if not failures else "FAIL"
+    long_run_eligible = status == "PASS" and not warnings
+    now = datetime.now(timezone.utc)
+    report = {
+        "schema_version": "rivf26.post_server.v1",
+        "stage": "B",
+        "status": status,
+        "timestamp_epoch_s": now.timestamp(),
+        "timestamp_iso": now.isoformat(),
+        "run_id": args.run_id,
+        "precision": args.precision,
+        "checks": checks,
+        "failures": failures,
+        "warnings": warnings,
+        "long_run_eligible": long_run_eligible,
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2) + "\n")
+    print(f"RIVF26 Stage B validation: {status}")
+    for item in checks:
+        print(f"[{item['result']}] {item['name']}: {item['detail']}")
+    for item in warnings:
+        print(f"[WARN] {item['name']}: {item['detail']}")
+    print(f"long_run_eligible={str(long_run_eligible).lower()}")
+    print(status)
+    return 0 if status == "PASS" else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

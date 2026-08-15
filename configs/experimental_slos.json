@@ -1,0 +1,6 @@
+{
+  "schema_version": "rivf26.slos.v1",
+  "provenance": "Borrowed for experimental comparison from the MLPerf Inference GPT-OSS methodology; these are not official Qwen3.6-35B-A3B requirements.",
+  "interactive": {"p99_ttft_seconds_max": 2.0, "tpot_milliseconds_max": 15.0},
+  "server": {"p99_ttft_seconds_max": 3.0, "tpot_milliseconds_max": 80.0}
+}

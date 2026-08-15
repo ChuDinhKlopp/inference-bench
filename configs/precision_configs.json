@@ -1,0 +1,55 @@
+{
+  "schema_version": "rivf26.precisions.v1",
+  "common": {
+    "tensor_parallel_size": 4,
+    "attention_backend": "FLASHINFER",
+    "model_dtype_name": "bfloat16",
+    "notes": "The attention backend is pinned across all arms because current vLLM TRITON_ATTN rejects FP8 KV cache on SM80. On A100/SM80, vLLM 0.27 executes the FP8 checkpoint with Marlin weight-only FP8 kernels and BF16 activations because the GPU has no native FP8 compute. Runtime logs remain the source of truth."
+  },
+  "precisions": {
+    "w16kv16": {
+      "model_logical_id": "Qwen/Qwen3.6-35B-A3B",
+      "model_path_default": "/dev/shm/Qwen3.6-35B-A3B",
+      "model_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+      "weight_format": "bfloat16",
+      "activation_scheme": "bfloat16",
+      "quantization": null,
+      "kv_cache_dtype_cli": "bfloat16"
+    },
+    "w8kv16": {
+      "model_logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+      "model_path_default": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+      "model_revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+      "checkpoint_weight_format": "fp8_e4m3_block_128x128",
+      "checkpoint_activation_scheme": "dynamic_fp8",
+      "runtime_weight_implementation_a100": "weight_only_fp8_marlin",
+      "runtime_activation_dtype_a100": "bfloat16",
+      "quantization": "fp8",
+      "kv_cache_dtype_cli": "bfloat16"
+    },
+    "w8kv8": {
+      "model_logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+      "model_path_default": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+      "model_revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+      "checkpoint_weight_format": "fp8_e4m3_block_128x128",
+      "checkpoint_activation_scheme": "dynamic_fp8",
+      "runtime_weight_implementation_a100": "weight_only_fp8_marlin",
+      "runtime_activation_dtype_a100": "bfloat16",
+      "quantization": "fp8",
+      "kv_cache_dtype_cli": "fp8",
+      "kv_cache_dtype_runtime_a100": "float8_e4m3fn",
+      "long_run_gate": "requires calibrated and runtime-verified KV/q/prob scales"
+    },
+    "w16kv8": {
+      "model_logical_id": "Qwen/Qwen3.6-35B-A3B",
+      "model_path_default": "/dev/shm/Qwen3.6-35B-A3B",
+      "model_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+      "weight_format": "bfloat16",
+      "activation_scheme": "bfloat16",
+      "quantization": null,
+      "kv_cache_dtype_cli": "fp8",
+      "kv_cache_dtype_runtime_a100": "float8_e4m3fn",
+      "long_run_gate": "requires calibrated and runtime-verified KV/q/prob scales"
+    }
+  }
+}

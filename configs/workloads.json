@@ -1,0 +1,20 @@
+{
+  "accuracy": {
+    "dataset": "gpqa_diamond",
+    "arrival_mode": "none",
+    "reasoning_effort": "high",
+    "max_gen_toks": 32768,
+    "source_samples": 198,
+    "repeats": 5,
+    "total_requests": 990
+  },
+  "performance": {
+    "dataset": "ccdv/pubmed-summarization",
+    "arrival_mode": "azure",
+    "reasoning_effort": "low",
+    "max_gen_toks": 10240,
+    "source_samples": 1000,
+    "repeats": 1,
+    "total_requests": 1000
+  }
+}

@@ -1,0 +1,54 @@
+# Generated experiment outputs (keep directory sentinels and small manifests).
+results/part1/**/raw/
+results/part1/**/logs/
+results/part2/**/raw/
+# The same paths are symlinks on this machine; directory-only patterns do not
+# match symlinks, so keep explicit non-directory forms too.
+results/**/raw
+results/**/logs
+logs/**
+profiler/**
+manifests/**/snapshots/
+
+# Profiler/telemetry databases and traces.
+*.nsys-rep
+*.qdstrm
+*.sqlite
+*.sqlite-journal
+*.pt.trace.json
+*.pt.trace.json.gz
+*.kineto.json
+
+# Potentially large runtime artifacts.
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.core
+core
+core.*
+*.log
+*.jsonl
+*.csv.gz
+*.parquet
+
+# Dataset/model caches and temporary files.
+.cache/
+cache/
+tmp/
+*.tmp
+*.part
+__pycache__/
+*.py[cod]
+
+# Explicitly allow lightweight, reproducibility-critical fixtures/configs.
+!configs/*.csv
+!tests/fixtures/*.csv
+!tests/fixtures/*.jsonl
+!traces/processed/*.csv
+!datasets/metadata/*.json
+!manifests/**/*.json
+!manifests/**/*.txt
+!results/**/manifest.json
+!results/**/summary.json
+!results/**/plot_data.json
