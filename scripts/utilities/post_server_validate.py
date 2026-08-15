@@ -103,6 +103,8 @@ def main() -> int:
             "Checkpoint does not provide a q scaling factor",
             "Using KV cache scaling factor 1.0",
             "Using uncalibrated q_scale",
+            "Disabling calculate_kv_scales for hybrid model",
+            "Using default scale of 1.0 instead",
         )
         scale_evidence = [
             line[:1000]

@@ -5,7 +5,7 @@
   "mechanical_smoke_status": "PASS",
   "full_part1_long_run_gate": "BLOCKED",
   "blockers": [
-    "FP8 KV scaling is not calibrated and runtime-verified for both KV8 arms.",
+    "FP8 KV scaling is not calibrated and runtime-verified for both KV8 arms; vLLM 0.27 disables --calculate-kv-scales for this hybrid GDN model and falls back to 1.0.",
     "The plot-ready schema is validated, but the browser import/render path for latency_plots.html is not yet implemented and visually validated."
   ],
   "runs": {

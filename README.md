@@ -92,6 +92,15 @@ uncalibrated q/prob scales of 1.0. Therefore KV8 Stage B can pass mechanical
 validation while `long_run_eligible` remains false. Full runs stay blocked until
 calibrated KV/q/prob scales are available and runtime-verified.
 
+The built-in runtime alternative was tested explicitly with
+`--calculate-kv-scales` on both `w8kv8` and `w16kv8`. vLLM 0.27 recognizes the
+flag and then disables it for Qwen3.6 because this is a hybrid model containing
+GDN/recurrent layers: recurrent state is uninitialized in the calibration pass,
+so vLLM considers the derived scales unreliable and falls back to 1.0. No
+per-layer runtime scale calculation occurred. Consequently this flag is not a
+valid way to clear the KV8 accuracy gate; checkpoint-provided calibrated scales
+or another hybrid-aware calibration method are required.
+
 ## Server launch
 
 The launchers adapt the existing Qwen3-4B harness pattern while keeping common
