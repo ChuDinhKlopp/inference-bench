@@ -1,0 +1,10 @@
+{
+  "logical_id": "Idavidrein/gpqa",
+  "config": "gpqa_diamond",
+  "split": "train",
+  "revision": "633f5ee89ab8ad4522a9f850766b73f62147ffdd",
+  "filename": "gpqa_diamond.csv",
+  "sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+  "rows": 198,
+  "license_note": "Gated GPQA data is not copied into Git; accept the upstream terms and place the canonical CSV in the Hugging Face cache or set RIVF26_GPQA_CSV."
+}

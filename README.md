@@ -15,9 +15,8 @@ Generated data stays here but large artifacts are ignored by Git.
   warns that A100 lacks native FP8 compute, and uses weight-only FP8 compression
   with BF16 activations. Thus `w8` is a checkpoint-format label; the effective
   A100 execution path is FP8 weights/Marlin with BF16 activations.
-- The repository directory is not currently inside a usable Git work tree;
-  manifests therefore record `git_commit: null` until repository ownership is
-  resolved.
+- `rivf26/` is a standalone Git repository, as requested. Manifests record its
+  commit without treating the parent benchmark directory as the Git root.
 
 No script downloads or copies model weights. Server launch forces Hugging Face
 offline mode and passes both model and tokenizer as the same explicit local
@@ -138,10 +137,46 @@ the same performance run unless a later trace-selection study establishes a
 scenario-specific arrival policy; they do not duplicate measurements by
 default.
 
-Full runs remain disabled until all four precision smoke tests, HBM capture,
-runtime precision evidence, browser visualization, log-growth estimation, and
-all resource gates pass. In addition, both KV8 arms require calibrated and
-runtime-verified KV/q/prob scales.
+All four mechanical precision smoke tests, HBM capture, runtime precision
+evidence, plot conversion, and smoke log-growth measurement are complete. The
+study owner explicitly accepted vLLM's intended default FP8 KV scale 1.0. Full
+runs are still fail-closed on each run's current Stage A and Stage B resource
+and runtime evidence; the present long-run Stage A check fails the configured
+`/dev/shm` free-space floor.
+
+## GPQA accuracy harness
+
+The four integrated launchers under `scripts/accuracy/` reuse the existing
+parent `bench.py` for streaming requests, Prometheus/iteration collection,
+generation capture, and GPQA answer scoring. They additionally own the server
+lifecycle, both safety stages, 10 Hz HBM capture, resource guarding, plot-data
+conversion, repeat-level Pass@1 summaries, and clean shutdown.
+
+The canonical gated GPQA Diamond CSV is validated offline by revision, SHA256,
+schema, and its exact 198-row count before vLLM starts. The dataset is not
+copied into Git. Set `RIVF26_GPQA_CSV` when the canonical CSV is outside its
+normal Hugging Face cache location. The adapter also redirects `bench.py`'s
+tokenizer lookup from the served logical model name to the matching local model
+directory in `/dev/shm`, with `local_files_only=True`, preventing a hidden model
+or tokenizer download.
+
+Inspect an exact matrix command without starting the server:
+
+```bash
+RIVF26_DRY_RUN=1 \
+RIVF26_RUN_ID=20260815_230000_accuracy_gpqa_w16kv16_mns24 \
+RIVF26_MAX_NUM_SEQS=24 \
+scripts/accuracy/run_trace_azure_gpqa_Qwen3.6-35B-A3B_w16kv16.sh
+```
+
+Remove `RIVF26_DRY_RUN=1` only when the generated long-run preflight can pass.
+Use the corresponding `w8kv16`, `w8kv8`, or `w16kv8` launcher and one of the
+matrix values `24`, `48`, or `96`. Every accuracy request uses high thinking,
+`MAX_GEN_TOKS=32768`, model-default sampling temperature 1.0 and top-p 0.95,
+top-k 20, and `BENCH_ARRIVAL_RATE=none`. The RIVF adapter injects top-k into the
+existing vLLM request object without modifying the parent client. The 198
+questions are independently sampled five times for 990 requests; `summary.json`
+reports Pass@1 for each repeat and their mean.
 
 ## PubMed performance trace
 
