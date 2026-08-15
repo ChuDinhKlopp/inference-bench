@@ -97,9 +97,10 @@ The built-in runtime alternative was tested explicitly with
 flag and then disables it for Qwen3.6 because this is a hybrid model containing
 GDN/recurrent layers: recurrent state is uninitialized in the calibration pass,
 so vLLM considers the derived scales unreliable and falls back to 1.0. No
-per-layer runtime scale calculation occurred. Consequently this flag is not a
-valid way to clear the KV8 accuracy gate; checkpoint-provided calibrated scales
-or another hybrid-aware calibration method are required.
+per-layer runtime scale calculation occurred. The study owner subsequently
+accepted vLLM's default scale 1.0 as the intended experimental configuration.
+Every KV8 Stage B command must include `--accept-fp8-kv-scale-one`; the resulting
+manifest retains the warning as non-blocking and records the accepted policy.
 
 ## Server launch
 

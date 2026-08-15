@@ -5,8 +5,10 @@
   "mechanical_smoke_status": "PASS",
   "full_part1_long_run_gate": "BLOCKED",
   "blockers": [
-    "FP8 KV scaling is not calibrated and runtime-verified for both KV8 arms; vLLM 0.27 disables --calculate-kv-scales for this hybrid GDN model and falls back to 1.0.",
     "The plot-ready schema is validated, but the browser import/render path for latency_plots.html is not yet implemented and visually validated."
+  ],
+  "accepted_experimental_constraints": [
+    "On 2026-08-15 the study owner explicitly accepted vLLM's default FP8 KV/Q/prob scale 1.0 for both KV8 arms."
   ],
   "runs": {
     "w16kv16": {
@@ -50,8 +52,9 @@
       "hbm_samples": 342,
       "plot_bins": 6,
       "measured_raw_gb_per_hour": 1.2471189604,
-      "long_run_eligible": false,
-      "warning": "Checkpoint lacks q scale; vLLM used KV scale 1.0 and uncalibrated q/prob scales 1.0."
+      "long_run_eligible": true,
+      "kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+      "warning": "Checkpoint lacks q scale; vLLM used KV scale 1.0 and uncalibrated q/prob scales 1.0, accepted as an experimental constraint."
     },
     "w16kv8": {
       "run_id": "20260815_smoke_v1_w16kv8",
@@ -66,8 +69,9 @@
       "hbm_samples": 435,
       "plot_bins": 7,
       "measured_raw_gb_per_hour": 0.8506264047,
-      "long_run_eligible": false,
-      "warning": "vLLM warned FP8 KV may reduce accuracy without proper scaling factors; calibrated scale evidence is absent."
+      "long_run_eligible": true,
+      "kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+      "warning": "vLLM default FP8 KV scale 1.0 is accepted as an experimental constraint."
     }
   }
 }

@@ -37,6 +37,11 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--monitor-pid", type=int, action="append", default=[])
     parser.add_argument("--min-post-load-free-mib", type=int, default=1024)
+    parser.add_argument(
+        "--accept-fp8-kv-scale-one",
+        action="store_true",
+        help="Record the study decision to accept vLLM's default FP8 KV/Q/prob scale 1.0.",
+    )
     args = parser.parse_args()
 
     checks: list[dict[str, Any]] = []
@@ -45,8 +50,15 @@ def main() -> int:
     def check(name: str, passed: bool, detail: str) -> None:
         checks.append({"name": name, "result": "PASS" if passed else "FAIL", "detail": detail})
 
-    def warn(name: str, detail: str, evidence: list[str]) -> None:
-        warnings.append({"name": name, "detail": detail, "evidence": evidence[:10]})
+    def warn(name: str, detail: str, evidence: list[str], *, blocking: bool) -> None:
+        warnings.append(
+            {
+                "name": name,
+                "blocking": blocking,
+                "detail": detail,
+                "evidence": evidence[:10],
+            }
+        )
 
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{args.port}/health", timeout=3) as response:
@@ -114,8 +126,13 @@ def main() -> int:
         if scale_evidence:
             warn(
                 "fp8_kv_scale_accuracy_risk",
-                "FP8 KV execution is mechanically valid, but a long accuracy/performance run is blocked until KV/q/prob scales are calibrated and verified.",
+                (
+                    "vLLM default FP8 KV/Q/prob scale 1.0 was explicitly accepted for this study."
+                    if args.accept_fp8_kv_scale_one
+                    else "A long run is blocked until scale 1.0 is explicitly accepted or calibrated scales are supplied."
+                ),
                 scale_evidence,
+                blocking=not args.accept_fp8_kv_scale_one,
             )
 
     backend_evidence = [line[:500] for line in log_text.splitlines() if "flashinfer" in line.lower() and "backend" in line.lower()]
@@ -164,7 +181,8 @@ def main() -> int:
 
     failures = [item["name"] for item in checks if item["result"] == "FAIL"]
     status = "PASS" if not failures else "FAIL"
-    long_run_eligible = status == "PASS" and not warnings
+    blocking_warnings = [item["name"] for item in warnings if item["blocking"]]
+    long_run_eligible = status == "PASS" and not blocking_warnings
     now = datetime.now(timezone.utc)
     report = {
         "schema_version": "rivf26.post_server.v1",
@@ -177,6 +195,12 @@ def main() -> int:
         "checks": checks,
         "failures": failures,
         "warnings": warnings,
+        "blocking_warnings": blocking_warnings,
+        "fp8_kv_scale_policy": (
+            "vllm_default_1.0_explicitly_accepted"
+            if args.precision.endswith("kv8") and args.accept_fp8_kv_scale_one
+            else "not_applicable" if not args.precision.endswith("kv8") else "not_accepted"
+        ),
         "long_run_eligible": long_run_eligible,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

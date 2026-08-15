@@ -38,7 +38,8 @@
       "quantization": "fp8",
       "kv_cache_dtype_cli": "fp8",
       "kv_cache_dtype_runtime_a100": "float8_e4m3fn",
-      "long_run_gate": "requires checkpoint-provided calibrated KV/q/prob scales; vLLM 0.27 disables runtime calculate_kv_scales for this hybrid GDN model"
+      "kv_scale_policy": "vllm_default_1.0_explicitly_accepted_2026-08-15",
+      "long_run_gate": "PASS when Stage B records --accept-fp8-kv-scale-one; vLLM 0.27 disables runtime calculation for this hybrid GDN model"
     },
     "w16kv8": {
       "model_logical_id": "Qwen/Qwen3.6-35B-A3B",
@@ -49,7 +50,8 @@
       "quantization": null,
       "kv_cache_dtype_cli": "fp8",
       "kv_cache_dtype_runtime_a100": "float8_e4m3fn",
-      "long_run_gate": "requires checkpoint-provided calibrated KV/q/prob scales; vLLM 0.27 disables runtime calculate_kv_scales for this hybrid GDN model"
+      "kv_scale_policy": "vllm_default_1.0_explicitly_accepted_2026-08-15",
+      "long_run_gate": "PASS when Stage B records --accept-fp8-kv-scale-one; vLLM 0.27 disables runtime calculation for this hybrid GDN model"
     }
   }
 }
