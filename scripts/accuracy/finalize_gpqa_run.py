@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -171,6 +172,33 @@ def main() -> int:
         "bulk_run_dir": str(args.bulk_run_dir),
         "artifacts": artifact_inventory(args.bulk_run_dir),
         "log_growth": growth,
+    }
+    record_input = args.output_summary.parent / f"{args.run_id}_e2e_record_input.json"
+    record_input.write_text(json.dumps(result, indent=2) + "\n")
+    record_script = root.parent / "record_e2e_metrics.py"
+    e2e_csv = root / "e2e_metrics_record.csv"
+    if not record_script.is_file():
+        raise FileNotFoundError(f"legacy e2e recorder is missing: {record_script}")
+    subprocess.run(
+        [
+            sys.executable,
+            str(record_script),
+            str(record_input),
+            "--csv",
+            str(e2e_csv),
+            "--server-log",
+            str(args.server_log),
+            "--model-suffix",
+            args.precision,
+            "--attn-backend",
+            "FLASHINFER",
+        ],
+        check=True,
+    )
+    manifest["e2e_metrics"] = {
+        "csv": str(e2e_csv),
+        "record_input": str(record_input),
+        "record_script": str(record_script),
     }
     args.output_manifest.write_text(json.dumps(manifest, indent=2) + "\n")
     return 0

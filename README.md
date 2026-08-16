@@ -192,7 +192,9 @@ matrix values `24`, `48`, or `96`. Every accuracy request uses high thinking,
 top-k 20, and `BENCH_ARRIVAL_RATE=none`. The RIVF adapter injects top-k into the
 existing vLLM request object without modifying the parent client. The 198
 questions are independently sampled five times for 990 requests; `summary.json`
-reports Pass@1 for each repeat and their mean.
+reports Pass@1 for each repeat and their mean. After final validation, the
+unchanged parent `record_e2e_metrics.py` also appends the run to
+`rivf26/e2e_metrics_record.csv` using the original `bench.py` result JSON.
 
 ## PubMed performance trace
 
@@ -223,8 +225,11 @@ server, runs Stage B, proves the reasoning cap produces a non-empty answer, and
 then releases requests with
 `BENCH_ARRIVAL_RATE=azure`. HBM capture wraps the same client command; afterward
 the launcher parses HBM telemetry, generates `plot_data.json`, records measured
-log growth, writes the run manifest, and shuts down the server. High-volume
-artifacts stay under `/run/user/1009/ducct/rivf26`.
+log growth, invokes the repository's unchanged `record_e2e_metrics.py` to append
+the legacy summary row to `rivf26/e2e_metrics_record.csv`, writes the run
+manifest, and shuts down the server. The bench-compatible recorder input is
+retained beside `summary.json`. High-volume artifacts stay under
+`/run/user/1009/ducct/rivf26`.
 
 `run_pubmed_trace.py` reuses the existing `bench.py` streaming transport and
 Prometheus collection. It releases each request against monotonic time using
