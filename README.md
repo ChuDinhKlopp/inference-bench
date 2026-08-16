@@ -242,6 +242,15 @@ scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w16kv16.sh
 Remove `RIVF26_DRY_RUN=1` to execute the integrated run after all smoke gates
 have passed. Replace the suffix for `w8kv16`, `w8kv8`, or `w16kv8`.
 
+Run all four performance arms sequentially in the predeclared alternating order:
+
+```bash
+scripts/performance/run_performance_matrix.sh
+```
+
+The matrix stops on the first failed arm and preserves its status JSONL under
+`$RIVF26_BULK_ROOT/logs/<matrix-id>/`.
+
 ## Workload output limits
 
 `MAX_GEN_TOKS` is a client-side per-request output cap. It is deliberately
