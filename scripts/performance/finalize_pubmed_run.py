@@ -82,7 +82,8 @@ def main() -> int:
     thinking_probe = json.loads(args.thinking_budget_probe.read_text())
     if (
         thinking_probe.get("status") != "PASS"
-        or thinking_probe.get("measured_reasoning_tokens") != 1024
+        or not isinstance(thinking_probe.get("measured_reasoning_tokens"), int)
+        or not 0 <= thinking_probe["measured_reasoning_tokens"] <= 1024
         or thinking_probe.get("answer_nonempty") is not True
     ):
         raise ValueError("thinking-budget runtime probe did not pass")

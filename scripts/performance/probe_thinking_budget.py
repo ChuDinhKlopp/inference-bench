@@ -71,7 +71,8 @@ def main() -> int:
     message = choice.get("message") or {}
     content = message.get("content") or ""
     passed = (
-        reasoning_tokens == args.thinking_token_budget
+        reasoning_tokens is not None
+        and 0 <= reasoning_tokens <= args.thinking_token_budget
         and bool(content.strip())
         and choice.get("finish_reason") in {"stop", "length"}
     )

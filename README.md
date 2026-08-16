@@ -238,7 +238,7 @@ only an on/off template control, the harness uses vLLM 0.27's sampler-level
 `thinking_token_budget=1024` with `--reasoning-parser qwen3`. vLLM forces the
 `</think>` boundary at that cap, leaving at least 9,216 of the 10,240 completion
 tokens for the answer. The launcher's Stage B probe counts token IDs between
-the markers and blocks request release unless the count is exactly 1,024 and
+the markers and blocks request release unless the count is at most 1,024 and
 the answer is non-empty. It also raises the inherited open-file limit to 65,536;
 the first invalid run lost seven burst requests at the former 1,024 limit.
 

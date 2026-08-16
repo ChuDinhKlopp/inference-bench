@@ -1,0 +1,12 @@
+{
+  "status": "INVALID",
+  "run_id": "20260816_025834_performance_pubmed_w16kv16_mns128",
+  "reason": "pre-workload probe validator incorrectly required the reasoning count to equal its maximum cap",
+  "runtime_evidence": {
+    "measured_reasoning_tokens": 492,
+    "thinking_token_budget": 1024,
+    "answer_nonempty": true
+  },
+  "requests_released": 0,
+  "preserve_artifacts": true
+}
