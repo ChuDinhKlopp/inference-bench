@@ -180,12 +180,17 @@ def main() -> int:
 
     dead_monitors = [pid for pid in args.monitor_pid if not alive(pid)]
     check("monitor_processes", not dead_monitors, f"configured={args.monitor_pid}; dead={dead_monitors}")
-    writable = args.output.parent.is_dir() and os.access(args.output.parent, os.W_OK)
-    stat = os.statvfs(args.output.parent)
-    free_gib = stat.f_bavail * stat.f_frsize / 1024**3
-    check("output_writable_and_headroom", writable and free_gib >= 20.0, f"writable={writable}; free={free_gib:.1f} GiB")
-
     preflight = json.loads(args.preflight.read_text())
+    result_path = Path(preflight["resources"]["result_filesystem"]["path"])
+    writable = result_path.is_dir() and os.access(result_path, os.W_OK)
+    stat = os.statvfs(result_path)
+    free_gib = stat.f_bavail * stat.f_frsize / 1024**3
+    check(
+        "output_writable_and_headroom",
+        writable and free_gib >= 20.0,
+        f"path={result_path}; writable={writable}; free={free_gib:.1f} GiB",
+    )
+
     preflight_batched_tokens = preflight.get("run", {}).get("max_num_batched_tokens")
     check(
         "max_num_batched_tokens_preflight_consistency",

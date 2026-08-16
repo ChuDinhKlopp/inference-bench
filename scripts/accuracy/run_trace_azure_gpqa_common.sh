@@ -168,13 +168,13 @@ cleanup() {
     kill -TERM "$guard_pid" 2>/dev/null || true
     wait "$guard_pid" 2>/dev/null || true
   fi
-  if [[ -n ${server_pid:-} ]] && kill -0 "$server_pid" 2>/dev/null; then
+  if [[ -n ${server_pid:-} ]]; then
     kill -TERM -- "-$server_pid" 2>/dev/null || true
     for _ in {1..120}; do
-      kill -0 "$server_pid" 2>/dev/null || break
+      kill -0 -- "-$server_pid" 2>/dev/null || break
       sleep 0.5
     done
-    if kill -0 "$server_pid" 2>/dev/null; then
+    if kill -0 -- "-$server_pid" 2>/dev/null; then
       kill -KILL -- "-$server_pid" 2>/dev/null || true
     fi
     wait "$server_pid" 2>/dev/null || true
