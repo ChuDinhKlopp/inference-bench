@@ -141,7 +141,10 @@ def main() -> int:
     spec = precision_config["precisions"][args.precision]
     env_key = "RIVF26_FP8_MODEL_PATH" if args.precision.startswith("w8") else "RIVF26_BF16_MODEL_PATH"
     model_path = Path(os.environ.get(env_key, spec["model_path_default"]))
-    min_shm_gib = args.min_shm_free_gib if args.min_shm_free_gib is not None else (32.0 if args.mode == "smoke" else 64.0)
+    # Model weights are the only large intentional /dev/shm residents. Runtime
+    # logs live under RIVF26_BULK_ROOT, while NCCL/multiprocessing only require
+    # bounded IPC headroom. Keep this independent and configurable.
+    min_shm_gib = args.min_shm_free_gib if args.min_shm_free_gib is not None else 32.0
     long_run = args.mode != "smoke"
     checks: list[dict[str, Any]] = []
 

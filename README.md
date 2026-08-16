@@ -150,6 +150,16 @@ vLLM's prior implicit A100 token budget, however. Pinning
 so all four arms must pass a new smoke at 16384 before any full run. Long runs
 also remain fail-closed on current Stage A and Stage B resource evidence.
 
+Renew one precision arm at the pinned scheduler budget with:
+
+```bash
+scripts/utilities/run_smoke.sh w16kv16
+```
+
+The same command accepts `w8kv16`, `w8kv8`, and `w16kv8`. It owns Stage A,
+server startup, Stage B, four requests, HBM capture, plot conversion, validation,
+and shutdown. Its compact PASS/FAIL summary is stored with the smoke result.
+
 ## GPQA accuracy harness
 
 The four integrated launchers under `scripts/accuracy/` reuse the existing
