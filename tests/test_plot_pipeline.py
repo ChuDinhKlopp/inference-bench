@@ -5,6 +5,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -34,6 +35,20 @@ class PlotPipelineTest(unittest.TestCase):
                 check=True,
             )
             data = json.loads(output.read_text())
+            svg = Path(directory) / "stacked.svg"
+            png = Path(directory) / "stacked.png"
+            subprocess.run(
+                [
+                    str(VENV_PYTHON), str(ROOT / "analysis/plot_stacked_timeline.py"),
+                    str(output),
+                    "--run-id", "fixture_w16kv16_mns2",
+                    "--output-svg", str(svg),
+                    "--output-png", str(png),
+                ],
+                check=True,
+            )
+            ET.parse(svg)
+            self.assertGreater(png.stat().st_size, 0)
         self.assertIn("DATA", data)
         self.assertIn("TS", data)
         series = data["TS"]["Qwen3.6-35B-A3B|w16kv16"]

@@ -286,3 +286,19 @@ pass `--gpqa-max-gen-toks "$GPQA_MAX_GEN_TOKS"`; the PubMed request builder must
 put `MAX_GEN_TOKS` into every request's `max_tokens` field. Short smoke requests
 may use a dedicated smoke-only cap, but that value must never be recorded as a
 full accuracy or performance matrix run.
+
+## Stacked runtime timeline
+
+Render any finalized `plot_data.json` as aligned HBM-bandwidth, KV-cache, and
+scheduler panels. The x-axis is the deterministic sampled-timestep index; the
+subtitle records the seconds represented by each sample.
+
+```bash
+run_id=20260816_031714_performance_pubmed_w16kv16_mns128
+run_dir="$RIVF26_ROOT/results/part1/performance/$run_id"
+"$RIVF26_VENV_BIN/python" "$RIVF26_ROOT/analysis/plot_stacked_timeline.py" \
+  "$run_dir/plot_data.json" --run-id "$run_id" \
+  --output-svg "$run_dir/stacked_timeline.svg" \
+  --output-html "$run_dir/stacked_timeline.html" \
+  --output-png "$run_dir/stacked_timeline.png"
+```
