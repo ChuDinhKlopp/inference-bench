@@ -82,8 +82,12 @@ def load_bench(repo_root: Path):
     return module
 
 
-def main() -> int:
-    adapter = argparse.ArgumentParser(add_help=False)
+def build_adapter_parser() -> argparse.ArgumentParser:
+    # Do not let argparse consume bench.py options as prefixes of adapter
+    # options. In particular, --dataset gpqa previously abbreviated
+    # --dataset-metadata-json, removed the dataset selector from bench_argv,
+    # and made bench.py fall back to MMLU-Pro.
+    adapter = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     adapter.add_argument("--gpqa-local-csv", type=Path, required=True)
     adapter.add_argument("--local-tokenizer", type=Path, required=True)
     adapter.add_argument("--gpqa-expected-sha256", required=True)
@@ -95,6 +99,11 @@ def main() -> int:
     adapter.add_argument("--sampling-top-k", type=int, required=True)
     adapter.add_argument("--dataset-metadata-json", type=Path)
     adapter.add_argument("--validate-only", action="store_true")
+    return adapter
+
+
+def main() -> int:
+    adapter = build_adapter_parser()
     args, bench_argv = adapter.parse_known_args()
 
     if args.sampling_top_k != 20:

@@ -23,6 +23,30 @@ def load_module(path: Path):
 
 
 class GPQAHarnessTest(unittest.TestCase):
+    def test_adapter_does_not_consume_bench_dataset_options(self) -> None:
+        module = load_module(ROOT / "scripts/accuracy/run_gpqa.py")
+        adapter = module.build_adapter_parser()
+        _, bench_argv = adapter.parse_known_args(
+            [
+                "--gpqa-local-csv", "/tmp/gpqa.csv",
+                "--local-tokenizer", "/tmp/model",
+                "--gpqa-expected-sha256", "digest",
+                "--gpqa-revision", "revision",
+                "--sampling-top-k", "20",
+                "--dataset", "gpqa",
+                "--gpqa-dataset", "Idavidrein/gpqa",
+                "--gpqa-config", "gpqa_diamond",
+            ]
+        )
+        self.assertEqual(
+            bench_argv,
+            [
+                "--dataset", "gpqa",
+                "--gpqa-dataset", "Idavidrein/gpqa",
+                "--gpqa-config", "gpqa_diamond",
+            ],
+        )
+
     def test_canonical_csv_validation(self) -> None:
         module = load_module(ROOT / "scripts/accuracy/run_gpqa.py")
         fields = list(module.REQUIRED_COLUMNS) + ["Subdomain", "Record ID"]
