@@ -380,3 +380,17 @@ run_dir="$RIVF26_ROOT/results/part1/performance/$run_id"
   --output-html "$run_dir/stacked_timeline.html" \
   --output-png "$run_dir/stacked_timeline.png"
 ```
+
+Pass one plot-data file per precision to overlay variants in every panel. Color
+then consistently denotes precision across HBM, KV, running, waiting, and
+cumulative-preemption panels; the shared x-axis is elapsed inference time:
+
+```bash
+"$RIVF26_VENV_BIN/python" "$RIVF26_ROOT/analysis/plot_stacked_timeline.py" \
+  results/part1/performance/*_w16kv16_mns256/plot_data.json \
+  results/part1/performance/*_w8kv16_mns256/plot_data.json \
+  results/part1/performance/*_w16kv8_mns256/plot_data.json \
+  results/part1/performance/*_w8kv8_mns256/plot_data.json \
+  --output-svg results/part1/performance/comparison_mns256.svg \
+  --output-png results/part1/performance/comparison_mns256.png
+```

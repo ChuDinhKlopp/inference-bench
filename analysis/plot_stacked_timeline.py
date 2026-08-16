@@ -1,5 +1,5 @@
 #!/home/ducct/repos/vllm/.venv/bin/python
-"""Render one RIVF26 run as aligned HBM/KV/scheduler SVG panels."""
+"""Render one run or an aligned multi-precision RIVF26 timeline."""
 
 from __future__ import annotations
 
@@ -28,6 +28,13 @@ COLORS = {
     "axis": "#52606d",
     "text": "#17212b",
     "muted": "#667788",
+}
+VARIANT_ORDER = ("w16kv16", "w8kv16", "w16kv8", "w8kv8")
+VARIANT_COLORS = {
+    "w16kv16": "#2563eb",
+    "w8kv16": "#ea580c",
+    "w16kv8": "#16a34a",
+    "w8kv8": "#7c3aed",
 }
 
 
@@ -361,17 +368,207 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     image.save(output, optimize=True)
 
 
+def comparison_runs(datasets: list[dict]) -> list[dict]:
+    required = ("hbm", "kv", "run", "wait", "pre")
+    selected = []
+    seen = set()
+    for data in datasets:
+        series_name, run_id, run = locate_run(data, None)
+        precision = data.get("run", {}).get("precision") or series_name.rsplit("|", 1)[-1]
+        if precision in seen:
+            raise ValueError(f"comparison contains duplicate precision: {precision}")
+        seen.add(precision)
+        lengths = {name: len(run.get(name, [])) for name in required}
+        if any(length == 0 for length in lengths.values()) or len(set(lengths.values())) != 1:
+            raise ValueError(f"required aligned series are missing or unequal for {precision}: {lengths}")
+        selected.append(
+            {
+                "precision": precision,
+                "run_id": run_id,
+                "bin_seconds": float(data["run"]["bin_seconds"]),
+                "hbm": [float(value) for value in run["hbm"]],
+                "kv": [float(value) * 100 for value in run["kv"]],
+                "run": [float(value) for value in run["run"]],
+                "wait": [float(value) for value in run["wait"]],
+                "pre": [float(value) for value in run["pre"]],
+            }
+        )
+    order = {name: index for index, name in enumerate(VARIANT_ORDER)}
+    return sorted(selected, key=lambda item: (order.get(item["precision"], len(order)), item["precision"]))
+
+
+def comparison_points(
+    values: list[float], bin_seconds: float, max_elapsed_s: float, y_top: float,
+    panel_height: float, y_upper: float,
+) -> list[tuple[float, float]]:
+    return [
+        (
+            LEFT + (index * bin_seconds / max(1.0, max_elapsed_s)) * PLOT_WIDTH,
+            y_top + panel_height - value / y_upper * panel_height,
+        )
+        for index, value in enumerate(values)
+    ]
+
+
+def render_comparison(datasets: list[dict]) -> str:
+    runs = comparison_runs(datasets)
+    panel_height = 205
+    panel_gap = 36
+    top = 140
+    metrics = (
+        ("hbm", "HBM BW utilization (%)", 100.0),
+        ("kv", "KV-cache utilization (%)", 100.0),
+        ("run", "running requests", None),
+        ("wait", "waiting requests", None),
+        ("pre", "cumulative preemptions", None),
+    )
+    height = top + len(metrics) * panel_height + (len(metrics) - 1) * panel_gap + 105
+    max_elapsed_s = max((len(run["hbm"]) - 1) * run["bin_seconds"] for run in runs)
+    last_second = max(1, math.ceil(max_elapsed_s))
+    xticks = x_ticks(last_second)
+
+    def axes(y_top: float, y_upper: float, ylabel: str, show_x: bool) -> list[str]:
+        items = [
+            f'<rect x="{LEFT}" y="{y_top}" width="{PLOT_WIDTH}" height="{panel_height}" '
+            'fill="#ffffff" stroke="#aebcca" stroke-width="1"/>'
+        ]
+        for value in tick_values(y_upper):
+            y = y_top + panel_height - value / y_upper * panel_height
+            items.append(
+                f'<line x1="{LEFT}" x2="{LEFT + PLOT_WIDTH}" y1="{y:.2f}" y2="{y:.2f}" '
+                f'stroke="{COLORS["grid"]}" stroke-width="1"/>'
+            )
+            items.append(text_node(LEFT - 12, y + 5, f"{value:.0f}", text_anchor="end", fill=COLORS["muted"], font_size="14"))
+        for second in xticks:
+            x = LEFT + second / last_second * PLOT_WIDTH
+            items.append(
+                f'<line x1="{x:.2f}" x2="{x:.2f}" y1="{y_top}" y2="{y_top + panel_height}" '
+                f'stroke="{COLORS["grid"]}" stroke-width="1"/>'
+            )
+            if show_x:
+                items.append(text_node(x, y_top + panel_height + 25, str(second), text_anchor="middle", fill=COLORS["muted"], font_size="14"))
+        cy = y_top + panel_height / 2
+        items.append(text_node(28, cy, ylabel, text_anchor="middle", fill=COLORS["text"], font_size="15", font_weight="600", transform=f"rotate(-90 28 {cy})"))
+        return items
+
+    svg = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" '
+        f'viewBox="0 0 {WIDTH} {height}" role="img" aria-label="RIVF26 four-precision comparison timeline">',
+        '<rect width="100%" height="100%" fill="#f7f9fc"/>',
+        text_node(LEFT, 38, "RIVF26 Part 1 — precision comparison timeline", fill=COLORS["text"], font_size="25", font_weight="700"),
+        text_node(LEFT, 66, "elapsed inference time; every panel overlays the same precision variants", fill=COLORS["muted"], font_size="15"),
+    ]
+    legend_x = LEFT
+    for run in runs:
+        color = VARIANT_COLORS.get(run["precision"], "#475569")
+        svg.append(f'<line x1="{legend_x}" x2="{legend_x + 38}" y1="98" y2="98" stroke="{color}" stroke-width="3"/>')
+        svg.append(text_node(legend_x + 46, 103, run["precision"], fill=color, font_size="15", font_weight="700"))
+        legend_x += 190
+
+    for panel_index, (metric_name, ylabel, fixed_upper) in enumerate(metrics):
+        y_top = top + panel_index * (panel_height + panel_gap)
+        upper = fixed_upper or nice_upper(max(max(run[metric_name]) for run in runs))
+        svg.extend(axes(y_top, upper, ylabel, panel_index == len(metrics) - 1))
+        for run in runs:
+            coords = comparison_points(
+                run[metric_name], run["bin_seconds"], max_elapsed_s,
+                y_top, panel_height, upper,
+            )
+            path_data = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in coords)
+            color = VARIANT_COLORS.get(run["precision"], "#475569")
+            svg.append(f'<path d="{path_data}" fill="none" stroke="{color}" stroke-width="2" opacity="0.92"/>')
+
+    final_y = top + (len(metrics) - 1) * (panel_height + panel_gap) + panel_height
+    svg.append(text_node(LEFT + PLOT_WIDTH / 2, final_y + 60, "elapsed inference time (seconds)", text_anchor="middle", fill=COLORS["text"], font_size="16", font_weight="600"))
+    run_ids = " · ".join(f"{run['precision']}: {run['run_id']}" for run in runs)
+    svg.append(text_node(LEFT, height - 24, run_ids, fill=COLORS["muted"], font_size="11"))
+    svg.append("</svg>")
+    return "\n".join(svg)
+
+
+def render_comparison_png(datasets: list[dict], output: Path) -> None:
+    from PIL import Image, ImageColor, ImageDraw, ImageFont
+
+    runs = comparison_runs(datasets)
+    panel_height = 205
+    panel_gap = 36
+    top = 140
+    metrics = (
+        ("hbm", "HBM BW utilization (%)", 100.0),
+        ("kv", "KV-cache utilization (%)", 100.0),
+        ("run", "running requests", None),
+        ("wait", "waiting requests", None),
+        ("pre", "cumulative preemptions", None),
+    )
+    height = top + len(metrics) * panel_height + (len(metrics) - 1) * panel_gap + 105
+    max_elapsed_s = max((len(run["hbm"]) - 1) * run["bin_seconds"] for run in runs)
+    last_second = max(1, math.ceil(max_elapsed_s))
+    xticks = x_ticks(last_second)
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    bold_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    font = ImageFont.truetype(font_path, 14)
+    small = ImageFont.truetype(font_path, 11)
+    bold = ImageFont.truetype(bold_path, 15)
+    title = ImageFont.truetype(bold_path, 25)
+    image = Image.new("RGB", (WIDTH, height), "#f7f9fc")
+    draw = ImageDraw.Draw(image)
+    draw.text((LEFT, 28), "RIVF26 Part 1 — precision comparison timeline", fill=COLORS["text"], font=title)
+    draw.text((LEFT, 64), "elapsed inference time; every panel overlays the same precision variants", fill=COLORS["muted"], font=font)
+    legend_x = LEFT
+    for run in runs:
+        color = VARIANT_COLORS.get(run["precision"], "#475569")
+        draw.line((legend_x, 98, legend_x + 38, 98), fill=color, width=3)
+        draw.text((legend_x + 46, 89), run["precision"], fill=color, font=bold)
+        legend_x += 190
+
+    for panel_index, (metric_name, ylabel, fixed_upper) in enumerate(metrics):
+        y_top = top + panel_index * (panel_height + panel_gap)
+        upper = fixed_upper or nice_upper(max(max(run[metric_name]) for run in runs))
+        draw.rectangle((LEFT, y_top, LEFT + PLOT_WIDTH, y_top + panel_height), fill="white", outline="#aebcca")
+        for value in tick_values(upper):
+            y = y_top + panel_height - value / upper * panel_height
+            draw.line((LEFT, y, LEFT + PLOT_WIDTH, y), fill=COLORS["grid"], width=1)
+            label = f"{value:.0f}"
+            box = draw.textbbox((0, 0), label, font=font)
+            draw.text((LEFT - 12 - (box[2] - box[0]), y - 8), label, fill=COLORS["muted"], font=font)
+        for second in xticks:
+            x = LEFT + second / last_second * PLOT_WIDTH
+            draw.line((x, y_top, x, y_top + panel_height), fill=COLORS["grid"], width=1)
+            if panel_index == len(metrics) - 1:
+                label = str(second)
+                box = draw.textbbox((0, 0), label, font=font)
+                draw.text((x - (box[2] - box[0]) / 2, y_top + panel_height + 7), label, fill=COLORS["muted"], font=font)
+        draw.text((8, y_top + 8), ylabel, fill=COLORS["text"], font=bold)
+        for run in runs:
+            coords = comparison_points(run[metric_name], run["bin_seconds"], max_elapsed_s, y_top, panel_height, upper)
+            draw.line(coords, fill=VARIANT_COLORS.get(run["precision"], "#475569"), width=2, joint="curve")
+
+    final_y = top + (len(metrics) - 1) * (panel_height + panel_gap) + panel_height
+    xlabel = "elapsed inference time (seconds)"
+    box = draw.textbbox((0, 0), xlabel, font=bold)
+    draw.text((LEFT + (PLOT_WIDTH - (box[2] - box[0])) / 2, final_y + 45), xlabel, fill=COLORS["text"], font=bold)
+    run_ids = " · ".join(f"{run['precision']}: {run['run_id']}" for run in runs)
+    draw.text((LEFT, height - 20), run_ids, fill=COLORS["muted"], font=small)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, optimize=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("plot_data", type=Path)
+    parser.add_argument("plot_data", type=Path, nargs="+")
     parser.add_argument("--run-id")
     parser.add_argument("--output-svg", type=Path, required=True)
     parser.add_argument("--output-html", type=Path)
     parser.add_argument("--output-png", type=Path)
     args = parser.parse_args()
 
-    data = json.loads(args.plot_data.read_text())
-    svg = render(data, args.run_id)
+    datasets = [json.loads(path.read_text()) for path in args.plot_data]
+    if len(datasets) == 1:
+        svg = render(datasets[0], args.run_id)
+    else:
+        if args.run_id:
+            parser.error("--run-id is only valid with one plot_data input")
+        svg = render_comparison(datasets)
     args.output_svg.parent.mkdir(parents=True, exist_ok=True)
     args.output_svg.write_text(svg + "\n")
     if args.output_html:
@@ -385,7 +582,10 @@ def main() -> int:
             f"</head><body><main>{svg}</main></body></html>\n"
         )
     if args.output_png:
-        render_png(data, args.run_id, args.output_png)
+        if len(datasets) == 1:
+            render_png(datasets[0], args.run_id, args.output_png)
+        else:
+            render_comparison_png(datasets, args.output_png)
     print(f"wrote {args.output_svg}")
     if args.output_html:
         print(f"wrote {args.output_html}")
