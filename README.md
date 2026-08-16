@@ -130,6 +130,11 @@ elapsed timestamps, read/write/aggregate GB/s, and normalized utilization. The
 normalization uses each device's `memoryBandwidth` value embedded in the report
 (1.5552 TB/s on this machine), not a hard-coded value.
 
+Plot conversion uses one-second timesteps by default. Each scheduler/KV point
+aggregates about five Prometheus samples, while each HBM point aggregates about
+ten GA100 samples. Override this with
+`RIVF26_PLOT_BIN_SECONDS=<seconds>`; raw telemetry remains the source of truth.
+
 This sampler is intentionally separate from Part 2: no kernel trace or PyTorch
 Profiler is enabled in Part 1.
 

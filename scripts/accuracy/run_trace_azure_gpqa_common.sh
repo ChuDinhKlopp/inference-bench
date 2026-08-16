@@ -321,6 +321,7 @@ plot_cmd=(
   --mode accuracy
   --max-num-seqs "$max_num_seqs"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
+  --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}"
   --experiment-start-epoch-s "$started_epoch_s"
 )
 if [[ -n "$kv_capacity" ]]; then

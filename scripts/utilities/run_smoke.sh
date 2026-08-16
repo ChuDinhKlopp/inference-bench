@@ -133,7 +133,8 @@ plot_cmd=(
   --prometheus "$bulk_run_dir/raw/iteration_metrics.prometheus_samples.jsonl"
   --hbm "$hbm_csv" --output "$run_dir/plot_data.json" --run-id "$run_id"
   --precision "$precision" --mode smoke --max-num-seqs "$max_num_seqs"
-  --max-num-batched-tokens 16384 --experiment-start-epoch-s "$started_epoch_s"
+  --max-num-batched-tokens 16384 --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}"
+  --experiment-start-epoch-s "$started_epoch_s"
 )
 if [[ -n "$kv_capacity" ]]; then
   plot_cmd+=(--kv-capacity-tokens "$kv_capacity")

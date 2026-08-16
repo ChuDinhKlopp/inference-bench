@@ -101,9 +101,16 @@ def main() -> int:
     parser.add_argument("--max-num-seqs", type=int, required=True)
     parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
     parser.add_argument("--kv-capacity-tokens", type=int)
-    parser.add_argument("--bin-seconds", type=float, default=15.0)
+    parser.add_argument(
+        "--bin-seconds",
+        type=float,
+        default=1.0,
+        help="Plot timestep width; 1 s retains 10 Hz HBM and 5 Hz scheduler dynamics",
+    )
     parser.add_argument("--experiment-start-epoch-s", type=float)
     args = parser.parse_args()
+    if not math.isfinite(args.bin_seconds) or args.bin_seconds <= 0:
+        parser.error("--bin-seconds must be a finite positive value")
 
     requests = read_requests(args.per_request)
     prometheus = read_prometheus(args.prometheus)
