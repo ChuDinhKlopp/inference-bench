@@ -207,12 +207,30 @@ dataset manifest. The frozen workload defaults to
 `/run/user/1009/ducct/rivf26/datasets/processed/pubmed_azure_bursty_1000.jsonl`.
 
 The four `scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w*.sh`
-wrappers validate that frozen workload and require a passing Stage B report
-before releasing requests. `run_pubmed_trace.py` reuses the existing
-`bench.py` streaming transport and Prometheus collection. It releases each
-request against monotonic time using the frozen normalized arrival offset,
-with no client concurrency semaphore; vLLM's `max-num-seqs` controls running
-versus waiting requests.
+wrappers are integrated launchers: each validates the explicit selected-trace
+CSV against the frozen prompt-bound workload, runs Stage A, starts its precision
+server, runs Stage B, and then releases requests with
+`BENCH_ARRIVAL_RATE=azure`. HBM capture wraps the same client command; afterward
+the launcher parses HBM telemetry, generates `plot_data.json`, records measured
+log growth, writes the run manifest, and shuts down the server. High-volume
+artifacts stay under `/run/user/1009/ducct/rivf26`.
+
+`run_pubmed_trace.py` reuses the existing `bench.py` streaming transport and
+Prometheus collection. It releases each request against monotonic time using
+the frozen normalized arrival offset, with no client concurrency semaphore;
+vLLM's `max-num-seqs` controls running versus waiting requests. The default
+matrix value is `max-num-seqs=128` and all servers use
+`max-num-batched-tokens=16384`.
+
+Preview any precision arm without allocating GPUs:
+
+```bash
+RIVF26_DRY_RUN=1 \
+scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w16kv16.sh
+```
+
+Remove `RIVF26_DRY_RUN=1` to execute the integrated run after all smoke gates
+have passed. Replace the suffix for `w8kv16`, `w8kv8`, or `w16kv8`.
 
 ## Workload output limits
 

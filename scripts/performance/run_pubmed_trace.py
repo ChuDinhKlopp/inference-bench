@@ -19,6 +19,7 @@ from pathlib import Path
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workload", type=Path, required=True)
+    parser.add_argument("--trace-csv", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--model", default="Qwen3.6-35B-A3B")
@@ -30,7 +31,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_and_validate(path: Path) -> list[dict]:
+def load_trace_offsets(path: Path) -> list[float]:
+    with path.open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    if len(rows) != 1000:
+        raise ValueError(f"Azure trace CSV must contain 1000 rows; got {len(rows)}")
+    offsets = [float(row["ARRIVAL_OFFSET_S"]) for row in rows]
+    if offsets[0] != 0.0 or any(right < left for left, right in zip(offsets, offsets[1:])):
+        raise ValueError("Azure trace offsets must begin at zero and be monotonic")
+    return offsets
+
+
+def load_and_validate(path: Path, trace_csv: Path) -> list[dict]:
     records = []
     with path.open(encoding="utf-8") as stream:
         for line_number, line in enumerate(stream, start=1):
@@ -57,6 +69,9 @@ def load_and_validate(path: Path) -> list[dict]:
         raise ValueError("performance mode requires low reasoning (enable_thinking=false)")
     if any(record["request"]["prompt_tokens"] + 10240 > 65536 for record in records):
         raise ValueError("frozen workload contains a request exceeding max_model_len=65536")
+    trace_offsets = load_trace_offsets(trace_csv)
+    if any(abs(workload_offset - trace_offset) > 1e-6 for workload_offset, trace_offset in zip(offsets, trace_offsets, strict=True)):
+        raise ValueError("frozen workload arrival offsets do not match the supplied Azure trace CSV")
     return records
 
 
@@ -145,6 +160,8 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
         "schema_version": 1,
         "mode": "performance",
         "dataset": "ccdv/pubmed-summarization",
+        "arrival_mode": "azure",
+        "trace_csv": str(args.trace_csv),
         "request_count": len(records),
         "successful_requests": successful,
         "failed_requests": len(records) - successful,
@@ -161,10 +178,11 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
 
 def main() -> None:
     args = parse_args()
-    records = load_and_validate(args.workload)
+    records = load_and_validate(args.workload, args.trace_csv)
     validation = {
         "request_count": len(records),
         "trace_duration_s": records[-1]["trace"]["arrival_offset_s"],
+        "trace_csv": str(args.trace_csv),
         "max_gen_toks": 10240,
         "max_num_batched_tokens": args.max_num_batched_tokens,
         "min_prompt_tokens": min(record["request"]["prompt_tokens"] for record in records),
