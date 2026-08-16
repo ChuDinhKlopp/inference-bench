@@ -17,9 +17,11 @@ rivf26_root=${RIVF26_ROOT:-$(cd -- "$script_dir/../.." && pwd)}
 parent_root=$(cd -- "$rivf26_root/.." && pwd)
 source "$rivf26_root/scripts/common/venv.sh"
 source "$rivf26_root/scripts/common/paths.sh"
+source "$rivf26_root/scripts/common/scheduler_env.sh"
 source "$rivf26_root/scripts/common/workload_env.sh"
 
 export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-65536}
+rivf26_set_scheduler_env
 rivf26_set_workload_env accuracy
 
 max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
@@ -72,6 +74,7 @@ preflight_cmd=(
   --mode accuracy
   --precision "$precision"
   --max-num-seqs "$max_num_seqs"
+  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --estimated-output-gib "${RIVF26_ESTIMATED_OUTPUT_GIB:-80}"
   --safety-reserve-gib "${RIVF26_SAFETY_RESERVE_GIB:-50}"
   --port "$port"
@@ -113,6 +116,7 @@ post_cmd=(
   --preflight "$preflight"
   --output "$post_server"
   --port "$port"
+  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
 )
 if [[ "$precision" == *kv8 ]]; then
   post_cmd+=(--accept-fp8-kv-scale-one)
@@ -135,8 +139,8 @@ if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   print_command "Stage B validation" "${post_cmd[@]}"
   print_command "GPQA client" "${client_cmd[@]}"
   print_command "HBM-wrapped client" "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}"
-  printf 'MAX_GEN_TOKS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=990\n' \
-    "$MAX_GEN_TOKS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT"
+  printf 'MAX_GEN_TOKS=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=990\n' \
+    "$MAX_GEN_TOKS" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT"
   exit 0
 fi
 
@@ -289,6 +293,7 @@ plot_cmd=(
   --precision "$precision"
   --mode accuracy
   --max-num-seqs "$max_num_seqs"
+  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --experiment-start-epoch-s "$started_epoch_s"
 )
 if [[ -n "$kv_capacity" ]]; then
@@ -311,6 +316,7 @@ fi
   --run-id "$run_id" \
   --precision "$precision" \
   --max-num-seqs "$max_num_seqs" \
+  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" \
   --started-epoch-s "$started_epoch_s" \
   --ended-epoch-s "$ended_epoch_s"
 

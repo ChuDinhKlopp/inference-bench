@@ -59,6 +59,7 @@ Run preflight (from the repository root):
 $HOME/repos/vllm/.venv/bin/python rivf26/scripts/utilities/preflight.py \
   --run-id 20260815_180000_smoke_w16kv16 \
   --mode smoke --precision w16kv16 --max-num-seqs 2 \
+  --max-num-batched-tokens 16384 \
   --estimated-output-gib 2 --safety-reserve-gib 20
 ```
 
@@ -87,9 +88,8 @@ All four precision arms completed the four-request mechanical smoke on
 10 Hz HBM telemetry, plot-ready JSON, and a log-growth estimate. The KV8 runs
 resolved the cache to `torch.float8_e4m3fn`, but vLLM warned that proper scaling
 is required; `w8kv8` additionally reported missing q scale, KV scale 1.0, and
-uncalibrated q/prob scales of 1.0. Therefore KV8 Stage B can pass mechanical
-validation while `long_run_eligible` remains false. Full runs stay blocked until
-calibrated KV/q/prob scales are available and runtime-verified.
+uncalibrated q/prob scales of 1.0. The study owner subsequently accepted that
+vLLM-default scale policy, as recorded below.
 
 The built-in runtime alternative was tested explicitly with
 `--calculate-kv-scales` on both `w8kv8` and `w16kv8`. vLLM 0.27 recognizes the
@@ -116,6 +116,11 @@ starting a process. Current vLLM rejects FP8 KV with `TRITON_ATTN` on SM80, so
 all four arms pin `FLASHINFER`; startup logs must confirm this and the effective
 KV/weight configuration.
 
+Every RIVF26 server arm pins `max-num-batched-tokens=16384`. The shared
+scheduler helper rejects any conflicting `RIVF26_MAX_NUM_BATCHED_TOKENS` value,
+and the same value is recorded by preflight, Stage B, summaries, manifests, and
+plot metadata.
+
 ## HBM telemetry
 
 Part 1 uses Nsight Systems' GA100 GPU Metrics sampler with CUDA tracing and CPU
@@ -137,12 +142,13 @@ the same performance run unless a later trace-selection study establishes a
 scenario-specific arrival policy; they do not duplicate measurements by
 default.
 
-All four mechanical precision smoke tests, HBM capture, runtime precision
-evidence, plot conversion, and smoke log-growth measurement are complete. The
-study owner explicitly accepted vLLM's intended default FP8 KV scale 1.0. Full
-runs are still fail-closed on each run's current Stage A and Stage B resource
-and runtime evidence; the present long-run Stage A check fails the configured
-`/dev/shm` free-space floor.
+The original four mechanical precision smokes completed HBM capture, runtime
+precision evidence, plot conversion, and log-growth measurement, and the study
+owner accepted vLLM's intended default FP8 KV scale 1.0. Those smokes used
+vLLM's prior implicit A100 token budget, however. Pinning
+`max-num-batched-tokens=16384` changes the scientific scheduler configuration,
+so all four arms must pass a new smoke at 16384 before any full run. Long runs
+also remain fail-closed on current Stage A and Stage B resource evidence.
 
 ## GPQA accuracy harness
 

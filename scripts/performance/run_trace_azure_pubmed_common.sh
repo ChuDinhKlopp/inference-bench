@@ -11,9 +11,11 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 rivf26_root=${RIVF26_ROOT:-$(cd -- "$script_dir/../.." && pwd)}
 source "$rivf26_root/scripts/common/venv.sh"
 source "$rivf26_root/scripts/common/paths.sh"
+source "$rivf26_root/scripts/common/scheduler_env.sh"
 source "$rivf26_root/scripts/common/workload_env.sh"
 
 export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-65536}
+rivf26_set_scheduler_env
 rivf26_set_workload_env performance
 
 run_id=${RIVF26_RUN_ID:-}
@@ -37,13 +39,14 @@ cmd=(
   --model Qwen3.6-35B-A3B
   --server-log-file "$server_log"
   --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}"
+  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --timeout "${RIVF26_REQUEST_TIMEOUT:-43200}"
 )
 
 printf 'RIVF26 PubMed client command:'
 printf ' %q' "${cmd[@]}"
-printf '\nMAX_GEN_TOKS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s precision=%s\n' \
-  "$MAX_GEN_TOKS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT" "$precision"
+printf '\nMAX_GEN_TOKS=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s precision=%s\n' \
+  "$MAX_GEN_TOKS" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT" "$precision"
 
 if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   exec "${cmd[@]}" --validate-only

@@ -70,6 +70,7 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--precision", required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
     parser.add_argument("--started-epoch-s", type=float, required=True)
     parser.add_argument("--ended-epoch-s", type=float, required=True)
     args = parser.parse_args()
@@ -126,6 +127,7 @@ def main() -> int:
         "run_id": args.run_id,
         "precision": args.precision,
         "max_num_seqs": args.max_num_seqs,
+        "max_num_batched_tokens": args.max_num_batched_tokens,
         "source_questions": 198,
         "repeats_per_question": 5,
         "total_requests": len(records),
@@ -154,6 +156,7 @@ def main() -> int:
         "dataset": "gpqa_diamond",
         "precision": args.precision,
         "max_num_seqs": args.max_num_seqs,
+        "max_num_batched_tokens": args.max_num_batched_tokens,
         "git_commit": git_commit(root),
         "started_epoch_s": args.started_epoch_s,
         "ended_epoch_s": args.ended_epoch_s,

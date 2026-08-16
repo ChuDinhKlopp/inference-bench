@@ -11,6 +11,8 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 rivf26_root=${RIVF26_ROOT:-$(cd -- "$script_dir/../.." && pwd)}
 source "$rivf26_root/scripts/common/venv.sh"
 source "$rivf26_root/scripts/common/paths.sh"
+source "$rivf26_root/scripts/common/scheduler_env.sh"
+rivf26_set_scheduler_env
 run_id=${RIVF26_RUN_ID:-}
 port=${RIVF26_PORT:-8000}
 max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
@@ -76,9 +78,7 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
   cmd+=(--calculate-kv-scales)
 fi
 
-if [[ -n ${RIVF26_MAX_NUM_BATCHED_TOKENS:-} ]]; then
-  cmd+=(--max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS")
-fi
+cmd+=(--max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS")
 if [[ -n ${RIVF26_EXTRA_SERVER_ARGS:-} ]]; then
   echo "RIVF26_EXTRA_SERVER_ARGS is intentionally unsupported; add audited arguments to this launcher" >&2
   exit 2

@@ -35,6 +35,7 @@ def main() -> int:
     parser.add_argument("--preflight", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
     parser.add_argument("--monitor-pid", type=int, action="append", default=[])
     parser.add_argument("--min-post-load-free-mib", type=int, default=1024)
     parser.add_argument(
@@ -104,6 +105,16 @@ def main() -> int:
     )
 
     log_text = args.server_log.read_text(errors="replace") if args.server_log.is_file() else ""
+    batched_token_pattern = rf"--max-num-batched-tokens(?:=|\s+){args.max_num_batched_tokens}(?:\s|$)"
+    batched_token_evidence = [
+        match.group(0).strip()
+        for match in re.finditer(batched_token_pattern, log_text, re.IGNORECASE)
+    ]
+    check(
+        "max_num_batched_tokens_runtime_evidence",
+        bool(batched_token_evidence),
+        f"expected={args.max_num_batched_tokens}; evidence={batched_token_evidence[:5]}",
+    )
     expected_kv = "fp8" if args.precision.endswith("kv8") else "bfloat16"
     kv_patterns = [rf"kv.?cache.?dtype[^\n]*{expected_kv}", rf"cache.?dtype[^\n]*{expected_kv}"]
     kv_evidence = [match.group(0)[:500] for pattern in kv_patterns for match in re.finditer(pattern, log_text, re.IGNORECASE)]
@@ -175,6 +186,12 @@ def main() -> int:
     check("output_writable_and_headroom", writable and free_gib >= 20.0, f"writable={writable}; free={free_gib:.1f} GiB")
 
     preflight = json.loads(args.preflight.read_text())
+    preflight_batched_tokens = preflight.get("run", {}).get("max_num_batched_tokens")
+    check(
+        "max_num_batched_tokens_preflight_consistency",
+        preflight_batched_tokens == args.max_num_batched_tokens,
+        f"expected={args.max_num_batched_tokens}; preflight={preflight_batched_tokens}",
+    )
     model_path = Path(preflight["model"]["local_path"])
     expected_model = "Qwen3.6-35B-A3B-FP8" if expects_fp8_weights else "Qwen3.6-35B-A3B"
     check("model_path_identity", model_path.name == expected_model, f"path={model_path}")
@@ -192,6 +209,7 @@ def main() -> int:
         "timestamp_iso": now.isoformat(),
         "run_id": args.run_id,
         "precision": args.precision,
+        "max_num_batched_tokens": args.max_num_batched_tokens,
         "checks": checks,
         "failures": failures,
         "warnings": warnings,

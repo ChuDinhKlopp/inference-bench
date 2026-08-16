@@ -99,7 +99,7 @@ def main() -> int:
     parser.add_argument("--precision", required=True)
     parser.add_argument("--mode", required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
-    parser.add_argument("--max-num-batched-tokens", type=int, default=0)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
     parser.add_argument("--kv-capacity-tokens", type=int)
     parser.add_argument("--bin-seconds", type=float, default=15.0)
     parser.add_argument("--experiment-start-epoch-s", type=float)

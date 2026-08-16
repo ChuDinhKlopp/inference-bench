@@ -24,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default="Qwen3.6-35B-A3B")
     parser.add_argument("--server-log-file", type=Path)
     parser.add_argument("--server-metrics-poll-interval", type=float, default=0.2)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
     parser.add_argument("--timeout", type=float, default=43200.0)
     parser.add_argument("--validate-only", action="store_true")
     return parser.parse_args()
@@ -150,6 +151,7 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
         "benchmark_duration_s": duration,
         "trace_duration_s": offsets[-1],
         "max_gen_toks": 10240,
+        "max_num_batched_tokens": args.max_num_batched_tokens,
         "enable_thinking": False,
         "client_concurrency_limit": None,
         "metrics_summary": dataclasses.asdict(metrics_summary) if metrics_summary else None,
@@ -164,6 +166,7 @@ def main() -> None:
         "request_count": len(records),
         "trace_duration_s": records[-1]["trace"]["arrival_offset_s"],
         "max_gen_toks": 10240,
+        "max_num_batched_tokens": args.max_num_batched_tokens,
         "min_prompt_tokens": min(record["request"]["prompt_tokens"] for record in records),
         "max_prompt_tokens": max(record["request"]["prompt_tokens"] for record in records),
     }
