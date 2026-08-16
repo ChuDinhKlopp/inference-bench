@@ -33,6 +33,7 @@ port=${RIVF26_PORT:-8000}
 run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${precision}_mns${max_num_seqs}}
 workload=${RIVF26_PUBMED_WORKLOAD:-$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000.jsonl}
 trace_csv=${RIVF26_AZURE_TRACE_CSV:-$rivf26_root/traces/processed/azure_multimodal_bursty_1000.csv}
+smoke_gate=${RIVF26_SMOKE_MATRIX:-$rivf26_root/manifests/smoke_matrix_mbt16384_20260816.json}
 
 run_dir=${RIVF26_RUN_DIR:-$rivf26_root/results/part1/performance/$run_id}
 bulk_run_dir=${RIVF26_BULK_RUN_DIR:-$RIVF26_BULK_ROOT/results/part1/performance/$run_id}
@@ -120,6 +121,16 @@ if [[ -e "$run_dir" || -e "$bulk_run_dir" || -e "$manifest_dir" ]]; then
 fi
 if [[ ! -x "$server_launcher" ]]; then
   echo "missing server launcher: $server_launcher" >&2
+  exit 2
+fi
+if [[ ! -f "$smoke_gate" ]]; then
+  echo "missing four-precision scheduler-budget smoke gate: $smoke_gate" >&2
+  exit 2
+fi
+if ! "$RIVF26_VENV_BIN/python" -c \
+  'import json,sys; d=json.load(open(sys.argv[1])); required={"w16kv16","w8kv16","w8kv8","w16kv8"}; runs=d.get("runs",{}); sys.exit(0 if d.get("status")=="PASS" and d.get("max_num_batched_tokens")==16384 and set(runs)==required and all(runs[p].get("status")=="PASS" for p in required) else 2)' \
+  "$smoke_gate"; then
+  echo "four-precision scheduler-budget smoke gate is not valid: $smoke_gate" >&2
   exit 2
 fi
 
