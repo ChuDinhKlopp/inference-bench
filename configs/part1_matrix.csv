@@ -11,7 +11,7 @@ accuracy_gpqa_w8kv8_mns96,accuracy,gpqa_diamond,w8kv8,96,16384,198,5,990,high,32
 accuracy_gpqa_w16kv8_mns24,accuracy,gpqa_diamond,w16kv8,24,16384,198,5,990,high,32768,none,accuracy
 accuracy_gpqa_w16kv8_mns48,accuracy,gpqa_diamond,w16kv8,48,16384,198,5,990,high,32768,none,accuracy
 accuracy_gpqa_w16kv8_mns96,accuracy,gpqa_diamond,w16kv8,96,16384,198,5,990,high,32768,none,accuracy
-performance_pubmed_w16kv16,performance,ccdv/pubmed-summarization,w16kv16,384,16384,1000,1,1000,low,10240,azure,interactive+server
-performance_pubmed_w8kv16,performance,ccdv/pubmed-summarization,w8kv16,384,16384,1000,1,1000,low,10240,azure,interactive+server
-performance_pubmed_w8kv8,performance,ccdv/pubmed-summarization,w8kv8,384,16384,1000,1,1000,low,10240,azure,interactive+server
-performance_pubmed_w16kv8,performance,ccdv/pubmed-summarization,w16kv8,384,16384,1000,1,1000,low,10240,azure,interactive+server
+performance_pubmed_w16kv16,performance,ccdv/pubmed-summarization,w16kv16,256,16384,1000,1,1000,low,10240,azure,interactive+server
+performance_pubmed_w8kv16,performance,ccdv/pubmed-summarization,w8kv16,256,16384,1000,1,1000,low,10240,azure,interactive+server
+performance_pubmed_w8kv8,performance,ccdv/pubmed-summarization,w8kv8,256,16384,1000,1,1000,low,10240,azure,interactive+server
+performance_pubmed_w16kv8,performance,ccdv/pubmed-summarization,w16kv8,256,16384,1000,1,1000,low,10240,azure,interactive+server

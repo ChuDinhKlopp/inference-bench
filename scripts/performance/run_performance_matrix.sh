@@ -21,7 +21,7 @@ printf '{"event":"matrix_start","matrix_id":"%s","epoch_s":%(%s)T,"order":["w16k
   "$matrix_id" -1 >> "$status_file"
 
 for precision in "${precisions[@]}"; do
-  run_id=$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${precision}_mns384
+  run_id=$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${precision}_mns256
   printf '{"event":"run_start","run_id":"%s","precision":"%s","epoch_s":%(%s)T}\n' \
     "$run_id" "$precision" -1 >> "$status_file"
   wrapper=$script_dir/run_trace_azure_pubmed_Qwen3.6-35B-A3B_${precision}.sh

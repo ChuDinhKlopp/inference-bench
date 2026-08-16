@@ -23,9 +23,9 @@ export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-65536}
 rivf26_set_scheduler_env
 rivf26_set_workload_env performance
 
-max_num_seqs=${RIVF26_MAX_NUM_SEQS:-384}
-if [[ "$max_num_seqs" != 384 ]]; then
-  echo "PubMed Part 1 matrix requires RIVF26_MAX_NUM_SEQS=384; got $max_num_seqs" >&2
+max_num_seqs=${RIVF26_MAX_NUM_SEQS:-256}
+if [[ "$max_num_seqs" != 256 ]]; then
+  echo "PubMed Part 1 matrix requires RIVF26_MAX_NUM_SEQS=256; got $max_num_seqs" >&2
   exit 2
 fi
 

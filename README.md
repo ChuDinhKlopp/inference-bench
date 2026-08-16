@@ -235,16 +235,17 @@ retained beside `summary.json`. High-volume artifacts stay under
 Prometheus collection. It releases each request against monotonic time using
 the frozen normalized arrival offset, with no client concurrency semaphore;
 vLLM's `max-num-seqs` controls running versus waiting requests. The performance
-matrix uses `max-num-seqs=384` and all servers use
+matrix uses `max-num-seqs=256` and all servers use
 `max-num-batched-tokens=16384`.
 
 The first mns128 baseline measured 1,525,248 logical KV-token slots and an
 average prompt-plus-completion length of 6,140.02 tokens, corresponding to about
-248 average-size resident requests. The mns384 matrix deliberately places the
-scheduler ceiling above that estimate so KV pressure, rather than the sequence
-limit, determines residency. The selected trace releases request 384 at
-69.188 seconds (361 requests by 60 seconds), so the arrival burst can populate
-the enlarged scheduler.
+248 average-size resident requests. Runtime evidence from the interrupted mns384
+baseline showed that its larger CUDA graphs reduced capacity to 1,183,232 KV
+tokens; KV utilization reached 99.9% with 200--210 requests running. The mns256
+ceiling therefore remains above observed KV-limited residency while avoiding
+the unnecessary mns384 graph reservation. The selected trace releases request
+256 at 37.378 seconds, so it supplies enough load to reach that ceiling.
 
 Performance mode keeps Qwen thinking enabled. Because this Qwen checkpoint has
 only an on/off template control, the harness uses vLLM 0.27's sampler-level
