@@ -235,10 +235,10 @@ matrix value is `max-num-seqs=128` and all servers use
 
 Performance mode keeps Qwen thinking enabled. Because this Qwen checkpoint has
 only an on/off template control, the harness uses vLLM 0.27's sampler-level
-`thinking_token_budget=1024` with `--reasoning-parser qwen3`. vLLM forces the
-`</think>` boundary at that cap, leaving at least 9,216 of the 10,240 completion
+`thinking_token_budget=6144` with `--reasoning-parser qwen3`. vLLM forces the
+`</think>` boundary at that cap, leaving at least 4,096 of the 10,240 completion
 tokens for the answer. The launcher's Stage B probe counts token IDs between
-the markers and blocks request release unless the count is at most 1,024 and
+the markers and blocks request release unless the count is at most 6,144 and
 the answer is non-empty. It also raises the inherited open-file limit to 65,536;
 the first invalid run lost seven burst requests at the former 1,024 limit.
 
@@ -272,7 +272,7 @@ and call `rivf26_set_workload_env` before constructing client commands:
 # GPQA accuracy: exported MAX_GEN_TOKS=GPQA_MAX_GEN_TOKS=32768
 rivf26_set_workload_env accuracy
 
-# PubMed performance: MAX_GEN_TOKS=10240, THINKING_TOKEN_BUDGET=1024
+# PubMed performance: MAX_GEN_TOKS=10240, THINKING_TOKEN_BUDGET=6144
 rivf26_set_workload_env performance
 ```
 

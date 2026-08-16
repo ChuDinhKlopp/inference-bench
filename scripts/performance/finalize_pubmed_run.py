@@ -75,15 +75,15 @@ def main() -> int:
         raise ValueError(f"performance run has {summary.get('failed_requests')} failed requests")
     if summary.get("enable_thinking") is not True:
         raise ValueError("performance run must keep Qwen thinking enabled")
-    if summary.get("thinking_token_budget") != 1024:
-        raise ValueError("performance run must use thinking_token_budget=1024")
+    if summary.get("thinking_token_budget") != 6144:
+        raise ValueError("performance run must use thinking_token_budget=6144")
     if summary.get("client_open_file_soft_limit", 0) < 65536:
         raise ValueError("performance client open-file limit must be at least 65536")
     thinking_probe = json.loads(args.thinking_budget_probe.read_text())
     if (
         thinking_probe.get("status") != "PASS"
         or not isinstance(thinking_probe.get("measured_reasoning_tokens"), int)
-        or not 0 <= thinking_probe["measured_reasoning_tokens"] <= 1024
+        or not 0 <= thinking_probe["measured_reasoning_tokens"] <= 6144
         or thinking_probe.get("answer_nonempty") is not True
     ):
         raise ValueError("thinking-budget runtime probe did not pass")
@@ -121,7 +121,7 @@ def main() -> int:
             "max_num_batched_tokens": args.max_num_batched_tokens,
             "reasoning_effort": "low",
             "enable_thinking": True,
-            "thinking_token_budget": 1024,
+            "thinking_token_budget": 6144,
             "max_gen_toks": 10240,
             "arrival_mode": "azure",
             "log_growth": growth,
@@ -147,7 +147,7 @@ def main() -> int:
         "max_gen_toks": 10240,
         "reasoning_effort": "low",
         "enable_thinking": True,
-        "thinking_token_budget": 1024,
+        "thinking_token_budget": 6144,
         "arrival_mode": "azure",
         "git_commit": git_commit(root),
         "started_epoch_s": args.started_epoch_s,

@@ -1,6 +1,6 @@
 {
   "schema_version": "rivf26.pubmed_frozen_workload.v2",
-  "created_iso": "2026-08-16T02:56:38.072039+00:00",
+  "created_iso": "2026-08-16T03:16:31.601318+00:00",
   "workload": "rivf26_part1_performance_pubmed_azure_bursty_1000",
   "conversion": "preserve messages/dataset/trace; retokenize only for thinking-enabled template",
   "attachment_policy": "preserve the original seeded PubMed selection and exact Azure pairing; no article text modified or truncated",
@@ -11,7 +11,7 @@
   },
   "output": {
     "path": "/run/user/1009/ducct/rivf26/datasets/processed/pubmed_azure_bursty_1000.jsonl",
-    "sha256": "d9b89823edcc9696967448d8e61a76fa40a787e9f272df56e56968a1ecd5cf8f",
+    "sha256": "6b842e6cd2771085c1dd7120c89153b2167b339f914f1922a5eb2784776cd751",
     "bytes": 36048553
   },
   "request_count": 1000,
@@ -1044,7 +1044,7 @@
   "generation": {
     "reasoning_effort": "low",
     "enable_thinking": true,
-    "thinking_token_budget": 1024,
+    "thinking_token_budget": 6144,
     "max_gen_toks": 10240,
     "temperature": 1.0,
     "top_p": 0.95,

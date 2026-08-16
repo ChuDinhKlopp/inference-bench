@@ -28,7 +28,7 @@ def main() -> int:
     parser.add_argument("--metadata", type=Path, required=True)
     parser.add_argument("--model-path", type=Path, required=True)
     parser.add_argument("--max-gen-toks", type=int, choices=(10240,), default=10240)
-    parser.add_argument("--thinking-token-budget", type=int, choices=(1024,), default=1024)
+    parser.add_argument("--thinking-token-budget", type=int, choices=(6144,), default=6144)
     parser.add_argument("--max-model-len", type=int, default=65536)
     args = parser.parse_args()
 

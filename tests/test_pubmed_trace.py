@@ -42,15 +42,16 @@ class PubMedTraceTest(unittest.TestCase):
                             "messages": [{"role": "user", "content": "summarize"}],
                             "prompt_tokens": 10,
                             "max_tokens": 10240,
-                            "temperature": 0.0,
-                            "top_p": 1.0,
+                            "temperature": 1.0,
+                            "top_p": 0.95,
                             "seed": 42,
-                            "chat_template_kwargs": {"enable_thinking": False},
+                            "chat_template_kwargs": {"enable_thinking": True},
+                            "thinking_token_budget": 6144,
                         },
                     }
                     stream.write(json.dumps(record) + "\n")
 
-            records = module.load_and_validate(workload, trace)
+            records = module.load_and_validate(workload, trace, 6144)
             self.assertEqual(len(records), 1000)
 
             with trace.open(newline="") as stream:
@@ -61,7 +62,7 @@ class PubMedTraceTest(unittest.TestCase):
                 writer.writeheader()
                 writer.writerows(rows)
             with self.assertRaisesRegex(ValueError, "do not match"):
-                module.load_and_validate(workload, trace)
+                module.load_and_validate(workload, trace, 6144)
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--server-log-file", type=Path)
     parser.add_argument("--server-metrics-poll-interval", type=float, default=0.2)
     parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
-    parser.add_argument("--thinking-token-budget", type=int, choices=(1024,), default=1024)
+    parser.add_argument("--thinking-token-budget", type=int, choices=(6144,), default=6144)
     parser.add_argument("--timeout", type=float, default=43200.0)
     parser.add_argument("--validate-only", action="store_true")
     return parser.parse_args()

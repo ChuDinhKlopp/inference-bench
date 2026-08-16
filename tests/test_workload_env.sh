@@ -20,8 +20,8 @@ env -u MAX_GEN_TOKS -u RIVF26_MAX_GEN_TOKS -u GPQA_MAX_GEN_TOKS \
   _ "$workload_env"
 
 env -u MAX_GEN_TOKS -u RIVF26_MAX_GEN_TOKS -u GPQA_MAX_GEN_TOKS \
-  -u PUBMED_MAX_GEN_TOKS -u BENCH_ARRIVAL_RATE \
-  bash -c 'source "$1"; rivf26_set_workload_env performance; [[ $MAX_GEN_TOKS == 10240 && $PUBMED_MAX_GEN_TOKS == 10240 && $BENCH_ARRIVAL_RATE == azure && $RIVF26_REASONING_EFFORT == low ]]' \
+  -u PUBMED_MAX_GEN_TOKS -u BENCH_ARRIVAL_RATE -u RIVF26_THINKING_TOKEN_BUDGET \
+  bash -c 'source "$1"; rivf26_set_workload_env performance; [[ $MAX_GEN_TOKS == 10240 && $PUBMED_MAX_GEN_TOKS == 10240 && $BENCH_ARRIVAL_RATE == azure && $RIVF26_REASONING_EFFORT == low && $RIVF26_THINKING_TOKEN_BUDGET == 6144 ]]' \
   _ "$workload_env"
 
 if MAX_GEN_TOKS=10240 bash -c 'source "$1"; rivf26_set_workload_env accuracy' _ "$workload_env"; then

@@ -25,7 +25,7 @@ def main() -> int:
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--model-path", type=Path, required=True)
-    parser.add_argument("--thinking-token-budget", type=int, choices=(1024,), required=True)
+    parser.add_argument("--thinking-token-budget", type=int, choices=(6144,), required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 

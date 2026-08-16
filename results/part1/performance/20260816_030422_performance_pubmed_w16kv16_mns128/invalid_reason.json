@@ -1,0 +1,8 @@
+{
+  "status": "INVALID",
+  "run_id": "20260816_030422_performance_pubmed_w16kv16_mns128",
+  "reason": "superseded by the study owner's 6144-token thinking budget",
+  "thinking_token_budget": 1024,
+  "completed_requests_before_stop": 1,
+  "preserve_artifacts": true
+}

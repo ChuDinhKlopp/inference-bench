@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset-file", default="document/test-00000-of-00001.parquet")
     parser.add_argument("--seed", type=int, default=260815)
     parser.add_argument("--max-gen-toks", type=int, default=10240)
-    parser.add_argument("--thinking-token-budget", type=int, default=1024)
+    parser.add_argument("--thinking-token-budget", type=int, default=6144)
     parser.add_argument("--max-model-len", type=int, default=65536)
     return parser.parse_args()
 
@@ -64,8 +64,8 @@ def main() -> None:
         raise ValueError("arrival offsets are not monotonic")
     if args.max_gen_toks != 10240:
         raise ValueError("RIVF26 performance mode requires --max-gen-toks 10240")
-    if args.thinking_token_budget != 1024:
-        raise ValueError("RIVF26 performance mode requires --thinking-token-budget 1024")
+    if args.thinking_token_budget != 6144:
+        raise ValueError("RIVF26 performance mode requires --thinking-token-budget 6144")
 
     args.cache_dir.mkdir(parents=True, exist_ok=True)
     parquet_path = Path(

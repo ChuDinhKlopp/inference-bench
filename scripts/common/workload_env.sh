@@ -19,9 +19,9 @@ rivf26_set_workload_env() {
       expected_reasoning_effort=low
       # Qwen has no native low/medium/high effort selector. Keep thinking on,
       # but cap the reasoning block so it cannot consume the full completion.
-      # This leaves at least 9,216 tokens of the 10,240-token response budget
+      # This leaves at least 4,096 tokens of the 10,240-token response budget
       # available for the answer.
-      expected_thinking_token_budget=1024
+      expected_thinking_token_budget=6144
       ;;
     *)
       echo "unsupported RIVF26 workload mode: $mode" >&2
