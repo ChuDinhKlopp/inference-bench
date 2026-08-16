@@ -25,13 +25,28 @@ rivf26_set_scheduler_env
 rivf26_set_workload_env accuracy
 
 max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
-case "$max_num_seqs" in
-  24|48|96) ;;
-  *) echo "GPQA Part 1 matrix requires RIVF26_MAX_NUM_SEQS in {24,48,96}; got $max_num_seqs" >&2; exit 2 ;;
+if [[ ! "$max_num_seqs" =~ ^[1-9][0-9]*$ ]] || (( max_num_seqs > 4096 )); then
+  echo "GPQA requires a positive RIVF26_MAX_NUM_SEQS no larger than 4096; got $max_num_seqs" >&2
+  exit 2
+fi
+num_samples=${RIVF26_GPQA_NUM_SAMPLES:-5}
+run_kind=${RIVF26_GPQA_RUN_KIND:-official}
+case "$run_kind:$num_samples" in
+  official:5|length_pilot:1) ;;
+  *)
+    echo "GPQA run kind/sample mismatch: official requires 5 repeats; length_pilot requires 1" >&2
+    exit 2
+    ;;
 esac
+total_requests=$((198 * num_samples))
 
 port=${RIVF26_PORT:-8000}
-run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_accuracy_gpqa_${precision}_mns${max_num_seqs}}
+if [[ "$run_kind" == length_pilot ]]; then
+  default_run_id=$(date -u +%Y%m%d_%H%M%S)_accuracy_gpqa_length_pilot_${precision}_mns${max_num_seqs}
+else
+  default_run_id=$(date -u +%Y%m%d_%H%M%S)_accuracy_gpqa_${precision}_mns${max_num_seqs}
+fi
+run_id=${RIVF26_RUN_ID:-$default_run_id}
 revision=633f5ee89ab8ad4522a9f850766b73f62147ffdd
 gpqa_sha256=41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305
 gpqa_csv=${RIVF26_GPQA_CSV:-$HOME/.cache/huggingface/hub/datasets--Idavidrein--gpqa/snapshots/$revision/gpqa_diamond.csv}
@@ -94,7 +109,7 @@ client_cmd=(
   --gpqa-split train
   --gpqa-max-gen-toks "$GPQA_MAX_GEN_TOKS"
   --num-prompts 198
-  --num-samples 5
+  --num-samples "$num_samples"
   --seed 42
   --model Qwen3.6-35B-A3B
   --base-url "http://127.0.0.1:$port"
@@ -140,8 +155,9 @@ if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   print_command "Stage B validation" "${post_cmd[@]}"
   print_command "GPQA client" "${client_cmd[@]}"
   print_command "HBM-wrapped client" "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}"
-  printf 'MAX_GEN_TOKS=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=990\n' \
-    "$MAX_GEN_TOKS" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT"
+  printf 'MAX_GEN_TOKS=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s run_kind=%s repeats=%s total_requests=%s\n' \
+    "$MAX_GEN_TOKS" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" \
+    "$RIVF26_REASONING_EFFORT" "$run_kind" "$num_samples" "$total_requests"
   exit 0
 fi
 
@@ -326,6 +342,9 @@ fi
   --output-manifest "$run_dir/manifest.json" \
   --run-id "$run_id" \
   --precision "$precision" \
+  --run-kind "$run_kind" \
+  --num-samples "$num_samples" \
+  --smoke-matrix "$smoke_gate" \
   --max-num-seqs "$max_num_seqs" \
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" \
   --started-epoch-s "$started_epoch_s" \

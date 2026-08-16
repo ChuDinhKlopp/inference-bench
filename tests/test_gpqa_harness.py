@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import importlib.util
+import json
 import tempfile
 import unittest
 from argparse import Namespace
@@ -68,6 +69,23 @@ class GPQAHarnessTest(unittest.TestCase):
         self.assertEqual(module.extract_choice("reasoning\nAnswer: C"), "C")
         self.assertEqual(module.extract_choice("final: \\boxed{B}"), "B")
         self.assertIsNone(module.extract_choice("no final choice"))
+
+    def test_length_distribution_and_capacity_estimates(self) -> None:
+        module = load_module(ROOT / "scripts/accuracy/finalize_gpqa_run.py")
+        stats = module.distribution([100, 200, 300, 400])
+        self.assertEqual(stats["avg"], 250.0)
+        self.assertEqual(stats["p90"], 370.0)
+        self.assertEqual(stats["max"], 400)
+        with tempfile.TemporaryDirectory() as directory:
+            smoke = Path(directory) / "smoke.json"
+            smoke.write_text(
+                json.dumps({"runs": {"w16kv16": {"kv_capacity_tokens": 1000}}})
+            )
+            estimates = module.kv_capacity_estimates(smoke, stats)
+            self.assertEqual(estimates["w16kv16"]["max_sequences_at_avg_length"], 4)
+            self.assertEqual(
+                estimates["w16kv16"]["max_sequences_at_90pct_capacity_p90_length"], 2
+            )
 
 
 if __name__ == "__main__":

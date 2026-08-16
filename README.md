@@ -135,9 +135,10 @@ Profiler is enabled in Part 1.
 
 ## Experiment matrix
 
-`configs/part1_matrix.csv` is authoritative. It contains 12 GPQA configurations
-(4 precisions x 3 `max-num-seqs` values), each with 198 samples x 5 repeats, and
-four PubMed/Azure workloads. Interactive and Server SLOs are two evaluations of
+`configs/part1_matrix.csv` now records the 198-request GPQA length pilot rather
+than the original provisional 24/48/96 sweep. After the pilot, replace that row
+with four official accuracy rows using the selected concurrency. Interactive
+and Server SLOs are two evaluations of
 the same performance run unless a later trace-selection study establishes a
 scenario-specific arrival policy; they do not duplicate measurements by
 default.
@@ -176,6 +177,20 @@ tokenizer lookup from the served logical model name to the matching local model
 directory in `/dev/shm`, with `local_files_only=True`, preventing a hidden model
 or tokenizer download.
 
+Before choosing the official `max-num-seqs`, run the 198-question BF16
+length pilot once (no repeats):
+
+```bash
+scripts/accuracy/run_gpqa_length_pilot_w16kv16.sh
+```
+
+It keeps the official high-thinking, 32,768-token, sampling, monitoring, and
+scoring settings. Its `summary.json` includes ISL, OSL, and ISL+OSL
+min/average/p25/p50/p75/p90/p95/p99/max distributions plus theoretical
+KV-capacity concurrency ratios for all four precisions using the validated
+smoke capacities. Choose the official `max-num-seqs` only after inspecting
+these results; the capacity ratios are planning bounds, not measured optima.
+
 Inspect an exact matrix command without starting the server:
 
 ```bash
@@ -186,8 +201,8 @@ scripts/accuracy/run_trace_azure_gpqa_Qwen3.6-35B-A3B_w16kv16.sh
 ```
 
 Remove `RIVF26_DRY_RUN=1` only when the generated long-run preflight can pass.
-Use the corresponding `w8kv16`, `w8kv8`, or `w16kv8` launcher and one of the
-matrix values `24`, `48`, or `96`. Every accuracy request uses high thinking,
+Use the corresponding `w8kv16`, `w8kv8`, or `w16kv8` launcher and the
+pilot-selected concurrency. Every accuracy request uses high thinking,
 `MAX_GEN_TOKS=32768`, model-default sampling temperature 1.0 and top-p 0.95,
 top-k 20, and `BENCH_ARRIVAL_RATE=none`. The RIVF adapter injects top-k into the
 existing vLLM request object without modifying the parent client. The 198
@@ -196,21 +211,25 @@ reports Pass@1 for each repeat and their mean. After final validation, the
 unchanged parent `record_e2e_metrics.py` also appends the run to
 `rivf26/e2e_metrics_record.csv` using the original `bench.py` result JSON.
 
-Inspect all 12 exact matrix commands without allocating a GPU:
+After selecting a concurrency from the pilot, inspect the four exact precision
+commands without allocating a GPU:
 
 ```bash
-RIVF26_DRY_RUN=1 scripts/accuracy/run_accuracy_matrix.sh
+RIVF26_ACCURACY_MAX_NUM_SEQS=<selected-value> \
+RIVF26_DRY_RUN=1 \
+scripts/accuracy/run_accuracy_matrix.sh
 ```
 
 After the GPUs are idle and a fresh resource preflight can pass, launch the
 fail-fast matrix with:
 
 ```bash
+RIVF26_ACCURACY_MAX_NUM_SEQS=<selected-value> \
 scripts/accuracy/run_accuracy_matrix.sh
 ```
 
-The driver interleaves precision order across `max-num-seqs=24,48,96` and logs
-each start/PASS/FAIL event to
+The driver uses the same selected concurrency for all four precision formats
+and logs each start/PASS/FAIL event to
 `$RIVF26_BULK_ROOT/logs/<matrix-id>/status.jsonl`. Each individual wrapper
 enforces the version-controlled four-precision `max-num-batched-tokens=16384`
 smoke gate before starting vLLM.
