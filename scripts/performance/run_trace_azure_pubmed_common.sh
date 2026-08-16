@@ -54,6 +54,7 @@ validate_cmd=(
   --trace-csv "$trace_csv"
   --output-dir "$run_dir"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
+  --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET"
   --validate-only
 )
 preflight_cmd=(
@@ -77,6 +78,7 @@ client_cmd=(
   --server-log-file "$server_log"
   --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
+  --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET"
   --timeout "${RIVF26_REQUEST_TIMEOUT:-43200}"
 )
 post_cmd=(
@@ -110,8 +112,8 @@ if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   print_command "Stage B validation" "${post_cmd[@]}"
   print_command "PubMed client" "${client_cmd[@]}"
   print_command "HBM-wrapped client" "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}"
-  printf 'MAX_GEN_TOKS=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=1000\n' \
-    "$MAX_GEN_TOKS" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT"
+  printf 'MAX_GEN_TOKS=%s THINKING_TOKEN_BUDGET=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=1000\n' \
+    "$MAX_GEN_TOKS" "$RIVF26_THINKING_TOKEN_BUDGET" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT"
   exit 0
 fi
 
@@ -171,6 +173,13 @@ trap 'exit 143' TERM
 
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
+# The Azure window can release nearly 1,000 concurrent HTTP connections.
+# The inherited soft limit was 1,024 and caused request loss in the first run.
+ulimit -n 65536
+if (( $(ulimit -n) < 65536 )); then
+  echo "unable to raise open-file limit to 65536" >&2
+  exit 2
+fi
 "${validate_cmd[@]}"
 "${preflight_cmd[@]}"
 
@@ -223,6 +232,14 @@ if ! "$RIVF26_VENV_BIN/python" -c \
   echo "Stage B did not pass every request-release gate" >&2
   exit 2
 fi
+
+"$RIVF26_VENV_BIN/python" "$script_dir/probe_thinking_budget.py" \
+  --workload "$workload" \
+  --base-url "http://127.0.0.1:$port" \
+  --model Qwen3.6-35B-A3B \
+  --model-path "${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B}" \
+  --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET" \
+  --output "$run_dir/thinking_budget_probe.json"
 
 {
   printf 'BENCH_ARRIVAL_RATE=azure '
@@ -282,6 +299,7 @@ fi
   --responses "$bulk_run_dir/raw/responses.jsonl" \
   --preflight "$preflight" \
   --post-server "$post_server" \
+  --thinking-budget-probe "$run_dir/thinking_budget_probe.json" \
   --server-command "$run_dir/logs/server_command.txt" \
   --client-command "$run_dir/client_command.txt" \
   --bulk-run-dir "$bulk_run_dir" \

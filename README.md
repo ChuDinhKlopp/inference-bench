@@ -219,7 +219,8 @@ dataset manifest. The frozen workload defaults to
 The four `scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w*.sh`
 wrappers are integrated launchers: each validates the explicit selected-trace
 CSV against the frozen prompt-bound workload, runs Stage A, starts its precision
-server, runs Stage B, and then releases requests with
+server, runs Stage B, proves the reasoning cap produces a non-empty answer, and
+then releases requests with
 `BENCH_ARRIVAL_RATE=azure`. HBM capture wraps the same client command; afterward
 the launcher parses HBM telemetry, generates `plot_data.json`, records measured
 log growth, writes the run manifest, and shuts down the server. High-volume
@@ -231,6 +232,15 @@ the frozen normalized arrival offset, with no client concurrency semaphore;
 vLLM's `max-num-seqs` controls running versus waiting requests. The default
 matrix value is `max-num-seqs=128` and all servers use
 `max-num-batched-tokens=16384`.
+
+Performance mode keeps Qwen thinking enabled. Because this Qwen checkpoint has
+only an on/off template control, the harness uses vLLM 0.27's sampler-level
+`thinking_token_budget=1024` with `--reasoning-parser qwen3`. vLLM forces the
+`</think>` boundary at that cap, leaving at least 9,216 of the 10,240 completion
+tokens for the answer. The launcher's Stage B probe counts token IDs between
+the markers and blocks request release unless the count is exactly 1,024 and
+the answer is non-empty. It also raises the inherited open-file limit to 65,536;
+the first invalid run lost seven burst requests at the former 1,024 limit.
 
 Preview any precision arm without allocating GPUs:
 
@@ -262,7 +272,7 @@ and call `rivf26_set_workload_env` before constructing client commands:
 # GPQA accuracy: exported MAX_GEN_TOKS=GPQA_MAX_GEN_TOKS=32768
 rivf26_set_workload_env accuracy
 
-# PubMed performance: exported MAX_GEN_TOKS=PUBMED_MAX_GEN_TOKS=10240
+# PubMed performance: MAX_GEN_TOKS=10240, THINKING_TOKEN_BUDGET=1024
 rivf26_set_workload_env performance
 ```
 

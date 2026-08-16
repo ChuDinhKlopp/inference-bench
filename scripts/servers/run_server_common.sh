@@ -70,6 +70,8 @@ cmd=(
   --gpu-memory-utilization "$gpu_memory_utilization"
   --kv-cache-dtype "$kv_dtype"
   --attention-backend "$attention_backend"
+  --reasoning-parser qwen3
+  --reasoning-config '{"reasoning_start_str":"<think>","reasoning_end_str":"</think>"}'
   --enable-logging-iteration-details
   "${quant_args[@]}"
 )
@@ -141,6 +143,8 @@ done
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3}
+# vLLM 0.27's thinking-token budget is implemented by the V1 model runner.
+export VLLM_USE_V2_MODEL_RUNNER=0
 if [[ "$calculate_kv_scales" == 1 ]]; then
   scale_audit_site=$rivf26_root/scripts/utilities/kv_scale_audit_site
   export RIVF26_KV_SCALE_AUDIT_DIR=${RIVF26_KV_SCALE_AUDIT_DIR:-$bulk_run_dir/raw/kv_scale_audit}

@@ -149,6 +149,17 @@ def main() -> int:
     backend_evidence = [line[:500] for line in log_text.splitlines() if "flashinfer" in line.lower() and "backend" in line.lower()]
     check("attention_backend_runtime_evidence", bool(backend_evidence), f"expected=FLASHINFER; evidence={backend_evidence[:5]}")
 
+    reasoning_evidence = [
+        line[:1000]
+        for line in log_text.splitlines()
+        if "reasoning_parser" in line and "qwen3" in line.lower()
+    ]
+    check(
+        "reasoning_parser_runtime_evidence",
+        bool(reasoning_evidence),
+        f"expected=qwen3; evidence={reasoning_evidence[:5]}",
+    )
+
     expects_fp8_weights = args.precision.startswith("w8")
     quant_evidence = [line[:500] for line in log_text.splitlines() if "quant" in line.lower() and "fp8" in line.lower()]
     if expects_fp8_weights:

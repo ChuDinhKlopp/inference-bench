@@ -55,6 +55,7 @@ def main() -> int:
     parser.add_argument("--responses", type=Path, required=True)
     parser.add_argument("--preflight", type=Path, required=True)
     parser.add_argument("--post-server", type=Path, required=True)
+    parser.add_argument("--thinking-budget-probe", type=Path, required=True)
     parser.add_argument("--server-command", type=Path, required=True)
     parser.add_argument("--client-command", type=Path, required=True)
     parser.add_argument("--bulk-run-dir", type=Path, required=True)
@@ -72,6 +73,19 @@ def main() -> int:
         raise ValueError(f"full performance run must contain 1000 requests; got {summary.get('request_count')}")
     if summary.get("failed_requests") != 0:
         raise ValueError(f"performance run has {summary.get('failed_requests')} failed requests")
+    if summary.get("enable_thinking") is not True:
+        raise ValueError("performance run must keep Qwen thinking enabled")
+    if summary.get("thinking_token_budget") != 1024:
+        raise ValueError("performance run must use thinking_token_budget=1024")
+    if summary.get("client_open_file_soft_limit", 0) < 65536:
+        raise ValueError("performance client open-file limit must be at least 65536")
+    thinking_probe = json.loads(args.thinking_budget_probe.read_text())
+    if (
+        thinking_probe.get("status") != "PASS"
+        or thinking_probe.get("measured_reasoning_tokens") != 1024
+        or thinking_probe.get("answer_nonempty") is not True
+    ):
+        raise ValueError("thinking-budget runtime probe did not pass")
 
     response_count = 0
     generated_tokens = 0
@@ -105,6 +119,8 @@ def main() -> int:
             "max_num_seqs": args.max_num_seqs,
             "max_num_batched_tokens": args.max_num_batched_tokens,
             "reasoning_effort": "low",
+            "enable_thinking": True,
+            "thinking_token_budget": 1024,
             "max_gen_toks": 10240,
             "arrival_mode": "azure",
             "log_growth": growth,
@@ -128,12 +144,16 @@ def main() -> int:
         "max_num_seqs": args.max_num_seqs,
         "max_num_batched_tokens": args.max_num_batched_tokens,
         "max_gen_toks": 10240,
+        "reasoning_effort": "low",
+        "enable_thinking": True,
+        "thinking_token_budget": 1024,
         "arrival_mode": "azure",
         "git_commit": git_commit(root),
         "started_epoch_s": args.started_epoch_s,
         "ended_epoch_s": args.ended_epoch_s,
         "preflight_status": preflight.get("status"),
         "post_server_status": post_server.get("status"),
+        "thinking_budget_probe": thinking_probe,
         "fp8_kv_scale_policy": post_server.get("fp8_kv_scale_policy"),
         "model": preflight.get("model"),
         "inputs": {

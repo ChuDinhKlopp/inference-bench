@@ -12,6 +12,8 @@ import asyncio
 import csv
 import dataclasses
 import json
+import os
+import resource
 import sys
 from pathlib import Path
 
@@ -26,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--server-log-file", type=Path)
     parser.add_argument("--server-metrics-poll-interval", type=float, default=0.2)
     parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
+    parser.add_argument("--thinking-token-budget", type=int, choices=(1024,), default=1024)
     parser.add_argument("--timeout", type=float, default=43200.0)
     parser.add_argument("--validate-only", action="store_true")
     return parser.parse_args()
@@ -42,7 +45,7 @@ def load_trace_offsets(path: Path) -> list[float]:
     return offsets
 
 
-def load_and_validate(path: Path, trace_csv: Path) -> list[dict]:
+def load_and_validate(path: Path, trace_csv: Path, thinking_token_budget: int) -> list[dict]:
     records = []
     with path.open(encoding="utf-8") as stream:
         for line_number, line in enumerate(stream, start=1):
@@ -63,10 +66,18 @@ def load_and_validate(path: Path, trace_csv: Path) -> list[dict]:
     if any(record["request"]["max_tokens"] != 10240 for record in records):
         raise ValueError("every PubMed performance request must use max_tokens=10240")
     if any(
-        record["request"].get("chat_template_kwargs", {}).get("enable_thinking") is not False
+        record["request"].get("chat_template_kwargs", {}).get("enable_thinking") is not True
         for record in records
     ):
-        raise ValueError("performance mode requires low reasoning (enable_thinking=false)")
+        raise ValueError("performance mode requires thinking enabled")
+    if any(
+        record["request"].get("thinking_token_budget") != thinking_token_budget
+        for record in records
+    ):
+        raise ValueError(
+            "every performance request must use "
+            f"thinking_token_budget={thinking_token_budget}"
+        )
     if any(record["request"]["prompt_tokens"] + 10240 > 65536 for record in records):
         raise ValueError("frozen workload contains a request exceeding max_model_len=65536")
     trace_offsets = load_trace_offsets(trace_csv)
@@ -79,6 +90,10 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
     repo_root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(repo_root))
     import bench  # Reuse the existing benchmark transport and metrics path.
+
+    # bench.py passes this per-request vLLM sampling parameter through to the
+    # OpenAI-compatible API when thinking is enabled.
+    os.environ["THINKING_TOKEN_BUDGET"] = str(args.thinking_token_budget)
 
     instances = []
     prompt_lengths = []
@@ -126,7 +141,7 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
         server_metrics_poll_interval_s=args.server_metrics_poll_interval,
         server_log_file=str(args.server_log_file) if args.server_log_file else None,
         iteration_metrics_artifact_prefix=str(metrics_prefix),
-        enable_thinking=False,
+        enable_thinking=True,
         profile=False,
     )
 
@@ -169,8 +184,11 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
         "trace_duration_s": offsets[-1],
         "max_gen_toks": 10240,
         "max_num_batched_tokens": args.max_num_batched_tokens,
-        "enable_thinking": False,
+        "reasoning_effort": "low",
+        "enable_thinking": True,
+        "thinking_token_budget": args.thinking_token_budget,
         "client_concurrency_limit": None,
+        "client_open_file_soft_limit": resource.getrlimit(resource.RLIMIT_NOFILE)[0],
         "metrics_summary": dataclasses.asdict(metrics_summary) if metrics_summary else None,
     }
     (args.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
@@ -178,12 +196,15 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
 
 def main() -> None:
     args = parse_args()
-    records = load_and_validate(args.workload, args.trace_csv)
+    records = load_and_validate(args.workload, args.trace_csv, args.thinking_token_budget)
     validation = {
         "request_count": len(records),
         "trace_duration_s": records[-1]["trace"]["arrival_offset_s"],
         "trace_csv": str(args.trace_csv),
         "max_gen_toks": 10240,
+        "reasoning_effort": "low",
+        "enable_thinking": True,
+        "thinking_token_budget": args.thinking_token_budget,
         "max_num_batched_tokens": args.max_num_batched_tokens,
         "min_prompt_tokens": min(record["request"]["prompt_tokens"] for record in records),
         "max_prompt_tokens": max(record["request"]["prompt_tokens"] for record in records),
