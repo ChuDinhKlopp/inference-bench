@@ -243,9 +243,12 @@ average prompt-plus-completion length of 6,140.02 tokens, corresponding to about
 248 average-size resident requests. Runtime evidence from the interrupted mns384
 baseline showed that its larger CUDA graphs reduced capacity to 1,183,232 KV
 tokens; KV utilization reached 99.9% with 200--210 requests running. The mns256
-ceiling therefore remains above observed KV-limited residency while avoiding
-the unnecessary mns384 graph reservation. The selected trace releases request
-256 at 37.378 seconds, so it supplies enough load to reach that ceiling.
+runtime restored capacity to 1,446,912 KV tokens, or about 236 requests at the
+observed average length, so its 256 ceiling remains above predicted KV-limited
+residency. The reported CUDA-graph memory estimate was not monotonic across
+these startups and is not used as the capacity proxy. The selected trace
+releases request 256 at 37.378 seconds, so it supplies enough load to reach that
+ceiling.
 
 Performance mode keeps Qwen thinking enabled. Because this Qwen checkpoint has
 only an on/off template control, the harness uses vLLM 0.27's sampler-level
@@ -274,6 +277,29 @@ scripts/performance/run_performance_matrix.sh
 
 The matrix stops on the first failed arm and preserves its status JSONL under
 `$RIVF26_BULK_ROOT/logs/<matrix-id>/`.
+
+### Offline PubMed ROUGE scoring
+
+Install the pinned scoring dependency into the required vLLM environment once:
+
+```bash
+/home/ducct/repos/vllm/.venv/bin/pip install \
+  -r "$RIVF26_ROOT/environment/requirements-scoring.txt"
+```
+
+Score every completed PubMed run registered in `e2e_metrics_record.csv`:
+
+```bash
+nice -n 10 "$RIVF26_VENV_BIN/python" \
+  "$RIVF26_ROOT/scripts/performance/score_registered_pubmed_runs.py"
+```
+
+The scorer strictly joins all 1,000 successful responses to the frozen test-set
+references by `request_id`. It uses `rouge-score==0.1.2` with Porter stemming
+and reports macro-mean per-request ROUGE-1, ROUGE-2, and sentence-agnostic
+ROUGE-L F1. Each run receives a compact `rouge_summary.json` and an ignored
+`rouge_per_request.jsonl` audit artifact. Prediction text is the API's
+`generated_text` answer field; reasoning tokens are not included in ROUGE.
 
 ## Workload output limits
 

@@ -51,4 +51,5 @@ __pycache__/
 !manifests/**/*.txt
 !results/**/manifest.json
 !results/**/summary.json
+!results/**/rouge_summary.json
 !results/**/plot_data.json
