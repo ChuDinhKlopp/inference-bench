@@ -1,194 +1,432 @@
-# RIVF26 operator handoff
+# RIVF26 portable experiment guide
 
-This is the practical runbook for an AI agent taking over the RIVF26 A100
-precision-characterization experiments. Read `/home/ducct/repos/inference-bench/AGENTS.md`
-in full first; it is authoritative. Then read `README.md` for design details.
-This guide records the current state and the shortest safe path to continue.
-
-## 1. Non-negotiable operating rules
-
-- Work only in `/home/ducct/repos/inference-bench/rivf26` for RIVF26 code and
-  compact artifacts.
-- `rivf26` is its own Git repository. Run Git commands from this directory and
-  never use `git add .`.
-- Use `/home/ducct/repos/vllm/.venv/bin` for every Python/vLLM command. The
-  harness enforces this through `scripts/common/venv.sh`.
-- Store high-volume logs and raw telemetry under
-  `/run/user/1009/ducct/rivf26`. Repository run directories contain symlinks
-  to those bulk paths.
-- Use the existing model weights directly. Never download or copy model
-  weights:
-
-  - BF16: `/dev/shm/Qwen3.6-35B-A3B`
-  - FP8: `/dev/shm/Qwen3.6-35B-A3B-FP8`
-
-- TP is always 4. Never start while any required GPU has another significant
-  workload. Never kill another user's process.
-- Every full run must pass Stage A preflight and Stage B post-server validation.
-- Keep `max-num-batched-tokens=16384`, `max-model-len=65536`, and the
-  `FLASHINFER` attention backend fixed across Part 1.
-- Keep HBM telemetry, Prometheus telemetry, resource guarding, per-request
-  results, plot conversion, and legacy e2e recording enabled. A run without a
-  required collector is invalid.
-- Preserve failed-run evidence. Never overwrite a run ID or silently delete
-  old results.
-- Do not start Part 2 profiling until Part 1 is stable and the owner asks for it.
-
-## 2. Current experiment state (2026-08-16 UTC)
-
-No RIVF26 benchmark or vLLM server is currently active.
-
-### Performance mode: complete
-
-The four PubMed/Azure performance arms at `max-num-seqs=256` completed with
-status PASS:
-
-| Precision | Run ID | Requests | Preemptions |
-|---|---|---:|---:|
-| `w16kv16` | `20260816_064441_performance_pubmed_w16kv16_mns256` | 1000/1000 | 319 |
-| `w8kv8` | `20260816_081708_performance_pubmed_w8kv8_mns256` | 1000/1000 | 0 |
-| `w8kv16` | `20260816_094633_performance_pubmed_w8kv16_mns256` | 1000/1000 | 0 |
-| `w16kv8` | `20260816_111414_performance_pubmed_w16kv8_mns256` | 1000/1000 | 0 |
-
-Matrix status:
+This is the bootstrap, validation, and operations guide for an AI agent moving
+the RIVF26 harness to another 4×A100 machine. It assumes the destination has:
 
 ```text
-/run/user/1009/ducct/rivf26/logs/
-  20260816_064441_performance_pubmed_mns256_matrix/status.jsonl
+~/repos/inference-bench/
+~/repos/vllm/.venv/
 ```
 
-The four rows are registered in `e2e_metrics_record.csv`. The one-second,
-four-precision stacked comparison is available at:
+but does not yet have `~/repos/inference-bench/rivf26/`.
 
-```text
-results/part1/performance/comparison_pubmed_mns256_precision_variants/
-  stacked_timeline.html
-  stacked_timeline.svg
-  stacked_timeline.png
-```
+The parent `AGENTS.md` remains the authoritative research and safety policy.
+Read it before changing or running the harness. This guide restates the
+experiment design so that the receiving agent can understand the study without
+depending on the source machine's run history.
 
-Do not rerun performance unless the owner explicitly requests it. Offline
-ROUGE scoring has not yet been generated for the MNS=256 runs; that is a safe
-next analysis action.
+## 1. What the experiment is
 
-### Accuracy mode: pilot complete, official MNS pending owner choice
+The research question is:
 
-The BF16 GPQA length pilot completed:
+> How does vLLM inference behavior change when model-weight and KV-cache
+> precision change, and which scheduler, KV-cache, latency, or A100 HBM effects
+> explain the performance difference?
 
-```text
-run_id: 20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24
-requests: 198/198 successful, one request per GPQA Diamond question
-accuracy: 145/198 = 0.7323
-```
+Part 1 is the priority. It records complete runtime time series, not only final
+throughput. Part 2 is a separate, later PyTorch Profiler study of roughly
+200–300 decode steps for quantization/dequantization kernel costs. Never enable
+full-run PyTorch profiling during Part 1.
 
-Important length results from its `summary.json`:
+### Fixed hardware and server configuration
 
-| Tokens | Average | P50 | P90 | P95 | P99 | Max |
-|---|---:|---:|---:|---:|---:|---:|
-| ISL | 251.91 | 218.50 | 376.50 | 460.00 | 788.39 | 2780 |
-| OSL | 17803.62 | 17278 | 32768 | 32768 | 32768 | 32768 |
-| ISL + OSL | 18055.53 | 17524 | 33026.30 | 33093.75 | 33300.66 | 33553 |
+| Item | Required value |
+|---|---|
+| GPUs | 4 × NVIDIA A100 PCIe 40 GB |
+| Tensor parallelism | 4 |
+| Model family | Qwen3.6-35B-A3B |
+| vLLM | 0.27.0 environment used by this harness |
+| Server context limit | 65,536 tokens |
+| `max-num-batched-tokens` | 16,384 for every Part 1 arm |
+| Attention backend | `FLASHINFER` for every Part 1 arm |
+| Server endpoint | `127.0.0.1:8000` by default |
 
-The high OSL percentiles show that many requests reached the 32,768-token cap.
-Do not reduce the cap or add a low-reasoning budget: official GPQA is high
-reasoning by design.
+`FLASHINFER` is pinned because vLLM's SM80 Triton attention path rejects FP8
+KV cache. Do not change the backend in one arm only. `max-num-batched-tokens`
+is also a scientific control and the scripts reject any value other than
+16,384.
 
-The pilot observed 1,648,128 logical BF16 KV-cache token slots. Its summary
-contains theoretical concurrency bounds for every precision. The conservative
-planning reference (`90% of capacity / P90 total length`) is:
+### Precision arms
 
-| Precision | Planning reference |
-|---|---:|
-| `w16kv16` | 44 sequences |
-| `w8kv16` | 61 sequences |
-| `w16kv8` | 77 sequences |
-| `w8kv8` | 118 sequences |
-
-These are capacity ratios, not measured scheduler optima. The owner requested
-one selected MNS instead of the old 24/48/96 sweep. **Do not choose it silently.**
-Present the pilot data to the owner and obtain the selected MNS. Then use that
-same value for all four official precision arms.
-
-The earlier run `20260816_134943_accuracy_gpqa_length_pilot_w16kv16_mns24`
-failed before request submission because argparse abbreviated `--dataset` as
-an adapter option. Commit `3e4b6ea` fixed this with `allow_abbrev=False` and a
-regression test. Do not resume or register the failed run.
-
-## 3. Precision mapping
-
-| Variant | Model directory | Weight runtime | KV dtype | vLLM quantization |
+| Arm | Checkpoint | Effective A100 weight path | KV-cache dtype | vLLM quantization |
 |---|---|---|---|---|
-| `w16kv16` | BF16 path | BF16 | `bfloat16` | none |
-| `w8kv16` | FP8 path | FP8 E4M3 weight-only Marlin | `bfloat16` | `--quantization fp8` |
-| `w8kv8` | FP8 path | FP8 E4M3 weight-only Marlin | `fp8` | `--quantization fp8` |
-| `w16kv8` | BF16 path | BF16 | `fp8` | none |
+| `w16kv16` | BF16 | BF16 | `bfloat16` | none |
+| `w8kv16` | FP8 | FP8 weight-only Marlin, BF16 activations | `bfloat16` | `fp8` |
+| `w8kv8` | FP8 | FP8 weight-only Marlin, BF16 activations | `float8_e4m3fn` | `fp8` |
+| `w16kv8` | BF16 | BF16 | `float8_e4m3fn` | none |
 
-KV8 uses vLLM's intended default KV scale 1.0. This was explicitly accepted by
-the owner. Do not enable runtime KV-scale calculation for normal Part 1 runs.
-Runtime logs and Stage B—not filenames alone—are the precision evidence.
+A100 has no native FP8 compute. The `w8` arms therefore use vLLM's FP8
+weight-only Marlin implementation rather than native FP8 tensor-core
+execution. Runtime server logs and Stage B validation are the evidence; names
+alone are not.
 
-The validated four-precision scheduler smoke gate is:
+For KV8, vLLM 0.27 disables runtime KV-scale calculation for this hybrid
+GDN/recurrent model and uses scale 1.0. The study owner accepted that intended
+vLLM policy. KV8 Stage B records the acceptance explicitly. Do not silently
+introduce `--calculate-kv-scales` or a different calibration policy.
 
-```text
-manifests/smoke_matrix_mbt16384_20260816.json
-```
+### Part 1 workloads
 
-Every integrated workload wrapper refuses to launch unless this gate is PASS
-for all four precisions at MBT=16384.
-
-## 4. Workload contract
-
-| Mode | Dataset | Requests | Arrival | Thinking | Max output |
+| Mode | Workload | Requests | Arrival policy | Reasoning | Output cap |
 |---|---|---:|---|---|---:|
-| Performance | PubMed test set attached to selected Azure trace | 1000 | Azure | enabled, budget 6144 | 10240 |
-| Accuracy pilot | GPQA Diamond | 198 × 1 | none | high/unbounded within cap | 32768 |
-| Official accuracy | GPQA Diamond | 198 × 5 = 990 | none | high/unbounded within cap | 32768 |
+| Performance | PubMed test articles bound to the selected Azure window | 1,000 | replay normalized Azure offsets | thinking enabled, budget 6,144 | 10,240 |
+| Accuracy pilot | GPQA Diamond | 198 × 1 | none | high/unbounded within cap | 32,768 |
+| Official accuracy | GPQA Diamond | 198 × 5 | none | high/unbounded within cap | 32,768 |
 
-Performance uses the frozen files:
+Performance uses `max-num-seqs=256`. The thinking budget forces the
+`</think>` boundary by token 6,144 and leaves at least 4,096 tokens for the
+answer. Turning thinking off is not the low-reasoning configuration.
+
+Official GPQA reports repeat-level Pass@1 and the mean over five independent
+samples per question, for 990 total requests. Sampling is temperature 1.0,
+top-p 0.95, top-k 20, and seed 42. `BENCH_ARRIVAL_RATE=none` means there is no
+artificial arrival trace.
+
+The original `AGENTS.md` proposed an accuracy sweep at MNS 24/48/96. The later
+experiment decision superseded that provisional sweep: first run one
+198-question BF16 length pilot, inspect ISL/OSL and KV-capacity ratios, then use
+one deliberately selected MNS for all four official precision arms. Do not
+silently choose the official value. Record the selection rationale.
+
+The performance run is evaluated against two borrowed comparison SLOs. These
+are not official Qwen requirements:
+
+| Scenario | P99 TTFT | TPOT |
+|---|---:|---:|
+| Interactive | ≤ 2.0 s | ≤ 15 ms |
+| Server | ≤ 3.0 s | ≤ 80 ms |
+
+Both SLO evaluations use the same measured performance run; they are not
+separate workloads.
+
+### Required Part 1 measurements
+
+Every arm must retain timestamped data for:
+
+- request arrivals and completions;
+- per-request TTFT and TPOT;
+- running and waiting requests;
+- cumulative/event preemptions;
+- KV-cache utilization and runtime KV-token capacity;
+- A100 HBM read, write, aggregate throughput, and normalized utilization;
+- resource-guard samples, throughput, latency, token counts, and failures.
+
+Prometheus scheduler/KV data defaults to 5 Hz. Nsight Systems GA100 GPU Metrics
+samples all four GPUs at 10 Hz. Compact plot data defaults to deterministic
+one-second bins while raw samples remain the source of truth.
+
+## 2. Harness architecture
+
+The package adapts the existing parent inference harness instead of replacing
+it:
 
 ```text
-traces/processed/azure_multimodal_bursty_1000.csv
-/run/user/1009/ducct/rivf26/datasets/processed/pubmed_azure_bursty_1000.jsonl
+precision wrapper
+  -> offline dataset/trace validation
+  -> Stage A machine preflight
+  -> precision-specific vLLM server, TP=4
+  -> Stage B runtime precision/HBM/monitor validation
+  -> resource guard + HBM collector
+  -> parent bench.py transport and vLLM metrics collection
+  -> workload-specific finalizer and scoring
+  -> parent record_e2e_metrics.py
+  -> analysis/build_plot_data.py
+  -> analysis/plot_stacked_timeline.py
 ```
 
-The trace is a reproducibly selected high-load, high-inter-arrival-CV window.
-The workload attaches 1,000 intact PubMed `document/test` prompts without
-changing the Azure arrival offsets.
+Important directories are:
 
-GPQA uses the canonical gated local CSV at revision
-`633f5ee89ab8ad4522a9f850766b73f62147ffdd`, split `train`, with SHA-256
-`41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305`.
-The wrapper validates revision, hash, schema, and exactly 198 rows offline.
+```text
+rivf26/
+  configs/                 scientific configuration
+  scripts/servers/         four vLLM precision launchers
+  scripts/accuracy/        GPQA pilot and official matrix
+  scripts/performance/     Azure/PubMed preparation, run, and ROUGE
+  scripts/monitoring/      HBM capture/parser and runtime guard
+  scripts/utilities/       preflight, Stage B, smoke gates
+  traces/processed/        selected 1,000-arrival Azure window
+  datasets/metadata/       frozen PubMed workload identity
+  analysis/                raw-to-plot conversion and rendering
+  manifests/               Stage A/B and small run records
+  results/                 compact artifacts and bulk-data symlinks
+```
 
-## 5. Start every session here
+The package requires these parent repository files:
+
+```text
+~/repos/inference-bench/bench.py
+~/repos/inference-bench/record_e2e_metrics.py
+```
+
+Accuracy and performance finalization intentionally call the unchanged parent
+recorder. Do not replace it with hand-written CSV manipulation.
+
+A transferred checkout may include compact summaries and
+`e2e_metrics_record.csv` rows from the reference host without their ignored raw
+data. Treat them as historical records, not proof that the destination has run
+those arms. New runs have unique IDs and host-specific Stage A/B manifests;
+archive or merge their bulk artifacts deliberately rather than deleting the
+reference records.
+
+## 3. Put `rivf26` on the destination
+
+`rivf26` is a standalone Git repository nested under `inference-bench`. Obtain
+the approved repository, bundle, or directory from the experiment owner. No
+remote URL is embedded in this checkout, so do not guess one.
+
+For a Git source:
 
 ```bash
-cd /home/ducct/repos/inference-bench/rivf26
+cd "$HOME/repos/inference-bench"
+git clone <approved-rivf26-repository-or-bundle> rivf26
+cd rivf26
+git checkout <approved-commit>
+```
+
+For a transferred directory, preserve its `.git/` directory and place it
+exactly at:
+
+```text
+$HOME/repos/inference-bench/rivf26
+```
+
+Then verify the dependency relationship:
+
+```bash
+cd "$HOME/repos/inference-bench/rivf26"
+test "$(git rev-parse --show-toplevel)" = "$PWD"
+test -f ../bench.py
+test -f ../record_e2e_metrics.py
+git status --short
+```
+
+Never run `git add .`: result directories can contain tens of gigabytes or
+symlinks to them. Use explicit file lists.
+
+## 4. Initialize the destination environment
+
+Use the vLLM checkout's environment for every command:
+
+```bash
+cd "$HOME/repos/inference-bench/rivf26"
 export RIVF26_ROOT="$PWD"
-export RIVF26_VENV_BIN=/home/ducct/repos/vllm/.venv/bin
-export RIVF26_BULK_ROOT=/run/user/1009/ducct/rivf26
+export RIVF26_VENV_BIN="$HOME/repos/vllm/.venv/bin"
 export PATH="$RIVF26_VENV_BIN:$PATH"
 ```
 
-Confirm repository and environment identity:
+Choose the bulk output filesystem explicitly. This example mirrors the source
+layout without hard-coding its UID or username:
 
 ```bash
-git rev-parse --show-toplevel
-git status --short
-which python
-which vllm
-python --version
-vllm --version
-python -c 'import torch, vllm; print(torch.__version__, torch.version.cuda); print(vllm.__version__)'
+export RIVF26_BULK_ROOT="/run/user/$(id -u)/$USER/rivf26"
+mkdir -p "$RIVF26_BULK_ROOT"/{datasets/processed,logs,results/part1}
 ```
 
-Expected vLLM version is 0.27.0. An earlier ABI mismatch was resolved by that
-upgrade. Do not switch environments or install into a different Python.
+`/run/user/...` is often volatile tmpfs: it disappears at reboot and consumes
+host RAM. It is acceptable only when it has the required capacity and results
+will be archived deliberately. A large local NVMe path is safer; the harness
+supports it through the same variable.
 
-## 6. Mandatory pre-run inspection
+Confirm the software identity:
 
-The integrated wrappers run machine-readable preflight checks, but the agent
-must inspect the machine before invoking a long run:
+```bash
+test -x "$RIVF26_VENV_BIN/python"
+test -x "$RIVF26_VENV_BIN/vllm"
+"$RIVF26_VENV_BIN/python" --version
+"$RIVF26_VENV_BIN/vllm" --version
+"$RIVF26_VENV_BIN/python" -c \
+  'import torch,vllm,transformers,flashinfer; print(torch.__version__, torch.version.cuda); print(vllm.__version__)'
+command -v nsys
+nsys status --environment
+```
+
+The validated reference environment is documented in
+`environment/vllm_0.27.0_20260815.md`. At minimum, vLLM must be 0.27.0 and its
+Python package and compiled extensions must come from the same installation.
+The preflight checks the MoE ABI that previously failed under a mixed install.
+
+Install offline scoring support in this same environment if absent:
+
+```bash
+"$RIVF26_VENV_BIN/pip" install \
+  -r "$RIVF26_ROOT/environment/requirements-scoring.txt"
+```
+
+`pandas` and `pyarrow` are needed only to regenerate the Azure selection or
+PubMed workload. They are not required when the frozen inputs are transferred.
+
+## 5. Place and verify model weights
+
+The harness never downloads or copies model weights. The expected defaults are:
+
+```text
+/dev/shm/Qwen3.6-35B-A3B
+/dev/shm/Qwen3.6-35B-A3B-FP8
+```
+
+If the destination uses other local directories, export both paths before any
+dry run:
+
+```bash
+export RIVF26_BF16_MODEL_PATH=/dev/shm/Qwen3.6-35B-A3B
+export RIVF26_FP8_MODEL_PATH=/dev/shm/Qwen3.6-35B-A3B-FP8
+```
+
+Verify config, tokenizer, and shard indexes locally:
+
+```bash
+for model_dir in "$RIVF26_BF16_MODEL_PATH" "$RIVF26_FP8_MODEL_PATH"; do
+  test -d "$model_dir"
+  test -f "$model_dir/config.json"
+  test -f "$model_dir/tokenizer_config.json"
+  find "$model_dir" -maxdepth 1 -type f \
+    \( -name '*.safetensors' -o -name '*.index.json' \) -printf '%f\n' | head
+  du -sh "$model_dir"
+done
+```
+
+Expected logical revisions are recorded in `configs/precision_configs.json`:
+
+```text
+BF16: 995ad96eacd98c81ed38be0c5b274b04031597b0
+FP8:  95a723d08a9490559dae23d0cff1d9466213d989
+```
+
+If the weights are missing, stop. Never invoke `hf download`,
+`snapshot_download`, `git lfs`, or a remote model ID as a fallback. Both model
+and tokenizer must resolve from the explicit local path.
+
+Before and after the first startup, record
+`du -sh ~/.cache/huggingface 2>/dev/null || true`; unexpected multi-GB growth
+invalidates the startup until explained.
+
+## 6. Prepare the two datasets
+
+### GPQA Diamond
+
+GPQA is gated and intentionally absent from Git. Obtain the canonical file
+through the authorized dataset process and set:
+
+```bash
+export RIVF26_GPQA_CSV=/path/to/gpqa_diamond.csv
+sha256sum "$RIVF26_GPQA_CSV"
+```
+
+The harness requires:
+
+```text
+repository: Idavidrein/gpqa
+configuration: gpqa_diamond
+split: train
+revision: 633f5ee89ab8ad4522a9f850766b73f62147ffdd
+rows: 198
+SHA-256: 41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305
+```
+
+The GPQA wrapper validates hash, schema, and row count before allocating GPUs.
+It does not download a replacement.
+
+### Frozen PubMed/Azure workload
+
+The selected Azure arrival CSV is version controlled:
+
+```text
+traces/processed/azure_multimodal_bursty_1000.csv
+SHA-256: 3b487d345f3ae02d5a4dcfc8d303a060322d6fe03763af638cda2695d11977d0
+```
+
+It is a 1,000-request contiguous window selected by:
+
+1. retaining the 10% shortest-duration candidate windows;
+2. maximizing population CV of the 999 inter-arrival times;
+3. breaking ties by shorter duration, then earlier source position.
+
+Its duration is 303.145 seconds, mean rate is about 3.299 requests/s, and
+inter-arrival CV is about 2.182. Arrival offsets are replayed without scaling.
+
+The 36 MB prompt-bound workload is intentionally outside normal Git history.
+The preferred path is to transfer this frozen file from approved experiment
+storage to:
+
+```text
+$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000.jsonl
+```
+
+Verify it before use:
+
+```bash
+export RIVF26_PUBMED_WORKLOAD="$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000.jsonl"
+test -f "$RIVF26_PUBMED_WORKLOAD"
+sha256sum "$RIVF26_PUBMED_WORKLOAD"
+wc -l "$RIVF26_PUBMED_WORKLOAD"
+```
+
+Expected identity:
+
+```text
+SHA-256: 6b842e6cd2771085c1dd7120c89153b2167b339f914f1922a5eb2784776cd751
+rows: 1,000
+dataset: ccdv/pubmed-summarization, document/test
+revision: 6b30a2cae59b11ed77cb19959bffccbbd18e1106
+```
+
+If transfer is impossible, the preparation script may explicitly download the
+pinned PubMed parquet—never model weights. Install `pandas` and `pyarrow`, run
+the preparation while online, verify the output hash above, then return to
+offline execution:
+
+```bash
+"$RIVF26_VENV_BIN/pip" install pandas pyarrow
+"$RIVF26_VENV_BIN/python" scripts/performance/prepare_pubmed_azure_workload.py \
+  --trace traces/processed/azure_multimodal_bursty_1000.csv \
+  --output-jsonl "$RIVF26_PUBMED_WORKLOAD" \
+  --output-metadata "$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000.metadata.json" \
+  --cache-dir "$RIVF26_BULK_ROOT/datasets/cache" \
+  --model-path "$RIVF26_BF16_MODEL_PATH" \
+  --max-gen-toks 10240 \
+  --thinking-token-budget 6144 \
+  --max-model-len 65536
+sha256sum "$RIVF26_PUBMED_WORKLOAD"
+```
+
+A hash mismatch means package, tokenizer, dataset, or selection drift. Do not
+run the matrix until it is explained.
+
+The original million-row Azure file is not needed to execute the frozen
+workload. It is only needed to reproduce the selection. Its expected SHA-256 is
+`eeaba4bae383eeb3724a4fc804ab49f160e918b6dbe356250111bc3ab50d4a95`.
+
+## 7. Validate the package without GPUs
+
+First run all unit and shell tests:
+
+```bash
+cd "$RIVF26_ROOT"
+"$RIVF26_VENV_BIN/python" -m unittest discover -s tests -p 'test_*.py' -v
+bash tests/test_workload_env.sh
+```
+
+Then inspect dry-run commands for every precision:
+
+```bash
+for precision in w16kv16 w8kv16 w8kv8 w16kv8; do
+  RIVF26_DRY_RUN=1 \
+    "scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_${precision}.sh"
+done
+
+for precision in w16kv16 w8kv16 w8kv8 w16kv8; do
+  RIVF26_DRY_RUN=1 RIVF26_MAX_NUM_SEQS=24 \
+    "scripts/accuracy/run_trace_azure_gpqa_Qwen3.6-35B-A3B_${precision}.sh"
+done
+```
+
+Each command must show the intended local model/tokenizer path, TP=4,
+MBT=16,384, context 65,536, `FLASHINFER`, precision mapping, and mode-specific
+output cap. Dry run does not prove runtime precision; the smoke matrix does.
+
+## 8. Record fresh host state and run preflight inspection
+
+Do this before every expensive run:
 
 ```bash
 df -h
@@ -196,284 +434,357 @@ df -h "$RIVF26_BULK_ROOT"
 df -i "$RIVF26_BULK_ROOT"
 du -sh "$RIVF26_BULK_ROOT"
 df -h /dev/shm
-du -sh /dev/shm/Qwen3.6-35B-A3B /dev/shm/Qwen3.6-35B-A3B-FP8
+du -sh "$RIVF26_BF16_MODEL_PATH" "$RIVF26_FP8_MODEL_PATH"
 free -h
+cat /proc/meminfo | head -n 30
 ps aux --sort=-%mem | head
 nvidia-smi
+nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw \
+  --format=csv
 nvidia-smi topo -m
 nvidia-smi pmon -c 1
 ss -ltnp | rg ':8000\b' || true
-pgrep -af 'vllm|EngineCore|run_(gpqa|pubmed)|nsys profile' || true
+pgrep -af 'vllm|EngineCore|bench.py|run_(gpqa|pubmed)|nsys profile' || true
 ```
 
-Do not launch unless all four A100s are idle and have approximately their full
-40 GiB HBM free. Treat output filesystem, host RAM, `/dev/shm`, and GPU HBM as
-four independent constraints. The default long-run preflight requires 80 GiB
-estimated output plus a 50 GiB reserve. Do not lower this merely to force a
-launch without evidence.
+Treat result-filesystem space, host RAM/swap, `/dev/shm`, and GPU HBM as four
+separate resources. Never kill another user's process. TP=4 requires all four
+GPUs to be available.
 
-## 7. Dry runs and tests
+Long-run defaults estimate 80 GiB output and require another 50 GiB safety
+reserve. Do not reduce these thresholds merely to force a run. If bulk output
+uses tmpfs, its growth also consumes host RAM.
 
-Run the test suite after changing harness code:
+## 9. Generate a fresh four-precision smoke gate
+
+The repository may contain a smoke manifest from a reference machine. It is
+historical evidence only and must not authorize a run on a different host.
+
+Run the integrated smoke matrix on the destination:
 
 ```bash
-"$RIVF26_VENV_BIN/python" -m unittest discover -s tests -p 'test_*.py' -v
-bash tests/test_workload_env.sh
+cd "$RIVF26_ROOT"
+matrix_id="$(date -u +%Y%m%d_%H%M%S)_smoke_matrix_mbt16384"
+RIVF26_SMOKE_MATRIX_ID="$matrix_id" scripts/utilities/run_smoke_matrix.sh \
+  | tee "$RIVF26_BULK_ROOT/logs/$matrix_id.log"
+export RIVF26_SMOKE_MATRIX="$RIVF26_ROOT/manifests/$matrix_id.json"
 ```
 
-Inspect one precision command without allocating GPUs:
+This sequentially runs `w16kv16`, `w8kv16`, `w8kv8`, and `w16kv8`. Each smoke
+owns Stage A, server startup, Stage B, four requests, TTFT/TPOT, Prometheus,
+10 Hz four-GPU HBM telemetry, plot conversion, log-growth measurement, and
+shutdown. The matrix gate is PASS only if all four summaries are complete.
+
+Verify the gate:
 
 ```bash
-RIVF26_DRY_RUN=1 \
-scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w16kv16.sh
-
-RIVF26_DRY_RUN=1 \
-RIVF26_MAX_NUM_SEQS=24 \
-scripts/accuracy/run_trace_azure_gpqa_Qwen3.6-35B-A3B_w16kv16.sh
+"$RIVF26_VENV_BIN/python" - "$RIVF26_SMOKE_MATRIX" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(json.dumps({"host": d["host"], "status": d["status"], "runs": d["runs"]}, indent=2))
+assert d["status"] == "PASS"
+assert set(d["runs"]) == {"w16kv16", "w8kv16", "w8kv8", "w16kv8"}
+PY
 ```
 
-Dry-run output must show the local `/dev/shm` model path, TP=4, MBT=16384,
-the intended weight/KV mapping, and the correct mode-specific token cap.
+Keep `RIVF26_SMOKE_MATRIX` exported for all long-run wrappers. If any smoke
+fails, preserve its evidence, fix the cause, and rerun the whole matrix with a
+new ID. Do not edit a FAIL gate into PASS.
 
-If a new machine needs renewed four-precision smoke evidence:
+Smoke KV capacities may differ from the reference machine because CUDA graphs,
+software builds, and free HBM affect allocation. Compare the effective runtime
+precision and completeness, not exact token-capacity equality.
+
+## 10. Run performance mode
+
+Performance is exactly four runs:
+
+| Order | Precision | MNS | Requests |
+|---:|---|---:|---:|
+| 1 | `w16kv16` | 256 | 1,000 |
+| 2 | `w8kv8` | 256 | 1,000 |
+| 3 | `w8kv16` | 256 | 1,000 |
+| 4 | `w16kv8` | 256 | 1,000 |
+
+Preview the matrix inputs and commands:
 
 ```bash
-for precision in w16kv16 w8kv16 w8kv8 w16kv8; do
-  scripts/utilities/run_smoke.sh "$precision" || break
+test -f "$RIVF26_SMOKE_MATRIX"
+test -f "$RIVF26_PUBMED_WORKLOAD"
+for precision in w16kv16 w8kv8 w8kv16 w16kv8; do
+  RIVF26_DRY_RUN=1 \
+    "scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_${precision}.sh"
 done
 ```
 
-Do not replace the existing smoke gate until all four new smokes and their
-plot-data path pass.
+Do not pass `RIVF26_DRY_RUN=1` to the performance matrix driver itself: its
+children would dry-run, but the driver would still write a misleading PASS
+matrix-status file.
 
-## 8. Launch commands
-
-### Performance
-
-Performance is already complete on this machine. For a deliberate rerun:
+Perform the manual resource inspection again, then launch:
 
 ```bash
 scripts/performance/run_performance_matrix.sh
 ```
 
-The driver runs `w16kv16`, `w8kv8`, `w8kv16`, `w16kv8`, stops at the first
-failure, and stores matrix events under
-`$RIVF26_BULK_ROOT/logs/<matrix-id>/status.jsonl`.
+The driver is sequential and fail-fast. Each arm independently validates the
+frozen 1,000-row workload and trace, runs both safety stages, probes the 6,144
+thinking budget for a non-empty answer, raises the open-file soft limit to
+65,536, replays Azure offsets, finalizes telemetry, appends through the parent
+recorder, and shuts down its server.
 
-### GPQA length pilot
+Do not run arms concurrently. Do not alter arrival offsets or add a client
+concurrency semaphore; `max-num-seqs=256` controls vLLM running residency while
+the trace supplies arrivals.
 
-The pilot is already complete. To reproduce it deliberately:
-
-```bash
-scripts/accuracy/run_gpqa_length_pilot_w16kv16.sh
-```
-
-It is fixed to one repeat and defaults to MNS=24. It fails finalization unless
-all 198 requests succeed.
-
-### Official GPQA matrix after owner selects MNS
-
-First update the pilot row in `configs/part1_matrix.csv` to four official rows,
-one per precision, with five repeats, 990 total requests, and the selected MNS.
-Keep `configs/workloads.json` at five accuracy repeats.
-
-Preview the exact four commands:
-
-```bash
-RIVF26_ACCURACY_MAX_NUM_SEQS=<owner-selected-mns> \
-RIVF26_DRY_RUN=1 \
-scripts/accuracy/run_accuracy_matrix.sh
-```
-
-Then, only after a fresh resource inspection:
-
-```bash
-RIVF26_ACCURACY_MAX_NUM_SEQS=<owner-selected-mns> \
-scripts/accuracy/run_accuracy_matrix.sh
-```
-
-The official driver runs all four precisions at the same MNS and stops on the
-first failure. Each arm sends 990 requests with `BENCH_ARRIVAL_RATE=none`.
-
-## 9. Monitoring a live run
-
-Discover recent run IDs:
-
-```bash
-find "$RIVF26_BULK_ROOT/results/part1" -mindepth 2 -maxdepth 2 -type d \
-  -printf '%T@ %p\n' | sort -n | tail
-```
-
-Monitor a GPQA pilot (`total=198`) or official accuracy run (`total=990`):
-
-```bash
-mode=accuracy
-run_id=<run-id>
-total=198
-log="$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/client.log"
-watch -n 5 "n=\$(tr '\r' '\n' < '$log' 2>/dev/null | rg -o -- '[0-9]+/$total \\[' | tail -n1 | cut -d' ' -f1); echo \"\${n:-0/$total}\""
-```
-
-The trailing `[` restriction selects tqdm progress records and avoids mistaking
-an accuracy score such as `145/198` for request progress. For performance, set
-`mode=performance` and `total=1000`.
-
-Inspect live server and collector state:
-
-```bash
-tail -f "$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/server.log"
-tail -f "$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/resource_guard.log"
-nvidia-smi
-curl -fsS http://127.0.0.1:8000/metrics | rg \
-  'num_requests_(running|waiting)|kv_cache_usage|num_preemptions'
-```
-
-Matrix progress is in its status JSONL, not the client log:
-
-```bash
-tail -f "$RIVF26_BULK_ROOT/logs/<matrix-id>/status.jsonl"
-```
-
-## 10. Artifact and data flow
-
-For run ID `<id>`:
-
-```text
-Repository compact artifacts:
-  results/part1/<mode>/<id>/
-    manifest.json
-    summary.json
-    plot_data.json
-    client_command.txt
-    logs -> /run/user/1009/ducct/rivf26/.../logs
-    raw  -> /run/user/1009/ducct/rivf26/.../raw
-
-Preflight and Stage B evidence:
-  manifests/<id>/preflight.json
-  manifests/<id>/post_server.json
-  manifests/<id>/snapshots/
-
-High-volume source of truth:
-  /run/user/1009/ducct/rivf26/results/part1/<mode>/<id>/logs/
-  /run/user/1009/ducct/rivf26/results/part1/<mode>/<id>/raw/
-```
-
-Accuracy raw files use `bench_results.*` plus `generations.json`. Performance
-raw files use `responses.jsonl`, `per_request.csv`, and `iteration_metrics.*`.
-Both modes include `hbm.nsys-rep`, parsed `hbm.csv`, resource-guard samples,
-server logs, and client logs.
-
-The deterministic analysis path is:
-
-```text
-raw per-request + Prometheus + HBM telemetry
-  -> analysis/build_plot_data.py
-  -> compact plot_data.json (default 1-second bins)
-  -> analysis/plot_stacked_timeline.py
-  -> SVG / HTML / PNG
-```
-
-Raw sampling is 5 Hz for Prometheus scheduler/KV metrics and 10 Hz for A100 HBM
-metrics. One-second plot bins retain approximately five and ten raw samples,
-respectively. Override plot bin width with `RIVF26_PLOT_BIN_SECONDS` without
-changing raw collection.
-
-Every successful integrated run invokes the unchanged parent
-`/home/ducct/repos/inference-bench/record_e2e_metrics.py` and appends to
-`e2e_metrics_record.csv`. Never hand-edit a missing row; repair/finalize using
-the recorder path.
-
-## 11. Analysis commands
-
-Score every registered PubMed run that lacks ROUGE output:
+After all four runs, score PubMed offline:
 
 ```bash
 nice -n 10 "$RIVF26_VENV_BIN/python" \
   scripts/performance/score_registered_pubmed_runs.py
 ```
 
-The scorer uses the frozen PubMed references and reports macro ROUGE-1,
-ROUGE-2, and sentence-agnostic ROUGE-L F1. It excludes thinking text and joins
-strictly by request ID.
+ROUGE uses the answer field only, excluding thinking text, and reports macro
+ROUGE-1, ROUGE-2, and sentence-agnostic ROUGE-L F1.
 
-Render a single run:
+## 11. Run the GPQA pilot and accuracy matrix
+
+First validate the canonical GPQA file and run one BF16 198-request length
+pilot:
 
 ```bash
-run_dir=results/part1/accuracy/<run-id>
+test -f "$RIVF26_GPQA_CSV"
+scripts/accuracy/run_gpqa_length_pilot_w16kv16.sh
+```
+
+Inspect the pilot's compact summary:
+
+```bash
+pilot_dir=$(find results/part1/accuracy -maxdepth 1 -type d \
+  -name '*accuracy_gpqa_length_pilot_w16kv16_mns24' | sort | tail -n1)
+"$RIVF26_VENV_BIN/python" - "$pilot_dir/summary.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print("requests", d["total_requests"], "mean_pass_at_1", d["mean_pass_at_1"])
+print("accuracy", json.dumps(d["bench_evaluation_metrics"], indent=2))
+print("length_analysis", json.dumps(d["length_analysis"], indent=2))
+PY
+```
+
+Use ISL+OSL percentiles and the destination's observed KV capacity to select
+one official `max-num-seqs`. A capacity quotient is a planning bound, not a
+measured scheduler optimum. Record the chosen value and rationale in a compact
+manifest or experiment note.
+
+Replace the length-pilot row in `configs/part1_matrix.csv` with four official
+accuracy rows using the selected MNS, five repeats, and 990 total requests.
+This keeps the declared experiment matrix consistent with what the driver will
+execute.
+
+Preview the four official commands at that one MNS:
+
+```bash
+export RIVF26_ACCURACY_MAX_NUM_SEQS=<selected-value>
+RIVF26_DRY_RUN=1 scripts/accuracy/run_accuracy_matrix.sh
+```
+
+Confirm the preview says four precisions, five repeats, 990 requests per arm,
+`BENCH_ARRIVAL_RATE=none`, high reasoning, and 32,768 maximum output tokens.
+After another full resource inspection, run:
+
+```bash
+scripts/accuracy/run_accuracy_matrix.sh
+```
+
+The matrix order is `w16kv16`, `w8kv8`, `w8kv16`, `w16kv8` to limit monotonic
+precision/thermal bias. It is sequential and fail-fast.
+
+## 12. Monitor a live run
+
+Matrix status is stored under:
+
+```text
+$RIVF26_BULK_ROOT/logs/<matrix-id>/status.jsonl
+```
+
+Find recent runs:
+
+```bash
+find "$RIVF26_BULK_ROOT/results/part1" -mindepth 2 -maxdepth 2 -type d \
+  -printf '%T@ %p\n' | sort -n | tail
+```
+
+Monitor tqdm request progress without confusing a GPQA score such as `145/198`
+for client progress:
+
+```bash
+mode=accuracy                 # or performance
+run_id=<run-id>
+total=198                     # 990 official GPQA; 1000 performance
+log="$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/client.log"
+watch -n 5 "n=\$(tr '\r' '\n' < '$log' 2>/dev/null | rg -o -- '[0-9]+/$total \\[' | tail -n1 | cut -d' ' -f1); echo \"\${n:-0/$total}\""
+```
+
+Inspect server and resource health:
+
+```bash
+tail -f "$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/server.log"
+tail -f "$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/resource_guard.log"
+curl -fsS http://127.0.0.1:8000/metrics | rg \
+  'num_requests_(running|waiting)|kv_cache_usage|num_preemptions'
+nvidia-smi
+```
+
+A `0/N` client log is not proof that a process is running. Also inspect
+`pgrep`, `failure.json`, and the final server-log lines.
+
+## 13. Artifacts and plot pipeline
+
+For each run ID, compact files live in Git-visible paths while large data lives
+under the configured bulk root:
+
+```text
+$RIVF26_ROOT/results/part1/<mode>/<run-id>/
+  manifest.json
+  summary.json
+  plot_data.json
+  client_command.txt
+  logs -> $RIVF26_BULK_ROOT/.../logs
+  raw  -> $RIVF26_BULK_ROOT/.../raw
+
+$RIVF26_ROOT/manifests/<run-id>/
+  preflight.json
+  preflight.txt
+  post_server.json
+  snapshots/
+```
+
+Raw data includes server/client logs, per-request output, Prometheus samples,
+iteration metrics, resource-guard samples, `hbm.nsys-rep`, and parsed
+`hbm.csv`. The deterministic conversion is:
+
+```text
+raw request + Prometheus + HBM data
+  -> analysis/build_plot_data.py
+  -> compact plot_data.json
+  -> analysis/plot_stacked_timeline.py
+  -> HTML/SVG/PNG
+```
+
+Render one run:
+
+```bash
+run_dir="$RIVF26_ROOT/results/part1/performance/<run-id>"
 "$RIVF26_VENV_BIN/python" analysis/plot_stacked_timeline.py \
   "$run_dir/plot_data.json" \
-  --output-svg "$run_dir/stacked_timeline.svg" \
   --output-html "$run_dir/stacked_timeline.html" \
+  --output-svg "$run_dir/stacked_timeline.svg" \
   --output-png "$run_dir/stacked_timeline.png"
 ```
 
-Render a four-precision comparison by passing one plot-data file per variant:
+Render all four precisions as lines on the same panels and shared x-axis:
 
 ```bash
 "$RIVF26_VENV_BIN/python" analysis/plot_stacked_timeline.py \
-  results/part1/performance/20260816_064441_performance_pubmed_w16kv16_mns256/plot_data.json \
-  results/part1/performance/20260816_094633_performance_pubmed_w8kv16_mns256/plot_data.json \
-  results/part1/performance/20260816_111414_performance_pubmed_w16kv8_mns256/plot_data.json \
-  results/part1/performance/20260816_081708_performance_pubmed_w8kv8_mns256/plot_data.json \
+  results/part1/performance/*_w16kv16_mns256/plot_data.json \
+  results/part1/performance/*_w8kv16_mns256/plot_data.json \
+  results/part1/performance/*_w16kv8_mns256/plot_data.json \
+  results/part1/performance/*_w8kv8_mns256/plot_data.json \
+  --output-html results/part1/performance/comparison_mns256.html \
   --output-svg results/part1/performance/comparison_mns256.svg \
   --output-png results/part1/performance/comparison_mns256.png
 ```
 
-Comparison colors are stable: blue `w16kv16`, orange `w8kv16`, green
-`w16kv8`, purple `w8kv8`. HBM, KV, running, waiting, and cumulative-preemption
-panels share elapsed inference time on the x-axis.
+The stacked panels include HBM bandwidth utilization, KV-cache utilization,
+running requests, waiting requests, and cumulative preemptions. TTFT/TPOT are
+retained in plot data and per-request artifacts.
 
-## 12. Failure handling
+## 14. Definition of a valid completed run
 
-The wrappers trap exit, stop the resource guard and server process group, and
-write `failure.json`. On failure:
+Do not call a run complete merely because the client exited zero. Verify:
 
-1. Confirm all vLLM/worker/Nsight processes from that run terminated.
-2. Preserve its run directory, bulk logs, preflight, and Stage B evidence.
-3. Read `client.log`, the final 100 lines of `server.log`, `failure.json`, and
-   `post_server.json` before changing code.
-4. Fix and test the root cause.
-5. Commit the fix.
-6. Rerun with a new timestamped run ID; never reuse the failed ID.
+- Stage A `preflight.json` is PASS;
+- Stage B `post_server.json` is PASS and `long_run_eligible` is true;
+- all expected requests succeeded;
+- runtime logs prove intended weights, KV dtype, TP=4, FLASHINFER, and MBT;
+- HBM report parsed successfully for all four GPUs;
+- Prometheus includes running, waiting, preemption, and KV metrics;
+- per-request TTFT/TPOT and token lengths exist;
+- `plot_data.json` contains non-empty required series;
+- resource guard remained alive and did not cross a threshold;
+- the run was appended by `record_e2e_metrics.py` to
+  `rivf26/e2e_metrics_record.csv`;
+- output size and post-run free capacity are recorded;
+- workload-specific scoring is present or explicitly queued offline.
 
-Expected non-fatal messages include Nsight's warning that CPU context-switch
-profiling is disabled; Part 1 intentionally records GA100 GPU metrics without
-CPU or CUDA kernel tracing. Transformer warnings about undocumented Qwen video
-processor frame fields have also appeared during startup and did not block
-text inference.
+If preemption is naturally zero, that is a result, not a schema failure.
 
-Do not infer that a progress log showing `0/N` means the run is healthy. Check
-the process list and `failure.json`: a client can fail before sending request 1.
+## 15. Failure and recovery
 
-## 13. Git discipline
+Wrappers trap exit, stop monitors and the vLLM process group, and write
+`failure.json`. When an arm fails:
 
-Before committing:
+1. verify that its vLLM workers and Nsight process terminated;
+2. preserve its result directory, raw logs, Stage A, and Stage B evidence;
+3. inspect `failure.json`, `client.log`, `resource_guard.log`, and the final
+   server-log lines;
+4. fix and test the cause;
+5. rerun with a new timestamped run ID;
+6. never overwrite or relabel the failed run.
+
+Do not automatically delete earlier runs. Do not let a benchmark continue if
+required telemetry or the resource guard dies. Do not lower safety thresholds
+without measured evidence and an explicit experimental decision.
+
+## 16. Reproducibility and Git discipline
+
+Before each matrix, capture at least:
 
 ```bash
+nvidia-smi > "environment/nvidia-smi_$(hostname)_$(date -u +%Y%m%d).txt"
+nvidia-smi topo -m > "environment/topology_$(hostname)_$(date -u +%Y%m%d).txt"
+"$RIVF26_VENV_BIN/python" -m pip freeze \
+  > "environment/pip-freeze_$(hostname)_$(date -u +%Y%m%d).txt"
+git rev-parse HEAD
 git status --short
+```
+
+Review snapshots before versioning them because they may contain machine paths
+or unrelated packages. Commit only small reproducibility artifacts with an
+explicit list:
+
+```bash
 git diff --check -- <changed-files>
 git diff -- <changed-files>
-git add <explicit-file-list>
+git add -- <explicit-file-list>
 git diff --cached --check
 git diff --cached
 git commit -m 'rivf26: <logical milestone>'
 ```
 
-Do not stage `e2e_metrics_record.csv` accidentally while a run is finalizing,
-and do not stage raw logs, Nsight reports, profiler data, response JSONL, model
-weights, caches, or editor swap files. Generated compact manifests, summaries,
-and plot data may be versioned deliberately after review.
+Never commit model weights, response JSONL, raw logs, Nsight reports, profiler
+traces, dataset caches, or bulk telemetry. Never hand-edit aggregate results to
+make a run appear complete.
 
-## 14. Immediate next actions
+## 17. Fresh-host execution checklist
 
-1. Report the completed GPQA pilot length table and concurrency bounds to the
-   owner.
-2. Obtain one explicit official accuracy `max-num-seqs` value. Do not assume it.
-3. Update `configs/part1_matrix.csv` to four official accuracy rows at that MNS.
-4. Dry-run `run_accuracy_matrix.sh` and verify four precisions × 990 requests.
-5. Recheck disk, RAM, `/dev/shm`, all four GPUs, port 8000, and stale processes.
-6. Launch the official four-arm accuracy matrix only after those checks pass.
-7. Independently run offline ROUGE scoring for the completed MNS=256 PubMed
-   arms; this does not require GPUs.
-8. After all four official accuracy arms complete, generate one overlaid
-   four-precision stacked timeline rather than separate figures.
+An agent may launch a long matrix only when every item is true:
+
+- [ ] `rivf26` is at `~/repos/inference-bench/rivf26` with its Git history.
+- [ ] Parent `bench.py` and `record_e2e_metrics.py` exist.
+- [ ] `$HOME/repos/vllm/.venv/bin/vllm` reports the validated 0.27.0 install.
+- [ ] Nsight Systems supports `--gpu-metrics-set=ga100`.
+- [ ] Both exact local model directories and tokenizers are present.
+- [ ] No model or tokenizer download occurred.
+- [ ] GPQA hash/row count and PubMed workload hash/row count pass.
+- [ ] Unit tests and all dry runs pass.
+- [ ] Filesystem, host RAM, `/dev/shm`, and every GPU pass separately.
+- [ ] No stale server, benchmark, Nsight, or port-8000 listener exists.
+- [ ] A fresh host-local four-precision smoke matrix is PASS.
+- [ ] `RIVF26_SMOKE_MATRIX` points to that new gate.
+- [ ] HBM, TTFT/TPOT, scheduler, KV, and plot conversion passed in smoke.
+- [ ] Smoke log-growth evidence supports the configured storage reserve.
+- [ ] The exact matrix command and current Git commit are recorded.
+
+Only then run performance or official accuracy. Part 2 remains separate until
+Part 1 is complete and the experiment owner requests it.
