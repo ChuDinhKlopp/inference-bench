@@ -35,6 +35,7 @@ run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_accuracy_gpqa_${precision}_mns
 revision=633f5ee89ab8ad4522a9f850766b73f62147ffdd
 gpqa_sha256=41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305
 gpqa_csv=${RIVF26_GPQA_CSV:-$HOME/.cache/huggingface/hub/datasets--Idavidrein--gpqa/snapshots/$revision/gpqa_diamond.csv}
+smoke_gate=${RIVF26_SMOKE_MATRIX:-$rivf26_root/manifests/smoke_matrix_mbt16384_20260816.json}
 case "$precision" in
   w8kv16|w8kv8) local_tokenizer=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8} ;;
   *) local_tokenizer=${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B} ;;
@@ -150,6 +151,16 @@ if [[ -e "$run_dir" || -e "$bulk_run_dir" || -e "$manifest_dir" ]]; then
 fi
 if [[ ! -x "$server_launcher" ]]; then
   echo "missing server launcher: $server_launcher" >&2
+  exit 2
+fi
+if [[ ! -f "$smoke_gate" ]]; then
+  echo "missing four-precision scheduler-budget smoke gate: $smoke_gate" >&2
+  exit 2
+fi
+if ! "$RIVF26_VENV_BIN/python" -c \
+  'import json,sys; d=json.load(open(sys.argv[1])); required={"w16kv16","w8kv16","w8kv8","w16kv8"}; runs=d.get("runs",{}); sys.exit(0 if d.get("status")=="PASS" and d.get("max_num_batched_tokens")==16384 and set(runs)==required and all(runs[p].get("status")=="PASS" for p in required) else 2)' \
+  "$smoke_gate"; then
+  echo "four-precision scheduler-budget smoke gate is not valid: $smoke_gate" >&2
   exit 2
 fi
 

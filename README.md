@@ -196,6 +196,25 @@ reports Pass@1 for each repeat and their mean. After final validation, the
 unchanged parent `record_e2e_metrics.py` also appends the run to
 `rivf26/e2e_metrics_record.csv` using the original `bench.py` result JSON.
 
+Inspect all 12 exact matrix commands without allocating a GPU:
+
+```bash
+RIVF26_DRY_RUN=1 scripts/accuracy/run_accuracy_matrix.sh
+```
+
+After the GPUs are idle and a fresh resource preflight can pass, launch the
+fail-fast matrix with:
+
+```bash
+scripts/accuracy/run_accuracy_matrix.sh
+```
+
+The driver interleaves precision order across `max-num-seqs=24,48,96` and logs
+each start/PASS/FAIL event to
+`$RIVF26_BULK_ROOT/logs/<matrix-id>/status.jsonl`. Each individual wrapper
+enforces the version-controlled four-precision `max-num-batched-tokens=16384`
+smoke gate before starting vLLM.
+
 ## PubMed performance trace
 
 `scripts/performance/select_azure_window.py` evaluates every contiguous
