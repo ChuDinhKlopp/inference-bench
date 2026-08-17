@@ -1,47 +1,73 @@
-# Generated experiment outputs (keep directory sentinels and small manifests).
-results/part1/**/raw/
-results/part1/**/logs/
-results/part2/**/raw/
-# The same paths are symlinks on this machine; directory-only patterns do not
-# match symlinks, so keep explicit non-directory forms too.
+# RIVF26 Git safety policy
+#
+# Keep source code, configs, tests, small manifests, summaries, and plot-ready
+# data reviewable. Never allow a blanket `git add .` to capture raw benchmark
+# output, model weights, caches, or profiler databases.
+
+# High-volume run data (usually symlinks to RIVF26_BULK_ROOT).
+results/**/raw/
 results/**/raw
+results/**/logs/
 results/**/logs
-logs/**
-profiler/**
+results/part2/**/raw/
+logs/
+profiler/
 manifests/**/snapshots/
 
-# Profiler/telemetry databases and traces.
+# Runtime logs, telemetry databases, profiler reports, and traces.
+*.log
 *.nsys-rep
 *.qdstrm
 *.sqlite
 *.sqlite-journal
+*.db
 *.pt.trace.json
 *.pt.trace.json.gz
 *.kineto.json
+*.jsonl
+*.csv.gz
+*.parquet
 
-# Potentially large runtime artifacts.
+# Model weights, checkpoints, core dumps, and other large binaries.
 *.safetensors
 *.bin
 *.pt
 *.pth
+*.onnx
+*.gguf
 *.core
 core
 core.*
-*.log
-*.jsonl
-*.csv.gz
-*.parquet
 
 # Dataset/model caches and temporary files.
 .cache/
 cache/
 tmp/
 *.tmp
+*.temp
 *.part
+*.swp
+*.swo
+*~
 __pycache__/
 *.py[cod]
 
-# Explicitly allow lightweight, reproducibility-critical fixtures/configs.
+# Generated plot images/reports are reproducible from plot_data.json.
+results/**/stacked_timeline.html
+results/**/stacked_timeline.svg
+results/**/stacked_timeline.png
+results/**/comparison_*.html
+results/**/comparison_*.svg
+results/**/comparison_*.png
+
+# Dataset files must not be copied into the repository.
+datasets/processed/
+datasets/cache/
+datasets/**/*.csv
+datasets/**/*.jsonl
+datasets/**/*.parquet
+
+# Preserve small, reproducibility-critical tracked artifacts.
 !configs/*.csv
 !tests/fixtures/*.csv
 !tests/fixtures/*.jsonl
@@ -53,3 +79,5 @@ __pycache__/
 !results/**/summary.json
 !results/**/rouge_summary.json
 !results/**/plot_data.json
+!results/**/hbm_metadata.json
+!e2e_metrics_record.csv
