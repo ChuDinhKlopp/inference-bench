@@ -90,6 +90,15 @@ def area(values: list[float], y_top: float, y_upper: float) -> str:
     )
 
 
+def kv_tokens(run: dict) -> tuple[list[float], float]:
+    """Convert stored KV utilization fractions to used KV-cache tokens."""
+    capacity = run.get("cap")
+    if capacity is None or float(capacity) <= 0:
+        raise ValueError("plot data is missing a positive KV-cache capacity (cap)")
+    capacity = float(capacity)
+    return [float(value) * capacity for value in run["kv"]], capacity
+
+
 def text_node(x: float, y: float, value: str, **attrs: object) -> str:
     rendered = " ".join(f'{key.replace("_", "-")}="{item}"' for key, item in attrs.items())
     return f'<text x="{x}" y="{y}" {rendered}>{html.escape(value)}</text>'
@@ -205,7 +214,7 @@ def render(data: dict, run_id: str | None) -> str:
         raise ValueError(f"required aligned series are missing or unequal: {lengths}")
 
     hbm = [float(value) for value in run["hbm"]]
-    kv = [float(value) * 100 for value in run["kv"]]
+    kv, kv_upper = kv_tokens(run)
     running = [float(value) for value in run["run"]]
     waiting = [float(value) for value in run["wait"]]
     preemptions = [float(value) for value in run["pre"]]
@@ -234,10 +243,10 @@ def render(data: dict, run_id: str | None) -> str:
     svg.append(f'<path d="{path(hbm, y_positions[0], hbm_upper)}" fill="none" stroke="{COLORS["hbm"]}" stroke-width="2"/>')
     svg.append(text_node(LEFT + PLOT_WIDTH - 8, y_positions[0] + 23, "normalized aggregate HBM bandwidth", text_anchor="end", fill=COLORS["hbm"], font_size="14", font_weight="600"))
 
-    svg.extend(panel_axes(y_positions[1], 100, "KV-cache utilization (%)", xticks, last_index, False, timestep_offset))
-    svg.append(f'<path d="{area(kv, y_positions[1], 100)}" fill="{COLORS["kv"]}" opacity="0.12"/>')
-    svg.append(f'<path d="{path(kv, y_positions[1], 100)}" fill="none" stroke="{COLORS["kv"]}" stroke-width="2"/>')
-    svg.append(text_node(LEFT + PLOT_WIDTH - 8, y_positions[1] + 23, "KV cache used / capacity", text_anchor="end", fill=COLORS["kv"], font_size="14", font_weight="600"))
+    svg.extend(panel_axes(y_positions[1], kv_upper, "KV-cache used (tokens)", xticks, last_index, False, timestep_offset))
+    svg.append(f'<path d="{area(kv, y_positions[1], kv_upper)}" fill="{COLORS["kv"]}" opacity="0.12"/>')
+    svg.append(f'<path d="{path(kv, y_positions[1], kv_upper)}" fill="none" stroke="{COLORS["kv"]}" stroke-width="2"/>')
+    svg.append(text_node(LEFT + PLOT_WIDTH - 8, y_positions[1] + 23, f"KV cache used / {kv_upper:,.0f} capacity", text_anchor="end", fill=COLORS["kv"], font_size="14", font_weight="600"))
 
     svg.extend(panel_axes(y_positions[2], scheduler_upper, "scheduled requests", xticks, last_index, True, timestep_offset))
     svg.append(f'<path d="{area(running, y_positions[2], scheduler_upper)}" fill="{COLORS["running"]}" opacity="0.10"/>')
@@ -273,7 +282,7 @@ def render(data: dict, run_id: str | None) -> str:
         )
     )
     summary = (
-        f"peak HBM {max(hbm):.1f}% · peak KV {max(kv):.1f}% · "
+        f"peak HBM {max(hbm):.1f}% · peak KV {max(kv):,.0f} tokens · "
         f"peak running {max(running):.1f} · peak waiting {max(waiting):.1f} · "
         f"preemptions {int(max(preemptions))}"
     )
@@ -287,7 +296,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
 
     series_name, selected_run_id, run = locate_run(data, run_id)
     hbm = [float(value) for value in run["hbm"]]
-    kv = [float(value) * 100 for value in run["kv"]]
+    kv, kv_upper = kv_tokens(run)
     running = [float(value) for value in run["run"]]
     waiting = [float(value) for value in run["wait"]]
     preemptions = [float(value) for value in run["pre"]]
@@ -370,8 +379,8 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     draw.line(hbm_points, fill=rgb("hbm"), width=2, joint="curve")
     draw.text((LEFT + PLOT_WIDTH - 285, y_positions[0] + 10), "normalized aggregate HBM bandwidth", fill=rgb("hbm"), font=small)
 
-    axes(y_positions[1], 100, "KV-cache utilization (%)", False)
-    kv_points = points(kv, y_positions[1], 100)
+    axes(y_positions[1], kv_upper, "KV-cache used (tokens)", False)
+    kv_points = points(kv, y_positions[1], kv_upper)
     draw.polygon([(kv_points[0][0], y_positions[1] + PANEL_HEIGHT), *kv_points, (kv_points[-1][0], y_positions[1] + PANEL_HEIGHT)], fill=faded("kv"))
     draw.line(kv_points, fill=rgb("kv"), width=2, joint="curve")
     draw.text((LEFT + PLOT_WIDTH - 200, y_positions[1] + 10), "KV cache used / capacity", fill=rgb("kv"), font=small)
@@ -393,7 +402,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     xlabel_box = draw.textbbox((0, 0), xlabel, font=label_font)
     draw.text((LEFT + (PLOT_WIDTH - (xlabel_box[2] - xlabel_box[0])) / 2, y_positions[2] + PANEL_HEIGHT + 43), xlabel, fill=rgb("text"), font=label_font)
     summary = (
-        f"peak HBM {max(hbm):.1f}% · peak KV {max(kv):.1f}% · peak running {max(running):.1f} · "
+        f"peak HBM {max(hbm):.1f}% · peak KV {max(kv):,.0f} tokens · peak running {max(running):.1f} · "
         f"peak waiting {max(waiting):.1f} · preemptions {int(max(preemptions))}"
     )
     draw.text((LEFT, HEIGHT - 28), summary, fill=rgb("muted"), font=font)
@@ -420,7 +429,8 @@ def comparison_runs(datasets: list[dict]) -> list[dict]:
                 "run_id": run_id,
                 "bin_seconds": float(data["run"]["bin_seconds"]),
                 "hbm": [float(value) for value in run["hbm"]],
-                "kv": [float(value) * 100 for value in run["kv"]],
+                "kv": kv_tokens(run)[0],
+                "kv_upper": kv_tokens(run)[1],
                 "run": [float(value) for value in run["run"]],
                 "wait": [float(value) for value in run["wait"]],
                 "pre": [float(value) for value in run["pre"]],
@@ -451,7 +461,7 @@ def render_comparison(datasets: list[dict]) -> str:
     top = 140
     metrics = (
         ("hbm", "HBM BW utilization (%)", hbm_upper),
-        ("kv", "KV-cache utilization (%)", 100.0),
+        ("kv", "KV-cache used (tokens)", None),
         ("run", "running requests", None),
         ("wait", "waiting requests", None),
         ("pre", "cumulative preemptions", None),
@@ -501,7 +511,11 @@ def render_comparison(datasets: list[dict]) -> str:
 
     for panel_index, (metric_name, ylabel, fixed_upper) in enumerate(metrics):
         y_top = top + panel_index * (panel_height + panel_gap)
-        upper = fixed_upper or nice_upper(max(max(run[metric_name]) for run in runs))
+        upper = fixed_upper or (
+            max(run["kv_upper"] for run in runs)
+            if metric_name == "kv"
+            else nice_upper(max(max(run[metric_name]) for run in runs))
+        )
         svg.extend(axes(y_top, upper, ylabel, panel_index == len(metrics) - 1))
         for run in runs:
             coords = comparison_points(
@@ -530,7 +544,7 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
     top = 140
     metrics = (
         ("hbm", "HBM BW utilization (%)", hbm_upper),
-        ("kv", "KV-cache utilization (%)", 100.0),
+        ("kv", "KV-cache used (tokens)", None),
         ("run", "running requests", None),
         ("wait", "waiting requests", None),
         ("pre", "cumulative preemptions", None),
@@ -558,7 +572,11 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
 
     for panel_index, (metric_name, ylabel, fixed_upper) in enumerate(metrics):
         y_top = top + panel_index * (panel_height + panel_gap)
-        upper = fixed_upper or nice_upper(max(max(run[metric_name]) for run in runs))
+        upper = fixed_upper or (
+            max(run["kv_upper"] for run in runs)
+            if metric_name == "kv"
+            else nice_upper(max(max(run[metric_name]) for run in runs))
+        )
         draw.rectangle((LEFT, y_top, LEFT + PLOT_WIDTH, y_top + panel_height), fill="white", outline="#aebcca")
         for value in tick_values(upper):
             y = y_top + panel_height - value / upper * panel_height
