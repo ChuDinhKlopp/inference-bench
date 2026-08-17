@@ -102,6 +102,7 @@ def panel_axes(
     xticks: list[int],
     last_index: int,
     show_x_labels: bool,
+    x_offset: int = 0,
 ) -> list[str]:
     items = [
         f'<rect x="{LEFT}" y="{y_top}" width="{PLOT_WIDTH}" height="{PANEL_HEIGHT}" '
@@ -135,7 +136,7 @@ def panel_axes(
                 text_node(
                     x,
                     y_top + PANEL_HEIGHT + 25,
-                    str(value),
+                    str(value + x_offset),
                     text_anchor="middle",
                     fill=COLORS["muted"],
                     font_size="14",
@@ -170,6 +171,32 @@ def locate_run(data: dict, run_id: str | None) -> tuple[str, str, dict]:
     return matches[0]
 
 
+def crop_dataset(data: dict, run_id: str | None, start: int, end: int | None) -> dict:
+    """Crop one aligned run while retaining original timestep labels."""
+    if start < 0:
+        raise ValueError("--start-timestep must be non-negative")
+    series_name, selected_run_id, run = locate_run(data, run_id)
+    length = len(run.get("hbm", []))
+    if end is None:
+        end = length
+    if end <= start or end > length:
+        raise ValueError(f"timestep range must satisfy 0 <= start < end <= {length}; got {start}:{end}")
+    cropped_run = dict(run)
+    for key, values in run.items():
+        if isinstance(values, list) and len(values) == length:
+            cropped_run[key] = values[start:end]
+    cropped_data = dict(data)
+    cropped_ts = {name: dict(series) for name, series in data["TS"].items()}
+    cropped_series = dict(cropped_ts[series_name])
+    cropped_series["runs"] = dict(cropped_series.get("runs", {}))
+    cropped_series["runs"][selected_run_id] = cropped_run
+    cropped_ts[series_name] = cropped_series
+    cropped_data["TS"] = cropped_ts
+    cropped_data["_timestep_offset"] = start
+    cropped_data["_timestep_end"] = end - 1
+    return cropped_data
+
+
 def render(data: dict, run_id: str | None) -> str:
     series_name, selected_run_id, run = locate_run(data, run_id)
     required = ("hbm", "kv", "run", "wait", "pre")
@@ -185,6 +212,9 @@ def render(data: dict, run_id: str | None) -> str:
     count = len(hbm)
     last_index = count - 1
     bin_seconds = float(data["run"]["bin_seconds"])
+    hbm_upper = float(data.get("_hbm_upper", 100.0))
+    timestep_offset = int(data.get("_timestep_offset", 0))
+    timestep_end = int(data.get("_timestep_end", timestep_offset + last_index))
     xticks = x_ticks(last_index)
     scheduler_upper = nice_upper(max(running + waiting))
     preemption_upper = nice_upper(max(preemptions))
@@ -196,20 +226,20 @@ def render(data: dict, run_id: str | None) -> str:
         f'aria-label="Stacked inference timeline for {html.escape(selected_run_id)}">',
         '<rect width="100%" height="100%" fill="#f7f9fc"/>',
         text_node(LEFT, 40, "RIVF26 Part 1 — aligned inference timeline", fill=COLORS["text"], font_size="25", font_weight="700"),
-        text_node(LEFT, 68, f"{selected_run_id} · {series_name} · {count} samples × {bin_seconds:g} s", fill=COLORS["muted"], font_size="15"),
+        text_node(LEFT, 68, f"{selected_run_id} · {series_name} · timesteps {timestep_offset}–{timestep_end} · {count} samples × {bin_seconds:g} s", fill=COLORS["muted"], font_size="15"),
     ]
 
-    svg.extend(panel_axes(y_positions[0], 100, "HBM BW utilization (%)", xticks, last_index, False))
-    svg.append(f'<path d="{area(hbm, y_positions[0], 100)}" fill="{COLORS["hbm"]}" opacity="0.13"/>')
-    svg.append(f'<path d="{path(hbm, y_positions[0], 100)}" fill="none" stroke="{COLORS["hbm"]}" stroke-width="2"/>')
+    svg.extend(panel_axes(y_positions[0], hbm_upper, "HBM BW utilization (%)", xticks, last_index, False, timestep_offset))
+    svg.append(f'<path d="{area(hbm, y_positions[0], hbm_upper)}" fill="{COLORS["hbm"]}" opacity="0.13"/>')
+    svg.append(f'<path d="{path(hbm, y_positions[0], hbm_upper)}" fill="none" stroke="{COLORS["hbm"]}" stroke-width="2"/>')
     svg.append(text_node(LEFT + PLOT_WIDTH - 8, y_positions[0] + 23, "normalized aggregate HBM bandwidth", text_anchor="end", fill=COLORS["hbm"], font_size="14", font_weight="600"))
 
-    svg.extend(panel_axes(y_positions[1], 100, "KV-cache utilization (%)", xticks, last_index, False))
+    svg.extend(panel_axes(y_positions[1], 100, "KV-cache utilization (%)", xticks, last_index, False, timestep_offset))
     svg.append(f'<path d="{area(kv, y_positions[1], 100)}" fill="{COLORS["kv"]}" opacity="0.12"/>')
     svg.append(f'<path d="{path(kv, y_positions[1], 100)}" fill="none" stroke="{COLORS["kv"]}" stroke-width="2"/>')
     svg.append(text_node(LEFT + PLOT_WIDTH - 8, y_positions[1] + 23, "KV cache used / capacity", text_anchor="end", fill=COLORS["kv"], font_size="14", font_weight="600"))
 
-    svg.extend(panel_axes(y_positions[2], scheduler_upper, "scheduled requests", xticks, last_index, True))
+    svg.extend(panel_axes(y_positions[2], scheduler_upper, "scheduled requests", xticks, last_index, True, timestep_offset))
     svg.append(f'<path d="{area(running, y_positions[2], scheduler_upper)}" fill="{COLORS["running"]}" opacity="0.10"/>')
     svg.append(f'<path d="{path(running, y_positions[2], scheduler_upper)}" fill="none" stroke="{COLORS["running"]}" stroke-width="2.2"/>')
     svg.append(f'<path d="{path(waiting, y_positions[2], scheduler_upper)}" fill="none" stroke="{COLORS["waiting"]}" stroke-width="2" stroke-dasharray="7 5"/>')
@@ -298,6 +328,9 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     count = len(hbm)
     last_index = count - 1
     bin_seconds = float(data["run"]["bin_seconds"])
+    hbm_upper = float(data.get("_hbm_upper", 100.0))
+    timestep_offset = int(data.get("_timestep_offset", 0))
+    timestep_end = int(data.get("_timestep_end", timestep_offset + last_index))
     xticks = x_ticks(last_index)
     y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(3)]
     scheduler_upper = nice_upper(max(running + waiting))
@@ -305,7 +338,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     draw.text((LEFT, 30), "RIVF26 Part 1 — aligned inference timeline", fill=rgb("text"), font=title_font)
     draw.text(
         (LEFT, 65),
-        f"{selected_run_id} · {series_name} · {count} samples × {bin_seconds:g} s",
+        f"{selected_run_id} · {series_name} · timesteps {timestep_offset}–{timestep_end} · {count} samples × {bin_seconds:g} s",
         fill=rgb("muted"),
         font=font,
     )
@@ -322,7 +355,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
             x = LEFT + value / max(1, last_index) * PLOT_WIDTH
             draw.line((x, y_top, x, y_top + PANEL_HEIGHT), fill=rgb("grid"), width=1)
             if show_x:
-                label = str(value)
+                label = str(value + timestep_offset)
                 box = draw.textbbox((0, 0), label, font=font)
                 draw.text((x - (box[2] - box[0]) / 2, y_top + PANEL_HEIGHT + 7), label, fill=rgb("muted"), font=font)
         label_image = Image.new("RGBA", (PANEL_HEIGHT, 28), (0, 0, 0, 0))
@@ -331,8 +364,8 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
         rotated = label_image.rotate(90, expand=True)
         image.paste(rotated, (8, round(y_top + (PANEL_HEIGHT - rotated.height) / 2)), rotated)
 
-    axes(y_positions[0], 100, "HBM BW utilization (%)", False)
-    hbm_points = points(hbm, y_positions[0], 100)
+    axes(y_positions[0], hbm_upper, "HBM BW utilization (%)", False)
+    hbm_points = points(hbm, y_positions[0], hbm_upper)
     draw.polygon([(hbm_points[0][0], y_positions[0] + PANEL_HEIGHT), *hbm_points, (hbm_points[-1][0], y_positions[0] + PANEL_HEIGHT)], fill=faded("hbm"))
     draw.line(hbm_points, fill=rgb("hbm"), width=2, joint="curve")
     draw.text((LEFT + PLOT_WIDTH - 285, y_positions[0] + 10), "normalized aggregate HBM bandwidth", fill=rgb("hbm"), font=small)
@@ -412,11 +445,12 @@ def comparison_points(
 
 def render_comparison(datasets: list[dict]) -> str:
     runs = comparison_runs(datasets)
+    hbm_upper = float(datasets[0].get("_hbm_upper", 100.0))
     panel_height = 205
     panel_gap = 36
     top = 140
     metrics = (
-        ("hbm", "HBM BW utilization (%)", 100.0),
+        ("hbm", "HBM BW utilization (%)", hbm_upper),
         ("kv", "KV-cache utilization (%)", 100.0),
         ("run", "running requests", None),
         ("wait", "waiting requests", None),
@@ -490,11 +524,12 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
     from PIL import Image, ImageColor, ImageDraw, ImageFont
 
     runs = comparison_runs(datasets)
+    hbm_upper = float(datasets[0].get("_hbm_upper", 100.0))
     panel_height = 205
     panel_gap = 36
     top = 140
     metrics = (
-        ("hbm", "HBM BW utilization (%)", 100.0),
+        ("hbm", "HBM BW utilization (%)", hbm_upper),
         ("kv", "KV-cache utilization (%)", 100.0),
         ("run", "running requests", None),
         ("wait", "waiting requests", None),
@@ -560,14 +595,28 @@ def main() -> int:
     parser.add_argument("--output-svg", type=Path, required=True)
     parser.add_argument("--output-html", type=Path)
     parser.add_argument("--output-png", type=Path)
+    parser.add_argument("--start-timestep", type=int, default=0)
+    parser.add_argument("--end-timestep", type=int, help="exclusive end timestep; use 3001 for an inclusive 2000–3000 window")
+    parser.add_argument("--hbm-y-max", type=float, default=100.0, help="upper bound for HBM utilization y-axis (default: 100)")
     args = parser.parse_args()
 
     datasets = [json.loads(path.read_text()) for path in args.plot_data]
+    if args.hbm_y_max <= 0:
+        parser.error("--hbm-y-max must be positive")
+    for dataset in datasets:
+        dataset["_hbm_upper"] = args.hbm_y_max
     if len(datasets) == 1:
+        if args.start_timestep or args.end_timestep is not None:
+            datasets[0] = crop_dataset(datasets[0], args.run_id, args.start_timestep, args.end_timestep)
         svg = render(datasets[0], args.run_id)
     else:
         if args.run_id:
             parser.error("--run-id is only valid with one plot_data input")
+        if args.start_timestep or args.end_timestep is not None:
+            datasets = [
+                crop_dataset(dataset, None, args.start_timestep, args.end_timestep)
+                for dataset in datasets
+            ]
         svg = render_comparison(datasets)
     args.output_svg.parent.mkdir(parents=True, exist_ok=True)
     args.output_svg.write_text(svg + "\n")

@@ -207,7 +207,7 @@ scripts/accuracy/run_trace_azure_gpqa_Qwen3.6-35B-A3B_w16kv16.sh
 Remove `RIVF26_DRY_RUN=1` only when the generated long-run preflight can pass.
 Use the corresponding `w8kv16`, `w8kv8`, or `w16kv8` launcher at the selected
 MNS 256. Every accuracy request uses high thinking,
-`MAX_GEN_TOKS=32768`, model-default sampling temperature 1.0 and top-p 0.95,
+`MAX_GEN_TOKS=253952`, model-default sampling temperature 1.0 and top-p 0.95,
 top-k 20, and `BENCH_ARRIVAL_RATE=none`. The RIVF adapter injects top-k into the
 existing vLLM request object without modifying the parent client. The 198
 questions are sampled once for 198 requests at `max-num-seqs=256`;
@@ -351,7 +351,7 @@ output context. Workload launchers must source `scripts/common/workload_env.sh`
 and call `rivf26_set_workload_env` before constructing client commands:
 
 ```bash
-# GPQA accuracy: exported MAX_GEN_TOKS=GPQA_MAX_GEN_TOKS=32768
+# GPQA accuracy: exported MAX_GEN_TOKS=GPQA_MAX_GEN_TOKS=253952
 rivf26_set_workload_env accuracy
 
 # PubMed performance: MAX_GEN_TOKS=10240, THINKING_TOKEN_BUDGET=6144

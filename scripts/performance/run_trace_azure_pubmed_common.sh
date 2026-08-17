@@ -30,9 +30,18 @@ if [[ "$max_num_seqs" != 256 ]]; then
 fi
 
 port=${RIVF26_PORT:-8000}
-run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${precision}_mns${max_num_seqs}}
-workload=${RIVF26_PUBMED_WORKLOAD:-$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000.jsonl}
-trace_csv=${RIVF26_AZURE_TRACE_CSV:-$rivf26_root/traces/processed/azure_multimodal_bursty_1000.csv}
+request_count=${RIVF26_PERFORMANCE_REQUESTS:-1000}
+if [[ "$request_count" != 1000 && "$request_count" != 2000 ]]; then
+  echo "RIVF26_PERFORMANCE_REQUESTS must be 1000 or 2000; got $request_count" >&2
+  exit 2
+fi
+workload_suffix=
+if [[ "$request_count" == 2000 ]]; then
+  workload_suffix=_longest
+fi
+run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${request_count}_${precision}_mns${max_num_seqs}}
+workload=${RIVF26_PUBMED_WORKLOAD:-$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_${request_count}${workload_suffix}.jsonl}
+trace_csv=${RIVF26_AZURE_TRACE_CSV:-$rivf26_root/traces/processed/azure_multimodal_bursty_${request_count}.csv}
 smoke_gate=${RIVF26_SMOKE_MATRIX:-$rivf26_root/manifests/smoke_matrix_mbt16384_20260816.json}
 
 run_dir=${RIVF26_RUN_DIR:-$rivf26_root/results/part1/performance/$run_id}
@@ -55,6 +64,7 @@ validate_cmd=(
   --output-dir "$run_dir"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET"
+  --expected-requests "$request_count"
   --validate-only
 )
 preflight_cmd=(
@@ -79,6 +89,7 @@ client_cmd=(
   --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET"
+  --expected-requests "$request_count"
   --timeout "${RIVF26_REQUEST_TIMEOUT:-43200}"
 )
 post_cmd=(
@@ -112,8 +123,8 @@ if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   print_command "Stage B validation" "${post_cmd[@]}"
   print_command "PubMed client" "${client_cmd[@]}"
   print_command "HBM-wrapped client" "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}"
-  printf 'MAX_GEN_TOKS=%s THINKING_TOKEN_BUDGET=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=1000\n' \
-    "$MAX_GEN_TOKS" "$RIVF26_THINKING_TOKEN_BUDGET" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT"
+  printf 'MAX_GEN_TOKS=%s THINKING_TOKEN_BUDGET=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s total_requests=%s\n' \
+    "$MAX_GEN_TOKS" "$RIVF26_THINKING_TOKEN_BUDGET" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" "$RIVF26_REASONING_EFFORT" "$request_count"
   exit 0
 fi
 

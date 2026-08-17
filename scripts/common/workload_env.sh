@@ -9,9 +9,10 @@ rivf26_set_workload_env() {
 
   case "$mode" in
     accuracy)
-      expected_max_gen_toks=32768
+      expected_max_gen_toks=253952
       expected_arrival_mode=none
       expected_reasoning_effort=high
+      expected_thinking_token_budget=32768
       ;;
     performance)
       expected_max_gen_toks=10240
@@ -56,6 +57,11 @@ rivf26_set_workload_env() {
     echo "performance requires RIVF26_THINKING_TOKEN_BUDGET=$expected_thinking_token_budget; got $RIVF26_THINKING_TOKEN_BUDGET" >&2
     return 2
   fi
+  if [[ "$mode" == accuracy && -n ${RIVF26_THINKING_TOKEN_BUDGET+x} \
+        && "$RIVF26_THINKING_TOKEN_BUDGET" != "$expected_thinking_token_budget" ]]; then
+    echo "accuracy requires RIVF26_THINKING_TOKEN_BUDGET=$expected_thinking_token_budget; got $RIVF26_THINKING_TOKEN_BUDGET" >&2
+    return 2
+  fi
 
   export RIVF26_MODE=$mode
   export RIVF26_MAX_GEN_TOKS=$expected_max_gen_toks
@@ -65,6 +71,8 @@ rivf26_set_workload_env() {
 
   if [[ "$mode" == accuracy ]]; then
     export GPQA_MAX_GEN_TOKS=$expected_max_gen_toks
+    export RIVF26_THINKING_TOKEN_BUDGET=$expected_thinking_token_budget
+    export THINKING_TOKEN_BUDGET=$expected_thinking_token_budget
   else
     export PUBMED_MAX_GEN_TOKS=$expected_max_gen_toks
     export RIVF26_THINKING_TOKEN_BUDGET=$expected_thinking_token_budget

@@ -37,6 +37,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dataset-file", default="document/test-00000-of-00001.parquet")
     parser.add_argument("--seed", type=int, default=260815)
+    parser.add_argument("--request-count", type=int, default=1000)
+    parser.add_argument("--select-longest-prompts", action="store_true")
     parser.add_argument("--max-gen-toks", type=int, default=10240)
     parser.add_argument("--thinking-token-budget", type=int, default=6144)
     parser.add_argument("--max-model-len", type=int, default=65536)
@@ -56,10 +58,12 @@ def main() -> None:
     missing = required_trace.difference(trace.columns)
     if missing:
         raise ValueError(f"selected trace is missing columns: {sorted(missing)}")
-    if len(trace) != 1000:
-        raise ValueError(f"performance workload requires 1000 trace rows; got {len(trace)}")
-    if trace["TRACE_INDEX"].tolist() != list(range(1000)):
-        raise ValueError("TRACE_INDEX must be exactly 0..999")
+    if args.request_count < 1:
+        raise ValueError("--request-count must be positive")
+    if len(trace) != args.request_count:
+        raise ValueError(f"performance workload requires {args.request_count} trace rows; got {len(trace)}")
+    if trace["TRACE_INDEX"].tolist() != list(range(args.request_count)):
+        raise ValueError(f"TRACE_INDEX must be exactly 0..{args.request_count - 1}")
     if not np.all(np.diff(trace["ARRIVAL_OFFSET_S"].to_numpy(float)) >= 0):
         raise ValueError("arrival offsets are not monotonic")
     if args.max_gen_toks != 10240:
@@ -81,8 +85,8 @@ def main() -> None:
     columns = set(table.column_names)
     if not {"article", "abstract"}.issubset(columns):
         raise ValueError(f"unexpected PubMed schema: {sorted(columns)}")
-    if table.num_rows < 1000:
-        raise ValueError(f"PubMed split has only {table.num_rows} rows")
+    if table.num_rows < args.request_count:
+        raise ValueError(f"PubMed split has only {table.num_rows} rows; need {args.request_count}")
 
     tokenizer = AutoTokenizer.from_pretrained(
         str(args.model_path), local_files_only=True, trust_remote_code=False
@@ -93,6 +97,7 @@ def main() -> None:
     selected: list[tuple[int, dict, list[dict[str, str]], int]] = []
     excluded_over_context: list[dict[str, int]] = []
 
+    candidate_rows: list[tuple[int, dict, list[dict[str, str]], int]] = []
     for source_index_raw in permutation:
         source_index = int(source_index_raw)
         example = dataset_rows[source_index]
@@ -115,11 +120,13 @@ def main() -> None:
                 {"source_index": source_index, "prompt_tokens": prompt_tokens}
             )
             continue
-        selected.append((source_index, example, messages, prompt_tokens))
-        if len(selected) == 1000:
-            break
+        candidate_rows.append((source_index, example, messages, prompt_tokens))
 
-    if len(selected) != 1000:
+    if args.select_longest_prompts:
+        candidate_rows.sort(key=lambda item: (-item[3], item[0]))
+    selected = candidate_rows[:args.request_count]
+
+    if len(selected) != args.request_count:
         raise ValueError(
             f"only {len(selected)} intact PubMed prompts fit prompt + "
             f"{args.max_gen_toks} <= {args.max_model_len}"
@@ -172,10 +179,10 @@ def main() -> None:
     metadata = {
         "schema_version": 1,
         "created_utc": datetime.now(timezone.utc).isoformat(),
-        "workload": "rivf26_part1_performance_pubmed_azure_bursty_1000",
-        "request_count": 1000,
+        "workload": f"rivf26_part1_performance_pubmed_azure_bursty_{args.request_count}",
+        "request_count": args.request_count,
         "attachment_policy": (
-            "seeded permutation; first 1000 intact documents satisfying "
+            ("longest prompt lengths among intact documents satisfying " if args.select_longest_prompts else "seeded permutation; first intact documents satisfying ") +
             f"prompt_tokens + {args.max_gen_toks} <= {args.max_model_len}; "
             "paired in trace order"
         ),
@@ -190,6 +197,7 @@ def main() -> None:
             "split_rows": table.num_rows,
             "candidates_examined": len(selected) + len(excluded_over_context),
             "selected_source_indices": [item[0] for item in selected],
+            "selection_policy": "longest_prompt_tokens" if args.select_longest_prompts else "seeded_permutation",
             "excluded_over_context": excluded_over_context,
         },
         "prompt": {

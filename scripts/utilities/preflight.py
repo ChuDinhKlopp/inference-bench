@@ -123,7 +123,7 @@ def main() -> int:
     parser.add_argument("--mode", choices=("smoke", "accuracy", "performance"), required=True)
     parser.add_argument("--precision", choices=("w16kv16", "w8kv16", "w8kv8", "w16kv8"), required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
-    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(8192,), default=8192)
     parser.add_argument("--estimated-output-gib", type=float, default=80.0)
     parser.add_argument("--safety-reserve-gib", type=float, default=50.0)
     parser.add_argument("--min-host-available-gib", type=float, default=256.0)

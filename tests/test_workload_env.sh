@@ -16,7 +16,7 @@ fi
 
 env -u MAX_GEN_TOKS -u RIVF26_MAX_GEN_TOKS -u GPQA_MAX_GEN_TOKS \
   -u PUBMED_MAX_GEN_TOKS -u BENCH_ARRIVAL_RATE \
-  bash -c 'source "$1"; rivf26_set_workload_env accuracy; [[ $MAX_GEN_TOKS == 32768 && $GPQA_MAX_GEN_TOKS == 32768 && $BENCH_ARRIVAL_RATE == none && $RIVF26_REASONING_EFFORT == high ]]' \
+  bash -c 'source "$1"; rivf26_set_workload_env accuracy; [[ $MAX_GEN_TOKS == 253952 && $GPQA_MAX_GEN_TOKS == 253952 && $THINKING_TOKEN_BUDGET == 32768 && $BENCH_ARRIVAL_RATE == none && $RIVF26_REASONING_EFFORT == high ]]' \
   _ "$workload_env"
 
 env -u MAX_GEN_TOKS -u RIVF26_MAX_GEN_TOKS -u GPQA_MAX_GEN_TOKS \

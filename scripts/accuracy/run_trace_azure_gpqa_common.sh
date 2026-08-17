@@ -20,7 +20,7 @@ source "$rivf26_root/scripts/common/paths.sh"
 source "$rivf26_root/scripts/common/scheduler_env.sh"
 source "$rivf26_root/scripts/common/workload_env.sh"
 
-export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-65536}
+export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-262144}
 rivf26_set_scheduler_env
 rivf26_set_workload_env accuracy
 
@@ -163,8 +163,8 @@ if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   print_command "Stage B validation" "${post_cmd[@]}"
   print_command "GPQA client" "${client_cmd[@]}"
   print_command "HBM-wrapped client" "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}"
-  printf 'MAX_GEN_TOKS=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s run_kind=%s repeats=%s total_requests=%s\n' \
-    "$MAX_GEN_TOKS" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" \
+  printf 'MAX_GEN_TOKS=%s THINKING_TOKEN_BUDGET=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s run_kind=%s repeats=%s total_requests=%s\n' \
+    "$MAX_GEN_TOKS" "$RIVF26_THINKING_TOKEN_BUDGET" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" \
     "$RIVF26_REASONING_EFFORT" "$run_kind" "$num_samples" "$total_requests"
   exit 0
 fi

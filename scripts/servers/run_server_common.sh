@@ -16,7 +16,7 @@ rivf26_set_scheduler_env
 run_id=${RIVF26_RUN_ID:-}
 port=${RIVF26_PORT:-8000}
 max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
-max_model_len=${RIVF26_MAX_MODEL_LEN:-65536}
+max_model_len=${RIVF26_MAX_MODEL_LEN:-262144}
 gpu_memory_utilization=${RIVF26_GPU_MEMORY_UTILIZATION:-0.90}
 vllm_python=$RIVF26_VENV_BIN/python
 attention_backend=${RIVF26_ATTENTION_BACKEND:-FLASHINFER}

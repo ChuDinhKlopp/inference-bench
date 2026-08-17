@@ -27,25 +27,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default="Qwen3.6-35B-A3B")
     parser.add_argument("--server-log-file", type=Path)
     parser.add_argument("--server-metrics-poll-interval", type=float, default=0.2)
-    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(8192,), default=8192)
     parser.add_argument("--thinking-token-budget", type=int, choices=(6144,), default=6144)
+    parser.add_argument("--expected-requests", type=int, default=1000)
     parser.add_argument("--timeout", type=float, default=43200.0)
     parser.add_argument("--validate-only", action="store_true")
     return parser.parse_args()
 
 
-def load_trace_offsets(path: Path) -> list[float]:
+def load_trace_offsets(path: Path, expected_requests: int) -> list[float]:
     with path.open(newline="", encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream))
-    if len(rows) != 1000:
-        raise ValueError(f"Azure trace CSV must contain 1000 rows; got {len(rows)}")
+    if len(rows) != expected_requests:
+        raise ValueError(f"Azure trace CSV must contain {expected_requests} rows; got {len(rows)}")
     offsets = [float(row["ARRIVAL_OFFSET_S"]) for row in rows]
     if offsets[0] != 0.0 or any(right < left for left, right in zip(offsets, offsets[1:])):
         raise ValueError("Azure trace offsets must begin at zero and be monotonic")
     return offsets
 
 
-def load_and_validate(path: Path, trace_csv: Path, thinking_token_budget: int) -> list[dict]:
+def load_and_validate(path: Path, trace_csv: Path, thinking_token_budget: int, expected_requests: int) -> list[dict]:
     records = []
     with path.open(encoding="utf-8") as stream:
         for line_number, line in enumerate(stream, start=1):
@@ -55,11 +56,11 @@ def load_and_validate(path: Path, trace_csv: Path, thinking_token_budget: int) -
                 except json.JSONDecodeError as error:
                     raise ValueError(f"invalid JSON on {path}:{line_number}") from error
 
-    if len(records) != 1000:
-        raise ValueError(f"performance workload must contain 1000 requests; got {len(records)}")
+    if len(records) != expected_requests:
+        raise ValueError(f"performance workload must contain {expected_requests} requests; got {len(records)}")
     indices = [record["request_index"] for record in records]
-    if indices != list(range(1000)):
-        raise ValueError("request_index must be exactly 0..999")
+    if indices != list(range(expected_requests)):
+        raise ValueError(f"request_index must be exactly 0..{expected_requests - 1}")
     offsets = [float(record["trace"]["arrival_offset_s"]) for record in records]
     if offsets[0] != 0.0 or any(right < left for left, right in zip(offsets, offsets[1:])):
         raise ValueError("arrival offsets must begin at zero and be monotonic")
@@ -80,7 +81,7 @@ def load_and_validate(path: Path, trace_csv: Path, thinking_token_budget: int) -
         )
     if any(record["request"]["prompt_tokens"] + 10240 > 65536 for record in records):
         raise ValueError("frozen workload contains a request exceeding max_model_len=65536")
-    trace_offsets = load_trace_offsets(trace_csv)
+    trace_offsets = load_trace_offsets(trace_csv, expected_requests)
     if any(abs(workload_offset - trace_offset) > 1e-6 for workload_offset, trace_offset in zip(offsets, trace_offsets, strict=True)):
         raise ValueError("frozen workload arrival offsets do not match the supplied Azure trace CSV")
     return records
@@ -196,7 +197,9 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
 
 def main() -> None:
     args = parse_args()
-    records = load_and_validate(args.workload, args.trace_csv, args.thinking_token_budget)
+    if args.expected_requests < 1:
+        raise ValueError("--expected-requests must be positive")
+    records = load_and_validate(args.workload, args.trace_csv, args.thinking_token_budget, args.expected_requests)
     validation = {
         "request_count": len(records),
         "trace_duration_s": records[-1]["trace"]["arrival_offset_s"],

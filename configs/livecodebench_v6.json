@@ -1,0 +1,12 @@
+{
+  "dataset": "livecodebench",
+  "release_version": "release_v6",
+  "expected_requests": 1055,
+  "repeats": 1,
+  "arrival_mode": "none",
+  "reasoning_effort": "high",
+  "max_gen_toks": 253952,
+  "thinking_token_budget": 32768,
+  "max_num_batched_tokens": 8192,
+  "precisions": ["w16kv16", "w8kv16", "w8kv8", "w16kv8"]
+}

@@ -124,7 +124,7 @@ def main() -> int:
     parser.add_argument("--num-samples", type=int, choices=(1,), default=1)
     parser.add_argument("--smoke-matrix", type=Path, required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
-    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
+    parser.add_argument("--max-num-batched-tokens", type=int, choices=(8192,), default=8192)
     parser.add_argument("--started-epoch-s", type=float, required=True)
     parser.add_argument("--ended-epoch-s", type=float, required=True)
     args = parser.parse_args()
@@ -229,7 +229,7 @@ def main() -> int:
         "repeats_per_question": args.num_samples,
         "total_requests": len(records),
         "reasoning_effort": "high",
-        "max_gen_toks": 32768,
+        "max_gen_toks": 253952,
         "arrival_mode": "none",
         "sampling": {"temperature": 1.0, "top_p": 0.95, "top_k": 20},
         "pass_at_1_repeats": repeats,

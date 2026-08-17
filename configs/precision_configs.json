@@ -2,7 +2,7 @@
   "schema_version": "rivf26.precisions.v1",
   "common": {
     "tensor_parallel_size": 4,
-    "max_num_batched_tokens": 16384,
+    "max_num_batched_tokens": 8192,
     "attention_backend": "FLASHINFER",
     "model_dtype_name": "bfloat16",
     "notes": "The attention backend is pinned across all arms because current vLLM TRITON_ATTN rejects FP8 KV cache on SM80. On A100/SM80, vLLM 0.27 executes the FP8 checkpoint with Marlin weight-only FP8 kernels and BF16 activations because the GPU has no native FP8 compute. Runtime logs remain the source of truth."
