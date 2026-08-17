@@ -24,10 +24,6 @@ rivf26_set_scheduler_env
 rivf26_set_workload_env performance
 
 max_num_seqs=${RIVF26_MAX_NUM_SEQS:-256}
-if [[ "$max_num_seqs" != 256 ]]; then
-  echo "PubMed Part 1 matrix requires RIVF26_MAX_NUM_SEQS=256; got $max_num_seqs" >&2
-  exit 2
-fi
 
 port=${RIVF26_PORT:-8000}
 request_count=${RIVF26_PERFORMANCE_REQUESTS:-1000}
