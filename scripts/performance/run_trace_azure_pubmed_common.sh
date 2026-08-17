@@ -204,6 +204,8 @@ export RIVF26_PREFLIGHT_JSON=$preflight
 
 setsid "$server_launcher" > "$server_log" 2>&1 &
 server_pid=$!
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting server"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Server log: $server_log"
 ready=0
 for ((attempt=0; attempt<${RIVF26_SERVER_READY_ATTEMPTS:-1800}; attempt++)); do
   if ! kill -0 "$server_pid" 2>/dev/null; then
@@ -223,6 +225,7 @@ if (( ready == 0 )); then
   echo "vLLM did not become ready within the configured timeout" >&2
   exit 2
 fi
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Server is ready"
 
 "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/resource_guard.py" \
   --path "$bulk_run_dir" \
@@ -257,6 +260,12 @@ fi
   printf '%q ' "${client_cmd[@]}"
   printf '\n'
 } > "$run_dir/client_command.txt"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting benchmark"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark log: $client_log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark output directory: $run_dir"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark dataset: ccdv/pubmed-summarization"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark arrival mode: azure"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark requests: $request_count"
 started_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
 set +e
 BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
