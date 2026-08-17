@@ -90,7 +90,7 @@ client_cmd=(
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET"
   --expected-requests "$request_count"
-  --timeout "${RIVF26_REQUEST_TIMEOUT:-43200}"
+  --timeout "${RIVF26_REQUEST_TIMEOUT:-86400}"
 )
 post_cmd=(
   "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/post_server_validate.py"

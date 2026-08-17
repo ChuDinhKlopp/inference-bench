@@ -33,7 +33,7 @@ class PlotPipelineTest(unittest.TestCase):
                         "--precision", precision,
                         "--mode", "performance",
                         "--max-num-seqs", "2",
-                        "--max-num-batched-tokens", "16384",
+                        "--max-num-batched-tokens", "8192",
                         "--bin-seconds", "1",
                     ],
                     check=True,
@@ -71,7 +71,7 @@ class PlotPipelineTest(unittest.TestCase):
                     "--precision", "w16kv16",
                     "--mode", "smoke",
                     "--max-num-seqs", "2",
-                    "--max-num-batched-tokens", "16384",
+                    "--max-num-batched-tokens", "8192",
                     "--bin-seconds", "2",
                 ],
                 check=True,
@@ -103,7 +103,7 @@ class PlotPipelineTest(unittest.TestCase):
         self.assertEqual(lengths, {3})
         self.assertEqual(run["hbm"][0], 22.5)
         self.assertEqual(run["hbm"][1], 40.0)
-        self.assertEqual(run["tok"], 16384)
+        self.assertEqual(run["tok"], 8192)
 
 
 if __name__ == "__main__":

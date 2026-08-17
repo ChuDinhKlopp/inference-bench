@@ -124,7 +124,7 @@ client_cmd=(
   --max-concurrency "$max_num_seqs"
   --temperature 1.0
   --top-p 0.95
-  --timeout "${RIVF26_REQUEST_TIMEOUT:-43200}"
+  --timeout "${RIVF26_REQUEST_TIMEOUT:-86400}"
   --enable-thinking
   --server-log-file "$server_log"
   --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}"

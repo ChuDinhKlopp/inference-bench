@@ -68,7 +68,7 @@ def main() -> int:
         "status": "PASS" if not errors else "FAIL",
         "run_id": args.run_id,
         "precision": args.precision,
-        "max_num_batched_tokens": 16384,
+        "max_num_batched_tokens": 8192,
         "requests_successful": client.get("successful_requests"),
         "hbm_samples": hbm.get("sample_rows"),
         "plot_bins": len(plotted["hbm"]) if plotted else 0,

@@ -50,7 +50,7 @@ for _ in $(seq 1 "${RIVF26_SERVER_READY_ATTEMPTS:-1800}"); do
 done
 curl -fsS "http://127.0.0.1:$port/health" >/dev/null || exit 2
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Server is ready"
-client=("$RIVF26_VENV_BIN/python" "$parent_root/bench.py" --dataset livecodebench --lcb-release-version release_v6 --num-prompts "$num_requests" --lcb-max-gen-toks "$max_gen_toks" --model Qwen3.6-35B-A3B --tokenizer "$local_tokenizer" --base-url "http://127.0.0.1:$port" --max-concurrency "$max_num_seqs" --temperature 0 --seed 42 --enable-thinking --server-log-file "$server_log" --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}" --iteration-metrics-prefix "$bulk/raw/bench_results" --save-generations "$bulk/raw/generations.json" --output "$bulk/raw/bench_results.json")
+client=("$RIVF26_VENV_BIN/python" "$parent_root/bench.py" --dataset livecodebench --lcb-release-version release_v6 --num-prompts "$num_requests" --lcb-max-gen-toks "$max_gen_toks" --model Qwen3.6-35B-A3B --tokenizer "$local_tokenizer" --base-url "http://127.0.0.1:$port" --max-concurrency "$max_num_seqs" --temperature 0 --seed 42 --timeout "${RIVF26_REQUEST_TIMEOUT:-86400}" --enable-thinking --server-log-file "$server_log" --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}" --iteration-metrics-prefix "$bulk/raw/bench_results" --save-generations "$bulk/raw/generations.json" --output "$bulk/raw/bench_results.json")
 printf '%q ' "${client[@]}" > "$run_dir/client_command.txt"
 printf '\n' >> "$run_dir/client_command.txt"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting benchmark"

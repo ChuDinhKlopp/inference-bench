@@ -66,7 +66,7 @@ trap 'exit 143' TERM
 
 "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/preflight.py" \
   --run-id "$run_id" --mode smoke --precision "$precision" \
-  --max-num-seqs "$max_num_seqs" --max-num-batched-tokens 16384 \
+  --max-num-seqs "$max_num_seqs" --max-num-batched-tokens 8192 \
   --estimated-output-gib 2 --safety-reserve-gib 20 --port "$port"
 
 export RIVF26_RUN_ID=$run_id
@@ -104,7 +104,7 @@ post_cmd=(
   "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/post_server_validate.py"
   --run-id "$run_id" --precision "$precision" --server-log "$server_log"
   --preflight "$preflight" --output "$post_server" --port "$port"
-  --max-num-batched-tokens 16384
+  --max-num-batched-tokens 8192
 )
 if [[ "$precision" == *kv8 ]]; then
   post_cmd+=(--accept-fp8-kv-scale-one)
@@ -133,7 +133,7 @@ plot_cmd=(
   --prometheus "$bulk_run_dir/raw/iteration_metrics.prometheus_samples.jsonl"
   --hbm "$hbm_csv" --output "$run_dir/plot_data.json" --run-id "$run_id"
   --precision "$precision" --mode smoke --max-num-seqs "$max_num_seqs"
-  --max-num-batched-tokens 16384 --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}"
+  --max-num-batched-tokens 8192 --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}"
   --experiment-start-epoch-s "$started_epoch_s"
 )
 if [[ -n "$kv_capacity" ]]; then

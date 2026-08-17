@@ -46,8 +46,8 @@ def build_gate(summary_paths: list[Path], root: Path) -> dict:
         run_errors: list[str] = []
         if summary.get("status") != "PASS":
             run_errors.append("summary status is not PASS")
-        if summary.get("max_num_batched_tokens") != 16384:
-            run_errors.append("max_num_batched_tokens is not 16384")
+        if summary.get("max_num_batched_tokens") != 8192:
+            run_errors.append("max_num_batched_tokens is not 8192")
         if summary.get("requests_successful") != 4:
             run_errors.append("four requests did not succeed")
         if not isinstance(summary.get("hbm_samples"), int) or summary["hbm_samples"] <= 0:
@@ -90,7 +90,7 @@ def build_gate(summary_paths: list[Path], root: Path) -> dict:
         "host": platform.node(),
         "git_commit": git_commit(root),
         "status": "PASS" if not errors else "FAIL",
-        "max_num_batched_tokens": 16384,
+        "max_num_batched_tokens": 8192,
         "required_precisions": list(PRECISIONS),
         "validated_data_path": [
             "per-request TTFT/TPOT",

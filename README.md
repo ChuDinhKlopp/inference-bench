@@ -59,7 +59,7 @@ Run preflight (from the repository root):
 $HOME/repos/vllm/.venv/bin/python rivf26/scripts/utilities/preflight.py \
   --run-id 20260815_180000_smoke_w16kv16 \
   --mode smoke --precision w16kv16 --max-num-seqs 2 \
-  --max-num-batched-tokens 16384 \
+  --max-num-batched-tokens 8192 \
   --estimated-output-gib 2 --safety-reserve-gib 20
 ```
 

@@ -6,7 +6,7 @@ workload_env=$test_dir/../scripts/common/workload_env.sh
 scheduler_env=$test_dir/../scripts/common/scheduler_env.sh
 
 env -u RIVF26_MAX_NUM_BATCHED_TOKENS \
-  bash -c 'source "$1"; rivf26_set_scheduler_env; [[ $RIVF26_MAX_NUM_BATCHED_TOKENS == 16384 ]]' \
+  bash -c 'source "$1"; rivf26_set_scheduler_env; [[ $RIVF26_MAX_NUM_BATCHED_TOKENS == 8192 ]]' \
   _ "$scheduler_env"
 
 if RIVF26_MAX_NUM_BATCHED_TOKENS=2048 bash -c 'source "$1"; rivf26_set_scheduler_env' _ "$scheduler_env"; then

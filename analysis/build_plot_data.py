@@ -99,7 +99,13 @@ def main() -> int:
     parser.add_argument("--precision", required=True)
     parser.add_argument("--mode", required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
-    parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
+    parser.add_argument(
+        "--max-num-batched-tokens",
+        type=int,
+        choices=(8192,),
+        default=8192,
+        help="Must match the RIVF26 scheduler token budget",
+    )
     parser.add_argument("--kv-capacity-tokens", type=int)
     parser.add_argument(
         "--bin-seconds",

@@ -24,7 +24,7 @@ class SmokeMatrixTest(unittest.TestCase):
                     "status": status,
                     "run_id": f"smoke-{precision}",
                     "precision": precision,
-                    "max_num_batched_tokens": 16384,
+                    "max_num_batched_tokens": 8192,
                     "requests_successful": 4,
                     "hbm_samples": 40,
                     "plot_bins": 2,
