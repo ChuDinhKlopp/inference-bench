@@ -192,18 +192,24 @@ def main() -> int:
             amdsmi.amdsmi_shut_down()
     except Exception as exc:
         gpu_query_error = str(exc)
+    # amdsmi's processor-handle index does not correlate to HIP_VISIBLE_DEVICES on
+    # this host's topology (empirically: HIP_VISIBLE_DEVICES=0,1 loaded the model
+    # onto amdsmi indices 2,3), so which specific indices the replica landed on
+    # cannot be predicted in advance. Instead, verify that exactly as many GPUs as
+    # the replica's configured size are actually busy, whichever indices they are.
     visible_devices_raw = os.environ.get("HIP_VISIBLE_DEVICES") or os.environ.get("CUDA_VISIBLE_DEVICES") or "0,1"
-    replica_indices = {int(part) for part in visible_devices_raw.split(",") if part.strip() != ""}
-    replica_rows = [row for row in gpu_rows if row["index"] in replica_indices]
+    expected_replica_size = len([part for part in visible_devices_raw.split(",") if part.strip() != ""])
+    busy_rows = [row for row in gpu_rows if row["used_mib"] > 1000]
+    idle_rows = [row for row in gpu_rows if row["used_mib"] <= 1000]
     gpu_ok = (
         len(gpu_rows) == 8
-        and len(replica_rows) == len(replica_indices)
-        and all(row["used_mib"] > 1000 and row["free_mib"] >= args.min_post_load_free_mib for row in replica_rows)
+        and len(busy_rows) == expected_replica_size
+        and all(row["free_mib"] >= args.min_post_load_free_mib for row in busy_rows)
     )
     check(
         "tp2_hbm_after_load",
         gpu_ok,
-        f"replica_gpus({sorted(replica_indices)})={replica_rows}; all_gpus={gpu_rows}; stderr={gpu_query_error}",
+        f"expected_replica_size={expected_replica_size}; busy_gpus={busy_rows}; idle_gpus={idle_rows}; stderr={gpu_query_error}",
     )
 
     dead_monitors = [pid for pid in args.monitor_pid if not alive(pid)]

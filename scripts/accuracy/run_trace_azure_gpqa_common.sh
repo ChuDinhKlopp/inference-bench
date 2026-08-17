@@ -106,6 +106,7 @@ preflight_cmd=(
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --estimated-output-gib "${RIVF26_ESTIMATED_OUTPUT_GIB:-80}"
   --safety-reserve-gib "${RIVF26_SAFETY_RESERVE_GIB:-50}"
+  --min-host-available-gib "${RIVF26_RUNTIME_MIN_HOST_AVAILABLE_GIB:-256}"
   --port "$port"
 )
 client_cmd=(

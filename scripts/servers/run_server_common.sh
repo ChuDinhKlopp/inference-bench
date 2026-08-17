@@ -171,7 +171,25 @@ cp "$rivf26_root/scripts/monitoring/rocm_hbm_rpl_rc.xml" "$hbm_dir/rpl_rc.xml"
   'import time,json,sys; json.dump({"reference_epoch_s": time.time(), "reference_monotonic_ns": time.monotonic_ns()}, open(sys.argv[1], "w"))' \
   "$hbm_dir/reference.json"
 cd "$hbm_dir"
+
+# Classic rocprof re-evaluates its wrapped command with `eval "$APP_CMD"` after a
+# naive per-argument \"$arg\" quote-wrap. That wrapping breaks (and rocprof
+# misparses the vLLM command entirely, e.g. treating the --reasoning-config JSON's
+# "<think>" as shell input redirection) for any argument that itself contains
+# double quotes, which --reasoning-config's JSON value always does. Writing the
+# real invocation to a script file with bash's own %q-quoting and having rocprof
+# wrap that (a single argument-free command) avoids rocprof's eval reconstruction
+# ever seeing the problematic characters.
+launch_script=$hbm_dir/launch_vllm.sh
+{
+  printf '#!/usr/bin/env bash\n'
+  printf 'exec'
+  printf ' %q' "${cmd[@]}"
+  printf '\n'
+} > "$launch_script"
+chmod +x "$launch_script"
+
 exec rocprof -i "$rivf26_root/scripts/monitoring/rocm_hbm_counters.txt" \
   -o "$hbm_dir/kernel_dispatches.csv" \
   -d "$hbm_dir/rocprof_data" \
-  "${cmd[@]}"
+  "$launch_script"

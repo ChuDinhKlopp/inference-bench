@@ -64,7 +64,8 @@ trap 'exit 143' TERM
 "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/preflight.py" \
   --run-id "$run_id" --mode smoke --precision "$precision" \
   --max-num-seqs "$max_num_seqs" --max-num-batched-tokens 8192 \
-  --estimated-output-gib 2 --safety-reserve-gib 20 --port "$port"
+  --estimated-output-gib 2 --safety-reserve-gib 20 --port "$port" \
+  --min-host-available-gib "${RIVF26_RUNTIME_MIN_HOST_AVAILABLE_GIB:-256}"
 
 export RIVF26_RUN_ID=$run_id
 export RIVF26_PORT=$port

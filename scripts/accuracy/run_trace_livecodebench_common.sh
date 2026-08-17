@@ -40,7 +40,7 @@ mkdir -p "$run_dir" "$bulk/logs" "$bulk/raw" "$manifest"
 ln -s "$bulk/logs" "$run_dir/logs"; ln -s "$bulk/raw" "$run_dir/raw"
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 BENCH_ARRIVAL_RATE=none
 "$RIVF26_VENV_BIN/python" -c 'import lcb_runner' || { echo 'LiveCodeBench v6 requires lcb_runner in the vLLM environment' >&2; exit 2; }
-"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/preflight.py" --run-id "$run_id" --mode accuracy --precision "$precision" --max-num-seqs "$max_num_seqs" --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" --estimated-output-gib "${RIVF26_ESTIMATED_OUTPUT_GIB:-80}" --safety-reserve-gib "${RIVF26_SAFETY_RESERVE_GIB:-50}" --port "$port" > "$manifest/preflight.txt"
+"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/preflight.py" --run-id "$run_id" --mode accuracy --precision "$precision" --max-num-seqs "$max_num_seqs" --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" --estimated-output-gib "${RIVF26_ESTIMATED_OUTPUT_GIB:-80}" --safety-reserve-gib "${RIVF26_SAFETY_RESERVE_GIB:-50}" --min-host-available-gib "${RIVF26_RUNTIME_MIN_HOST_AVAILABLE_GIB:-256}" --port "$port" > "$manifest/preflight.txt"
 server_launcher=$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh
 export RIVF26_RUN_ID=$run_id RIVF26_RUN_DIR=$run_dir RIVF26_BULK_RUN_DIR=$bulk RIVF26_PORT=$port RIVF26_MODE=accuracy RIVF26_MAX_NUM_SEQS=$max_num_seqs
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting server"
