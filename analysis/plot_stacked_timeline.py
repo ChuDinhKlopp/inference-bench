@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 WIDTH = 1400
-HEIGHT = 980
+HEIGHT = 1280
 LEFT = 115
 RIGHT = 125
 TOP = 105
@@ -215,6 +215,7 @@ def render(data: dict, run_id: str | None) -> str:
 
     hbm = [float(value) for value in run["hbm"]]
     kv, kv_upper = kv_tokens(run)
+    kv_util = [value / kv_upper * 100.0 for value in kv]
     running = [float(value) for value in run["run"]]
     waiting = [float(value) for value in run["wait"]]
     preemptions = [float(value) for value in run["pre"]]
@@ -227,7 +228,7 @@ def render(data: dict, run_id: str | None) -> str:
     xticks = x_ticks(last_index)
     scheduler_upper = nice_upper(max(running + waiting))
     preemption_upper = nice_upper(max(preemptions))
-    y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(3)]
+    y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(4)]
 
     svg = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" '
@@ -248,17 +249,21 @@ def render(data: dict, run_id: str | None) -> str:
     svg.append(f'<path d="{path(kv, y_positions[1], kv_upper)}" fill="none" stroke="{COLORS["kv"]}" stroke-width="2"/>')
     svg.append(text_node(LEFT + PLOT_WIDTH - 8, y_positions[1] + 23, f"KV cache used / {kv_upper:,.0f} capacity", text_anchor="end", fill=COLORS["kv"], font_size="14", font_weight="600"))
 
-    svg.extend(panel_axes(y_positions[2], scheduler_upper, "scheduled requests", xticks, last_index, True, timestep_offset))
-    svg.append(f'<path d="{area(running, y_positions[2], scheduler_upper)}" fill="{COLORS["running"]}" opacity="0.10"/>')
-    svg.append(f'<path d="{path(running, y_positions[2], scheduler_upper)}" fill="none" stroke="{COLORS["running"]}" stroke-width="2.2"/>')
-    svg.append(f'<path d="{path(waiting, y_positions[2], scheduler_upper)}" fill="none" stroke="{COLORS["waiting"]}" stroke-width="2" stroke-dasharray="7 5"/>')
+    svg.extend(panel_axes(y_positions[2], 100, "KV utilization (%)", xticks, last_index, False, timestep_offset))
+    svg.append(f'<path d="{area(kv_util, y_positions[2], 100)}" fill="{COLORS["kv"]}" opacity="0.08"/>')
+    svg.append(f'<path d="{path(kv_util, y_positions[2], 100)}" fill="none" stroke="{COLORS["kv"]}" stroke-width="2"/>')
 
-    pre_points = points(preemptions, y_positions[2], preemption_upper)
+    svg.extend(panel_axes(y_positions[3], scheduler_upper, "scheduled requests", xticks, last_index, True, timestep_offset))
+    svg.append(f'<path d="{area(running, y_positions[3], scheduler_upper)}" fill="{COLORS["running"]}" opacity="0.10"/>')
+    svg.append(f'<path d="{path(running, y_positions[3], scheduler_upper)}" fill="none" stroke="{COLORS["running"]}" stroke-width="2.2"/>')
+    svg.append(f'<path d="{path(waiting, y_positions[3], scheduler_upper)}" fill="none" stroke="{COLORS["waiting"]}" stroke-width="2" stroke-dasharray="7 5"/>')
+
+    pre_points = points(preemptions, y_positions[3], preemption_upper)
     pre_path = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in pre_points)
     svg.append(f'<path d="{pre_path}" fill="none" stroke="{COLORS["preemptions"]}" stroke-width="1.8" stroke-dasharray="3 5"/>')
-    svg.append(text_node(LEFT + PLOT_WIDTH + 16, y_positions[2] + 5, f"preemptions: {int(max(preemptions))}", fill=COLORS["preemptions"], font_size="13"))
+    svg.append(text_node(LEFT + PLOT_WIDTH + 16, y_positions[3] + 5, f"preemptions: {int(max(preemptions))}", fill=COLORS["preemptions"], font_size="13"))
 
-    legend_y = y_positions[2] + 23
+    legend_y = y_positions[3] + 23
     legend_x = LEFT + PLOT_WIDTH - 360
     for offset, label, color, dash in (
         (0, "running", COLORS["running"], ""),
@@ -273,7 +278,7 @@ def render(data: dict, run_id: str | None) -> str:
     svg.append(
         text_node(
             LEFT + PLOT_WIDTH / 2,
-            y_positions[2] + PANEL_HEIGHT + 58,
+            y_positions[3] + PANEL_HEIGHT + 58,
             f"sampled timestep ({bin_seconds:g} seconds per sample)",
             text_anchor="middle",
             fill=COLORS["text"],
@@ -297,6 +302,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     series_name, selected_run_id, run = locate_run(data, run_id)
     hbm = [float(value) for value in run["hbm"]]
     kv, kv_upper = kv_tokens(run)
+    kv_util = [value / kv_upper * 100.0 for value in kv]
     running = [float(value) for value in run["run"]]
     waiting = [float(value) for value in run["wait"]]
     preemptions = [float(value) for value in run["pre"]]
@@ -341,7 +347,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     timestep_offset = int(data.get("_timestep_offset", 0))
     timestep_end = int(data.get("_timestep_end", timestep_offset + last_index))
     xticks = x_ticks(last_index)
-    y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(3)]
+    y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(4)]
     scheduler_upper = nice_upper(max(running + waiting))
 
     draw.text((LEFT, 30), "RIVF26 Part 1 — aligned inference timeline", fill=rgb("text"), font=title_font)
@@ -385,22 +391,27 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     draw.line(kv_points, fill=rgb("kv"), width=2, joint="curve")
     draw.text((LEFT + PLOT_WIDTH - 200, y_positions[1] + 10), "KV cache used / capacity", fill=rgb("kv"), font=small)
 
-    axes(y_positions[2], scheduler_upper, "scheduled requests", True)
-    running_points = points(running, y_positions[2], scheduler_upper)
-    waiting_points = points(waiting, y_positions[2], scheduler_upper)
+    axes(y_positions[2], 100, "KV utilization (%)", False)
+    kv_util_points = points(kv_util, y_positions[2], 100)
+    draw.polygon([(kv_util_points[0][0], y_positions[2] + PANEL_HEIGHT), *kv_util_points, (kv_util_points[-1][0], y_positions[2] + PANEL_HEIGHT)], fill=faded("kv"))
+    draw.line(kv_util_points, fill=rgb("kv"), width=2, joint="curve")
+
+    axes(y_positions[3], scheduler_upper, "scheduled requests", True)
+    running_points = points(running, y_positions[3], scheduler_upper)
+    waiting_points = points(waiting, y_positions[3], scheduler_upper)
     preemption_upper = nice_upper(max(preemptions))
-    preemption_points = points(preemptions, y_positions[2], preemption_upper)
-    draw.polygon([(running_points[0][0], y_positions[2] + PANEL_HEIGHT), *running_points, (running_points[-1][0], y_positions[2] + PANEL_HEIGHT)], fill=faded("running"))
+    preemption_points = points(preemptions, y_positions[3], preemption_upper)
+    draw.polygon([(running_points[0][0], y_positions[3] + PANEL_HEIGHT), *running_points, (running_points[-1][0], y_positions[3] + PANEL_HEIGHT)], fill=faded("running"))
     draw.line(running_points, fill=rgb("running"), width=2, joint="curve")
     dashed_line(waiting_points, "waiting", 2, 8, 5)
     dashed_line(preemption_points, "preemptions", 2, 3, 5)
-    draw.text((LEFT + PLOT_WIDTH - 335, y_positions[2] + 10), "running", fill=rgb("running"), font=small)
-    draw.text((LEFT + PLOT_WIDTH - 245, y_positions[2] + 10), "waiting", fill=rgb("waiting"), font=small)
-    draw.text((LEFT + PLOT_WIDTH - 155, y_positions[2] + 10), f"preemptions ({int(max(preemptions))})", fill=rgb("preemptions"), font=small)
+    draw.text((LEFT + PLOT_WIDTH - 335, y_positions[3] + 10), "running", fill=rgb("running"), font=small)
+    draw.text((LEFT + PLOT_WIDTH - 245, y_positions[3] + 10), "waiting", fill=rgb("waiting"), font=small)
+    draw.text((LEFT + PLOT_WIDTH - 155, y_positions[3] + 10), f"preemptions ({int(max(preemptions))})", fill=rgb("preemptions"), font=small)
 
     xlabel = f"sampled timestep ({bin_seconds:g} seconds per sample)"
     xlabel_box = draw.textbbox((0, 0), xlabel, font=label_font)
-    draw.text((LEFT + (PLOT_WIDTH - (xlabel_box[2] - xlabel_box[0])) / 2, y_positions[2] + PANEL_HEIGHT + 43), xlabel, fill=rgb("text"), font=label_font)
+    draw.text((LEFT + (PLOT_WIDTH - (xlabel_box[2] - xlabel_box[0])) / 2, y_positions[3] + PANEL_HEIGHT + 43), xlabel, fill=rgb("text"), font=label_font)
     summary = (
         f"peak HBM {max(hbm):.1f}% · peak KV {max(kv):,.0f} tokens · peak running {max(running):.1f} · "
         f"peak waiting {max(waiting):.1f} · preemptions {int(max(preemptions))}"
@@ -431,6 +442,7 @@ def comparison_runs(datasets: list[dict]) -> list[dict]:
                 "hbm": [float(value) for value in run["hbm"]],
                 "kv": kv_tokens(run)[0],
                 "kv_upper": kv_tokens(run)[1],
+                "kv_util": [float(value) * 100.0 for value in run["kv"]],
                 "run": [float(value) for value in run["run"]],
                 "wait": [float(value) for value in run["wait"]],
                 "pre": [float(value) for value in run["pre"]],
@@ -462,6 +474,7 @@ def render_comparison(datasets: list[dict]) -> str:
     metrics = (
         ("hbm", "HBM BW utilization (%)", hbm_upper),
         ("kv", "KV-cache used (tokens)", None),
+        ("kv_util", "KV utilization (%)", 100.0),
         ("run", "running requests", None),
         ("wait", "waiting requests", None),
         ("pre", "cumulative preemptions", None),
@@ -545,6 +558,7 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
     metrics = (
         ("hbm", "HBM BW utilization (%)", hbm_upper),
         ("kv", "KV-cache used (tokens)", None),
+        ("kv_util", "KV utilization (%)", 100.0),
         ("run", "running requests", None),
         ("wait", "waiting requests", None),
         ("pre", "cumulative preemptions", None),
