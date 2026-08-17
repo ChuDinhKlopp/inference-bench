@@ -1,0 +1,13 @@
+{
+  "schema_version": "rivf26.gpqa_source.v1",
+  "status": "PASS",
+  "timestamp_epoch_s": 1786888183.670573,
+  "timestamp_iso": "2026-08-16T13:49:43.670573+00:00",
+  "logical_id": "Idavidrein/gpqa",
+  "config": "gpqa_diamond",
+  "split": "train",
+  "revision": "633f5ee89ab8ad4522a9f850766b73f62147ffdd",
+  "local_csv": "/home/ducct/.cache/huggingface/hub/datasets--Idavidrein--gpqa/blobs/7589e3e467d69a1dceb126a60c4108d6d4f1d166",
+  "sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+  "rows": 198
+}

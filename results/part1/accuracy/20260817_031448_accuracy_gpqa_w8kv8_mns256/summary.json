@@ -1,0 +1,123 @@
+{
+  "schema_version": "rivf26.gpqa_summary.v2",
+  "run_id": "20260817_031448_accuracy_gpqa_w8kv8_mns256",
+  "run_kind": "official",
+  "precision": "w8kv8",
+  "max_num_seqs": 256,
+  "max_num_batched_tokens": 16384,
+  "source_questions": 198,
+  "repeats_per_question": 1,
+  "total_requests": 198,
+  "reasoning_effort": "high",
+  "max_gen_toks": 32768,
+  "arrival_mode": "none",
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20
+  },
+  "pass_at_1_repeats": [
+    {
+      "repeat": 0,
+      "correct": 140,
+      "total": 198,
+      "pass_at_1_accuracy": 0.7070707070707071
+    }
+  ],
+  "mean_pass_at_1": 0.7070707070707071,
+  "bench_evaluation_metrics": {
+    "overall_correct": 140,
+    "overall_total": 198,
+    "overall_accuracy": 0.7071
+  },
+  "length_analysis": {
+    "successful_requests": 198,
+    "failed_requests": 0,
+    "input_tokens": {
+      "count": 198,
+      "min": 77,
+      "avg": 251.91,
+      "p25": 167.25,
+      "p50": 218.5,
+      "p75": 278.0,
+      "p90": 376.5,
+      "p95": 460.0,
+      "p99": 788.39,
+      "max": 2780
+    },
+    "output_tokens": {
+      "count": 198,
+      "min": 1625,
+      "avg": 17812.12,
+      "p25": 6763.25,
+      "p50": 17456.5,
+      "p75": 29774.25,
+      "p90": 32768.0,
+      "p95": 32768.0,
+      "p99": 32768.0,
+      "max": 32768
+    },
+    "total_tokens": {
+      "count": 198,
+      "min": 1702,
+      "avg": 18064.03,
+      "p25": 7065.0,
+      "p50": 17649.5,
+      "p75": 30047.75,
+      "p90": 33019.7,
+      "p95": 33100.45,
+      "p99": 33328.93,
+      "max": 33666
+    },
+    "pilot_runtime_kv_capacity_tokens": 4297572,
+    "kv_capacity_concurrency_estimates": {
+      "w16kv16": {
+        "kv_capacity_tokens": 1461760,
+        "max_sequences_at_avg_length": 80,
+        "max_sequences_at_p90_length": 44,
+        "max_sequences_at_p95_length": 44,
+        "max_sequences_at_p99_length": 43,
+        "max_sequences_at_max_length": 43,
+        "max_sequences_at_90pct_capacity_p90_length": 39
+      },
+      "w8kv16": {
+        "kv_capacity_tokens": 2242048,
+        "max_sequences_at_avg_length": 124,
+        "max_sequences_at_p90_length": 67,
+        "max_sequences_at_p95_length": 67,
+        "max_sequences_at_p99_length": 67,
+        "max_sequences_at_max_length": 66,
+        "max_sequences_at_90pct_capacity_p90_length": 61
+      },
+      "w8kv8": {
+        "kv_capacity_tokens": 4297572,
+        "max_sequences_at_avg_length": 237,
+        "max_sequences_at_p90_length": 130,
+        "max_sequences_at_p95_length": 129,
+        "max_sequences_at_p99_length": 128,
+        "max_sequences_at_max_length": 127,
+        "max_sequences_at_90pct_capacity_p90_length": 117
+      },
+      "w16kv8": {
+        "kv_capacity_tokens": 2834928,
+        "max_sequences_at_avg_length": 156,
+        "max_sequences_at_p90_length": 85,
+        "max_sequences_at_p95_length": 85,
+        "max_sequences_at_p99_length": 85,
+        "max_sequences_at_max_length": 84,
+        "max_sequences_at_90pct_capacity_p90_length": 77
+      }
+    },
+    "estimate_note": "Capacity ratios are theoretical length-based bounds. The 90%-capacity/p90 row is a planning reference, not a measured scheduler optimum."
+  },
+  "log_growth": {
+    "bytes_written": 141927223,
+    "elapsed_s": 3877.8894922733307,
+    "requests": 198,
+    "successful_requests": 198,
+    "generated_tokens": 3526799,
+    "gib_per_hour": 0.12270800835988513,
+    "mib_per_request": 0.6835977140099111,
+    "bytes_per_generated_token": 40.24250403836454
+  }
+}

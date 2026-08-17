@@ -1,0 +1,43 @@
+{
+  "schema_version": "rivf26.hbm.v1",
+  "source_report": "/run/user/1009/ducct/rivf26/results/part1/performance/20260816_064441_performance_pubmed_w16kv16_mns256/raw/hbm.nsys-rep",
+  "session_start_epoch_s": 1786862845.8569589,
+  "session_start_utc": "2026-08-16T06:47:25",
+  "sample_rows": 186430,
+  "gpu_count": 4,
+  "normalization": "read and write percentages are summed, bounded to [0,100], then multiplied by the per-device peak memoryBandwidth from TARGET_INFO_GPU",
+  "devices": [
+    {
+      "id": 0,
+      "name": "NVIDIA A100-PCIE-40GB",
+      "busLocation": "0000:41:00.0",
+      "uuid": "3d7a4073-6883-8404-2a2c-649e3f357fdb",
+      "totalMemory": 42405855232,
+      "memoryBandwidth": 1555200000000
+    },
+    {
+      "id": 1,
+      "name": "NVIDIA A100-PCIE-40GB",
+      "busLocation": "0000:81:00.0",
+      "uuid": "bd1cf778-820d-19f4-ae21-ad5f5c1d98de",
+      "totalMemory": 42405855232,
+      "memoryBandwidth": 1555200000000
+    },
+    {
+      "id": 2,
+      "name": "NVIDIA A100-PCIE-40GB",
+      "busLocation": "0000:c1:00.0",
+      "uuid": "809db201-769b-b5c0-87bf-aab23077a820",
+      "totalMemory": 42405855232,
+      "memoryBandwidth": 1555200000000
+    },
+    {
+      "id": 3,
+      "name": "NVIDIA A100-PCIE-40GB",
+      "busLocation": "0000:c2:00.0",
+      "uuid": "2e9ce60f-2229-3abf-7e10-d6000b4d8524",
+      "totalMemory": 42405855232,
+      "memoryBandwidth": 1555200000000
+    }
+  ]
+}

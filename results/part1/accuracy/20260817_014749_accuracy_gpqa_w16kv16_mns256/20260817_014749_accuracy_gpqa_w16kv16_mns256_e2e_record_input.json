@@ -1,0 +1,341 @@
+{
+  "model": "Qwen3.6-35B-A3B",
+  "dataset": "gpqa",
+  "num_prompts": 198,
+  "num_requests": 198,
+  "isl_stats": {
+    "avg": 251.91,
+    "p25": 167.25,
+    "p50": 218.5,
+    "p90": 376.5
+  },
+  "osl_stats": {
+    "avg": 17344.57,
+    "p25": 6191.75,
+    "p50": 16800.0,
+    "p90": 32768.0
+  },
+  "dataset_info": {
+    "dataset_id": "Idavidrein/gpqa",
+    "config": "gpqa_diamond",
+    "split": "train",
+    "revision": "633f5ee89ab8ad4522a9f850766b73f62147ffdd",
+    "schema": "canonical_csv",
+    "local_csv": "/home/ducct/.cache/huggingface/hub/datasets--Idavidrein--gpqa/blobs/7589e3e467d69a1dceb126a60c4108d6d4f1d166",
+    "sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+    "num_instances": 198,
+    "max_gen_toks": 32768,
+    "sampling_top_k": 20
+  },
+  "frozen_requests_path": null,
+  "arrival_source": null,
+  "burstgpt_csv": null,
+  "azure_trace_csv": null,
+  "uniform_arrival_rate": null,
+  "arrival_scale": 1.0,
+  "max_concurrency": 256,
+  "temperature": 1.0,
+  "request_api": "chat/completions",
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  },
+  "num_fewshot": 5,
+  "lcb_release_version": "release_latest",
+  "lcb_not_fast": false,
+  "lcb_request_mode": "chat",
+  "lcb_num_process_evaluate": 12,
+  "lcb_eval_timeout": 6,
+  "repobench_dataset_name": null,
+  "repobench_language": "python",
+  "repobench_subsets": null,
+  "repobench_levels": null,
+  "repobench_start_date": "2023-12-01",
+  "repobench_end_date": "2023-12-31",
+  "repobench_max_prompt_toks": 15800,
+  "repobench_max_gen_toks": 128,
+  "mrcr_n_needles": null,
+  "mrcr_max_chars": null,
+  "mrcr_max_gen_toks": 1024,
+  "supergpqa_dataset": "m-a-p/SuperGPQA",
+  "supergpqa_max_gen_toks": 2048,
+  "hmmt25_dataset": "MathArena/hmmt_feb_2025",
+  "hmmt25_max_gen_toks": 8192,
+  "server_log_file": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/logs/server.log",
+  "server_metrics_poll_interval": 0.2,
+  "extra_prometheus_metrics": [],
+  "benchmark_duration_s": 5026.181,
+  "serving_metrics": {
+    "completed": 198,
+    "failed": 0,
+    "total_input": 51660,
+    "total_output": 3434224,
+    "request_throughput": 0.03939373017496274,
+    "request_goodput": 0.0,
+    "output_throughput": 683.2671394766729,
+    "total_token_throughput": 693.5453218041405,
+    "mean_ttft_ms": 24085.124384517774,
+    "median_ttft_ms": 24035.700105130672,
+    "std_ttft_ms": 8657.94617484351,
+    "percentiles_ttft_ms": [
+      [
+        50.0,
+        24035.700105130672
+      ],
+      [
+        90.0,
+        32889.85669799149
+      ],
+      [
+        95.0,
+        33034.19997766612
+      ],
+      [
+        99.0,
+        33845.53743798286
+      ]
+    ],
+    "mean_tpot_ms": 159.34825474733023,
+    "median_tpot_ms": 150.45574576320718,
+    "std_tpot_ms": 39.42687095378399,
+    "percentiles_tpot_ms": [
+      [
+        50.0,
+        150.45574576320718
+      ],
+      [
+        90.0,
+        177.38191522689553
+      ],
+      [
+        95.0,
+        212.50531365983028
+      ],
+      [
+        99.0,
+        364.31558892290576
+      ]
+    ],
+    "mean_itl_ms": 150.2663996214129,
+    "median_itl_ms": 119.84995752573013,
+    "std_itl_ms": 6038.58511882093,
+    "percentiles_itl_ms": [
+      [
+        50.0,
+        119.84995752573013
+      ],
+      [
+        90.0,
+        169.95012015104294
+      ],
+      [
+        95.0,
+        171.98732495307922
+      ],
+      [
+        99.0,
+        175.49553886055946
+      ]
+    ],
+    "mean_e2el_ms": 2628065.990434978,
+    "median_e2el_ms": 2594085.548372939,
+    "std_e2el_ms": 1595855.351752626,
+    "percentiles_e2el_ms": [
+      [
+        50.0,
+        2594085.548372939
+      ],
+      [
+        90.0,
+        4445462.840020285
+      ],
+      [
+        95.0,
+        4768958.701994269
+      ],
+      [
+        99.0,
+        4986571.918345913
+      ]
+    ],
+    "max_output_tokens_per_s": 1385.0,
+    "max_concurrent_requests": 198,
+    "rtfx": 0.0
+  },
+  "iteration_metrics": {
+    "poll_interval_s": 0.2,
+    "scrape_failures": 0,
+    "server_log_file": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/logs/server.log",
+    "server_log_start_offset": 45341,
+    "num_prometheus_samples": 23905,
+    "num_iterations_parsed": 55708,
+    "num_iterations_merged": 55708,
+    "num_requests_processed": 198,
+    "num_preemptions": 104,
+    "prometheus_samples_jsonl_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/bench_results.prometheus_samples.jsonl",
+    "iteration_metrics_jsonl_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/bench_results.iteration_metrics.jsonl",
+    "iteration_metrics_csv_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/bench_results.iteration_metrics.csv",
+    "initial_snapshot": {
+      "timestamp_epoch_s": 1786931427.6875432,
+      "timestamp_iso": "2026-08-17T01:50:27.687543+00:00",
+      "elapsed_s": 0.0,
+      "metrics": {
+        "requests_running": {
+          "alias": "requests_running",
+          "metric_name": "vllm:num_requests_running",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_waiting": {
+          "alias": "requests_waiting",
+          "metric_name": "vllm:num_requests_waiting",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "preemptions_cum": {
+          "alias": "preemptions_cum",
+          "metric_name": "vllm:num_preemptions_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "kv_cache_usage": {
+          "alias": "kv_cache_usage",
+          "metric_name": "vllm:kv_cache_usage_perc",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iteration_tokens_cum": {
+          "alias": "iteration_tokens_cum",
+          "metric_name": "vllm:iteration_tokens_total_sum",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iterations_cum": {
+          "alias": "iterations_cum",
+          "metric_name": "vllm:iteration_tokens_total_count",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_processed_cum": {
+          "alias": "requests_processed_cum",
+          "metric_name": "vllm:request_success_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "final_snapshot": {
+      "timestamp_epoch_s": 1786936453.8762763,
+      "timestamp_iso": "2026-08-17T03:14:13.876276+00:00",
+      "elapsed_s": 5026.188734136522,
+      "metrics": {
+        "requests_running": {
+          "alias": "requests_running",
+          "metric_name": "vllm:num_requests_running",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_waiting": {
+          "alias": "requests_waiting",
+          "metric_name": "vllm:num_requests_waiting",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "preemptions_cum": {
+          "alias": "preemptions_cum",
+          "metric_name": "vllm:num_preemptions_total",
+          "per_engine": {
+            "0": 104.0
+          },
+          "sum": 104.0,
+          "avg": 104.0,
+          "max": 104.0
+        },
+        "kv_cache_usage": {
+          "alias": "kv_cache_usage",
+          "metric_name": "vllm:kv_cache_usage_perc",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iteration_tokens_cum": {
+          "alias": "iteration_tokens_cum",
+          "metric_name": "vllm:iteration_tokens_total_sum",
+          "per_engine": {
+            "0": 3485884.0
+          },
+          "sum": 3485884.0,
+          "avg": 3485884.0,
+          "max": 3485884.0
+        },
+        "iterations_cum": {
+          "alias": "iterations_cum",
+          "metric_name": "vllm:iteration_tokens_total_count",
+          "per_engine": {
+            "0": 55708.0
+          },
+          "sum": 55708.0,
+          "avg": 55708.0,
+          "max": 55708.0
+        },
+        "requests_processed_cum": {
+          "alias": "requests_processed_cum",
+          "metric_name": "vllm:request_success_total",
+          "per_engine": {
+            "0": 198.0
+          },
+          "sum": 198.0,
+          "avg": 198.0,
+          "max": 198.0
+        }
+      }
+    }
+  },
+  "evaluation_metrics": {
+    "overall_correct": 140,
+    "overall_total": 198,
+    "overall_accuracy": 0.7071
+  },
+  "generation_bundle_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/generations.json",
+  "evaluation_skipped": false,
+  "num_preempted": 104,
+  "num_requests_processed": 198
+}

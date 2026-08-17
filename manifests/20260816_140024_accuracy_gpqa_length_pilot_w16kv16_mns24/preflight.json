@@ -1,0 +1,301 @@
+{
+  "schema_version": "rivf26.preflight.v1",
+  "stage": "A",
+  "status": "PASS",
+  "timestamp_epoch_s": 1786888833.026364,
+  "timestamp_iso": "2026-08-16T14:00:33.026364+00:00",
+  "run": {
+    "run_id": "20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24",
+    "mode": "accuracy",
+    "precision": "w16kv16",
+    "max_num_seqs": 24,
+    "max_num_batched_tokens": 16384,
+    "estimated_output_gib": 80.0,
+    "safety_reserve_gib": 50.0
+  },
+  "git_commit": "3e4b6eadef1b14319b23a538d134f9ff57ff822c",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B",
+    "size_bytes": 71926872555,
+    "weight_files": [
+      {
+        "name": "model-00001-of-00026.safetensors",
+        "size_bytes": 3996199712
+      },
+      {
+        "name": "model-00002-of-00026.safetensors",
+        "size_bytes": 1284907696
+      },
+      {
+        "name": "model-00003-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00004-of-00026.safetensors",
+        "size_bytes": 3370808712
+      },
+      {
+        "name": "model-00005-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00006-of-00026.safetensors",
+        "size_bytes": 3959424904
+      },
+      {
+        "name": "model-00007-of-00026.safetensors",
+        "size_bytes": 1096788232
+      },
+      {
+        "name": "model-00008-of-00026.safetensors",
+        "size_bytes": 3946842008
+      },
+      {
+        "name": "model-00009-of-00026.safetensors",
+        "size_bytes": 1096460848
+      },
+      {
+        "name": "model-00010-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00011-of-00026.safetensors",
+        "size_bytes": 1096460752
+      },
+      {
+        "name": "model-00012-of-00026.safetensors",
+        "size_bytes": 3409971080
+      },
+      {
+        "name": "model-00013-of-00026.safetensors",
+        "size_bytes": 1633331664
+      },
+      {
+        "name": "model-00014-of-00026.safetensors",
+        "size_bytes": 3422553872
+      },
+      {
+        "name": "model-00015-of-00026.safetensors",
+        "size_bytes": 1633659224
+      },
+      {
+        "name": "model-00016-of-00026.safetensors",
+        "size_bytes": 3946842136
+      },
+      {
+        "name": "model-00017-of-00026.safetensors",
+        "size_bytes": 1096460608
+      },
+      {
+        "name": "model-00018-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00019-of-00026.safetensors",
+        "size_bytes": 1096460808
+      },
+      {
+        "name": "model-00020-of-00026.safetensors",
+        "size_bytes": 3409971072
+      },
+      {
+        "name": "model-00021-of-00026.safetensors",
+        "size_bytes": 1633331744
+      },
+      {
+        "name": "model-00022-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00023-of-00026.safetensors",
+        "size_bytes": 3357898392
+      },
+      {
+        "name": "model-00024-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00025-of-00026.safetensors",
+        "size_bytes": 3832888256
+      },
+      {
+        "name": "model-00026-of-00026.safetensors",
+        "size_bytes": 2231416848
+      }
+    ]
+  },
+  "resources": {
+    "result_filesystem": {
+      "path": "/run/user/1009/ducct/rivf26",
+      "bytes_total": 162323963904,
+      "bytes_free": 146469822464,
+      "inodes_total": 198149371,
+      "inodes_free": 198148013,
+      "mount": "/run/user/1009 tmpfs  tmpfs",
+      "filesystem_type": "tmpfs"
+    },
+    "dev_shm": {
+      "path": "/dev/shm",
+      "bytes_total": 811619823616,
+      "bytes_free": 50086297600,
+      "inodes_total": 198149371,
+      "inodes_free": 198142346
+    },
+    "host": {
+      "memory_total_bytes": 1623239651328,
+      "memory_available_bytes": 547845341184,
+      "swap_total_bytes": 8589930496,
+      "swap_free_bytes": 296374272
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 0,
+        "memory_free_mib": 40442,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 30,
+        "power_w": 32.81
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 0,
+        "memory_free_mib": 40442,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 34,
+        "power_w": 49.12
+      },
+      {
+        "index": 2,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 0,
+        "memory_free_mib": 40442,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 34,
+        "power_w": 48.31
+      },
+      {
+        "index": 3,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 0,
+        "memory_free_mib": 40442,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 33,
+        "power_w": 43.77
+      }
+    ],
+    "gpu_processes": []
+  },
+  "checks": [
+    {
+      "name": "git_worktree",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "3e4b6eadef1b14319b23a538d134f9ff57ff822c"
+    },
+    {
+      "name": "result_filesystem_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=136.4 GiB; required=130.0 GiB"
+    },
+    {
+      "name": "result_filesystem_inodes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_fraction=1.000"
+    },
+    {
+      "name": "host_ram",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=510.2 GiB; minimum=256.0 GiB"
+    },
+    {
+      "name": "swap_usage",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "used_fraction=0.965; host available RAM is the mandatory pressure gate"
+    },
+    {
+      "name": "tmpfs_host_ram_after_estimated_output",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=510.2 GiB; required host floor + output/reserve=386.0 GiB"
+    },
+    {
+      "name": "dev_shm_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=46.6 GiB; minimum=32.0 GiB"
+    },
+    {
+      "name": "local_model",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "path=/dev/shm/Qwen3.6-35B-A3B; safetensors=26; missing=[]"
+    },
+    {
+      "name": "gpu_inventory",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "found=[(0, 'NVIDIA A100-PCIE-40GB'), (1, 'NVIDIA A100-PCIE-40GB'), (2, 'NVIDIA A100-PCIE-40GB'), (3, 'NVIDIA A100-PCIE-40GB')]; stderr="
+    },
+    {
+      "name": "gpu_hbm_before_server",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_mib=[(0, 40442), (1, 40442), (2, 40442), (3, 40442)]"
+    },
+    {
+      "name": "gpu_processes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "none"
+    },
+    {
+      "name": "stale_vllm_servers",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "none"
+    },
+    {
+      "name": "other_benchmark_clients",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "[{\"pid\": 3992676, \"uid\": \"1004\", \"command\": \"/home/hieupm/repos/base/.venv/bin/python /home/hieupm/repos/base/scripts/bench.py --server-log-file /home/hieupm/repos/base/scripts/logs/server_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.log --server-metrics-poll-interval 0.2 --dataset livecodebench --model /dev/shm/gemma-4-26B-A4B-it-FP8-dynamic --base-url http://localhost:8006 --max-concurrency 128 --temperature 0.0 --timeout 7200 --arrival-scale 200 --output /home/hieupm/repos/base/scripts/logs/bench_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.json --num-prompts 1055 --azure-trace-csv /home/hieupm/repos/base/scripts/busiest_AzureLMMInferenceTrace_multimodal.csv --lcb-release-version release_latest --lcb-max-gen-toks 8192 --lcb-num-process-evaluate 12 --lcb-eval-timeout 6\"}]"
+    },
+    {
+      "name": "server_port",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "127.0.0.1:8000"
+    },
+    {
+      "name": "vllm_runtime",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "2.13.0+cu130\n0.27.0"
+    },
+    {
+      "name": "vllm_compiled_extension_api",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()\n(topk_weights: torch.Tensor, topk_ids: torch.Tensor, token_expert_indices: torch.Tensor, gating_output: torch.Tensor, renormalize: bool = False, e_score_correction_bias: torch.Tensor | None = None, is_padding: torch.Tensor | None = None) -> None"
+    },
+    {
+      "name": "hbm_sampler",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "/usr/local/bin/nsys"
+    }
+  ],
+  "mandatory_failures": []
+}

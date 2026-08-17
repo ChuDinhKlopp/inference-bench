@@ -1,0 +1,123 @@
+{
+  "schema_version": "rivf26.pubmed_rouge.v1",
+  "run_id": "20260816_031714_performance_pubmed_w16kv16_mns128",
+  "created_epoch_s": 1786866201.626061,
+  "created_iso": "2026-08-16T07:43:21.626061+00:00",
+  "dataset": {
+    "repo": "ccdv/pubmed-summarization",
+    "config": "document",
+    "split": "test",
+    "revision": "6b30a2cae59b11ed77cb19959bffccbbd18e1106"
+  },
+  "metrics": {
+    "rouge1": {
+      "precision": {
+        "mean": 0.3277497605453397,
+        "p25": 0.25,
+        "p50": 0.32932126696832575,
+        "p90": 0.4635306372549019,
+        "min": 0.02702702702702703,
+        "max": 0.73
+      },
+      "recall": {
+        "mean": 0.5868446939677797,
+        "p25": 0.5293612290276936,
+        "p50": 0.591715976331361,
+        "p90": 0.6991381803458846,
+        "min": 0.08602150537634409,
+        "max": 0.9629629629629629
+      },
+      "f1": {
+        "mean": 0.40484532676381263,
+        "p25": 0.3492058735391069,
+        "p50": 0.41666666666666663,
+        "p90": 0.5134673982266202,
+        "min": 0.051948051948051945,
+        "max": 0.6858638743455497
+      }
+    },
+    "rouge2": {
+      "precision": {
+        "mean": 0.09823138121417271,
+        "p25": 0.06038048277892258,
+        "p50": 0.09302012562491987,
+        "p90": 0.16536464622071964,
+        "min": 0.0,
+        "max": 0.41397849462365593
+      },
+      "recall": {
+        "mean": 0.17378169051906814,
+        "p25": 0.12814436748086036,
+        "p50": 0.16666666666666666,
+        "p90": 0.261996336996337,
+        "min": 0.0,
+        "max": 0.5
+      },
+      "f1": {
+        "mean": 0.12062217401350309,
+        "p25": 0.08289812469379033,
+        "p50": 0.11785751867831212,
+        "p90": 0.18712411979812027,
+        "min": 0.0,
+        "max": 0.4052631578947368
+      }
+    },
+    "rougeL": {
+      "precision": {
+        "mean": 0.16487227819908032,
+        "p25": 0.11803604868913857,
+        "p50": 0.16120894114630552,
+        "p90": 0.24338700402530195,
+        "min": 0.021621621621621623,
+        "max": 0.4921875
+      },
+      "recall": {
+        "mean": 0.29730289700717516,
+        "p25": 0.24675324675324675,
+        "p50": 0.2926829268292683,
+        "p90": 0.385870703930249,
+        "min": 0.043010752688172046,
+        "max": 0.6575342465753424
+      },
+      "f1": {
+        "mean": 0.20363546470486663,
+        "p25": 0.16606165159124514,
+        "p50": 0.2021276595744681,
+        "p90": 0.27375323744971625,
+        "min": 0.04155844155844156,
+        "max": 0.47643979057591623
+      }
+    }
+  },
+  "request_count": 1000,
+  "scoring": {
+    "implementation": "rouge-score",
+    "implementation_version": "0.1.2",
+    "metrics": [
+      "rouge1",
+      "rouge2",
+      "rougeL"
+    ],
+    "score_scale": "0_to_1",
+    "use_stemmer": true,
+    "aggregation": "macro mean of per-request scores",
+    "prediction_field": "generated_text",
+    "reference_field": "dataset.reference_abstract",
+    "rougeL_variant": "sentence-agnostic rougeL (not rougeLsum)"
+  },
+  "scores": {
+    "rouge1_f1": 0.40484532676381263,
+    "rouge2_f1": 0.12062217401350309,
+    "rougeL_f1": 0.20363546470486663
+  },
+  "inputs": {
+    "workload": "/run/user/1009/ducct/rivf26/datasets/processed/pubmed_azure_bursty_1000.jsonl",
+    "workload_sha256": "6b842e6cd2771085c1dd7120c89153b2167b339f914f1922a5eb2784776cd751",
+    "responses": "/run/user/1009/ducct/rivf26/results/part1/performance/20260816_031714_performance_pubmed_w16kv16_mns128/raw/responses.jsonl",
+    "responses_sha256": "3fe5e6e394fb5cdd033d1e57fe5eabaf785abe8fb6b0d18b40700803da71734f"
+  },
+  "per_request": {
+    "path": "/home/ducct/repos/inference-bench/rivf26/results/part1/performance/20260816_031714_performance_pubmed_w16kv16_mns128/rouge_per_request.jsonl",
+    "sha256": "620b563be1eaf81cf6512dcd0c11796507acfc05a4b51e9fb89e6eed026bafa8"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schema_version": "rivf26.post_server.v1",
+  "stage": "B",
+  "status": "PASS",
+  "timestamp_epoch_s": 1786944699.399141,
+  "timestamp_iso": "2026-08-17T05:31:39.399141+00:00",
+  "run_id": "20260817_052644_accuracy_gpqa_w16kv8_mns256",
+  "precision": "w16kv8",
+  "max_num_batched_tokens": 16384,
+  "checks": [
+    {
+      "name": "server_health",
+      "result": "PASS",
+      "detail": "status=200; error="
+    },
+    {
+      "name": "prometheus_metrics",
+      "result": "PASS",
+      "detail": "resolved={'requests_running': 'vllm:num_requests_running', 'requests_waiting': 'vllm:num_requests_waiting', 'kv_cache_usage': 'vllm:kv_cache_usage_perc'}; missing=[]; error="
+    },
+    {
+      "name": "max_num_batched_tokens_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=16384; evidence=['--max-num-batched-tokens 16384']"
+    },
+    {
+      "name": "kv_dtype_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=fp8; evidence=['kv-cache-dtype fp8', \"kv_cache_dtype': 'fp8\", 'kv_cache_dtype=fp8', 'cache-dtype fp8', \"cache_dtype': 'fp8\"]"
+    },
+    {
+      "name": "attention_backend_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=FLASHINFER; evidence=['RIVF26 server command: /home/ducct/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B --tokenizer /dev/shm/Qwen3.6-35B-A3B --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8000 --tensor-parallel-size 4 --max-model-len 262144 --max-num-seqs 256 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend FLASHINFER --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_str\\\\\":\\\\\"\\\\</think\\\\>\\\\\"\\\\} --', \"(APIServer pid=1889263) INFO 08-17 05:26:59 [api_utils.py:273] non-default args: {'model_tag': '/dev/shm/Qwen3.6-35B-A3B', 'host': '127.0.0.1', 'model': '/dev/shm/Qwen3.6-35B-A3B', 'tokenizer': '/dev/shm/Qwen3.6-35B-A3B', 'max_model_len': 262144, 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'FLASHINFER', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'enable_logging_iteration_details': True, 'max_num_batched_token\", \"(EngineCore pid=1889894) INFO 08-17 05:27:16 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/dev/shm/Qwen3.6-35B-A3B', speculative_config=None, tokenizer='/dev/shm/Qwen3.6-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size\", \"(Worker pid=1890076) INFO 08-17 05:27:28 [cuda_communicator.py:266] Using ['PYNCCL'] all-reduce backends (in dispatch order) for group 'tp:0' out of potential backends: ['NCCL_SYMM_MEM', 'QUICK_REDUCE', 'FLASHINFER', 'AITER_CUSTOM', 'CUSTOM', 'SYMM_MEM', 'PYNCCL'].\", \"(Worker pid=1890076) INFO 08-17 05:27:29 [cuda_communicator.py:266] Using ['PYNCCL'] all-reduce backends (in dispatch order) for group 'ep:0' out of potential backends: ['NCCL_SYMM_MEM', 'QUICK_REDUCE', 'FLASHINFER', 'AITER_CUSTOM', 'CUSTOM', 'SYMM_MEM', 'PYNCCL'].\"]"
+    },
+    {
+      "name": "reasoning_parser_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=qwen3; evidence=[\"(APIServer pid=1889263) INFO 08-17 05:26:59 [api_utils.py:273] non-default args: {'model_tag': '/dev/shm/Qwen3.6-35B-A3B', 'host': '127.0.0.1', 'model': '/dev/shm/Qwen3.6-35B-A3B', 'tokenizer': '/dev/shm/Qwen3.6-35B-A3B', 'max_model_len': 262144, 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'FLASHINFER', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'enable_logging_iteration_details': True, 'max_num_batched_tokens': 16384, 'max_num_seqs': 256, 'reasoning_config': ReasoningConfig(reasoning_parser='', reasoning_start_str='<think>', reasoning_end_str='</think>')}\", \"(EngineCore pid=1889894) INFO 08-17 05:27:16 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/dev/shm/Qwen3.6-35B-A3B', speculative_config=None, tokenizer='/dev/shm/Qwen3.6-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=fp8, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='qwen3', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otl\"]"
+    },
+    {
+      "name": "weight_format_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=BF16 directory; evidence=['RIVF26 server command: /home/ducct/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B --tokenizer /dev/shm/Qwen3.6-35B-A3B --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8000 --tensor-parallel-size 4 --max-model-len 262144 --max-num-seqs 256 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend FLASHINFER --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_str\\\\\":\\\\\"\\\\</think\\\\>\\\\\"\\\\} --', '(APIServer pid=1889263) INFO 08-17 05:26:59 [api_utils.py:345]   \u2588\u2584\u2588\u2580 \u2588     \u2588     \u2588     \u2588  model   /dev/shm/Qwen3.6-35B-A3B', \"(APIServer pid=1889263) INFO 08-17 05:26:59 [api_utils.py:273] non-default args: {'model_tag': '/dev/shm/Qwen3.6-35B-A3B', 'host': '127.0.0.1', 'model': '/dev/shm/Qwen3.6-35B-A3B', 'tokenizer': '/dev/shm/Qwen3.6-35B-A3B', 'max_model_len': 262144, 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'FLASHINFER', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'enable_logging_iteration_details': True, 'max_num_batched_token\", \"(EngineCore pid=1889894) INFO 08-17 05:27:16 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/dev/shm/Qwen3.6-35B-A3B', speculative_config=None, tokenizer='/dev/shm/Qwen3.6-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size\", '(Worker_TP0 pid=1890076) INFO 08-17 05:27:35 [gpu_model_runner.py:5308] Starting to load model /dev/shm/Qwen3.6-35B-A3B...']"
+    },
+    {
+      "name": "kv_capacity_runtime_evidence",
+      "result": "PASS",
+      "detail": "evidence=['GPU KV cache size: 2,486,206 tokens', 'Available KV cache memory: 12.04 GiB']"
+    },
+    {
+      "name": "tp4_hbm_after_load",
+      "result": "PASS",
+      "detail": "gpus=[{'index': 0, 'used_mib': 37457, 'free_mib': 2985}, {'index': 1, 'used_mib': 37451, 'free_mib': 2991}, {'index': 2, 'used_mib': 37447, 'free_mib': 2995}, {'index': 3, 'used_mib': 37445, 'free_mib': 2997}]; stderr="
+    },
+    {
+      "name": "monitor_processes",
+      "result": "PASS",
+      "detail": "configured=[1902174]; dead=[]"
+    },
+    {
+      "name": "output_writable_and_headroom",
+      "result": "PASS",
+      "detail": "path=/run/user/1009/ducct/rivf26; writable=True; free=135.3 GiB"
+    },
+    {
+      "name": "max_num_batched_tokens_preflight_consistency",
+      "result": "PASS",
+      "detail": "expected=16384; preflight=16384"
+    },
+    {
+      "name": "model_path_identity",
+      "result": "PASS",
+      "detail": "path=/dev/shm/Qwen3.6-35B-A3B"
+    }
+  ],
+  "failures": [],
+  "warnings": [
+    {
+      "name": "fp8_kv_scale_accuracy_risk",
+      "blocking": false,
+      "detail": "vLLM default FP8 KV/Q/prob scale 1.0 was explicitly accepted for this study.",
+      "evidence": [
+        "(APIServer pid=1889263) INFO 08-17 05:27:01 [cache.py:296] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor"
+      ]
+    }
+  ],
+  "blocking_warnings": [],
+  "fp8_kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+  "long_run_eligible": true
+}

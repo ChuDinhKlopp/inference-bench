@@ -1,0 +1,308 @@
+{
+  "schema_version": "rivf26.run_manifest.v1",
+  "status": "PASS",
+  "created_epoch_s": 1786861061.683941,
+  "created_iso": "2026-08-16T06:17:41.683941+00:00",
+  "run_id": "20260816_044905_performance_pubmed_w8kv8_mns128",
+  "mode": "performance",
+  "dataset": "ccdv/pubmed-summarization",
+  "precision": "w8kv8",
+  "max_num_seqs": 128,
+  "max_num_batched_tokens": 16384,
+  "max_gen_toks": 10240,
+  "reasoning_effort": "low",
+  "enable_thinking": true,
+  "thinking_token_budget": 6144,
+  "arrival_mode": "azure",
+  "git_commit": "f3ce32a25dd4f0df5fe412e97a955e558366ff9b",
+  "started_epoch_s": 1786856034.8283162,
+  "ended_epoch_s": 1786861051.8678133,
+  "preflight_status": "PASS",
+  "post_server_status": "PASS",
+  "thinking_budget_probe": {
+    "schema_version": "rivf26.thinking_budget_probe.v1",
+    "status": "PASS",
+    "timestamp_iso": "2026-08-16T04:53:54.145320+00:00",
+    "request_id": "pubmed-test-05286",
+    "prompt_tokens": 42,
+    "max_completion_tokens": 6656,
+    "enable_thinking": true,
+    "thinking_token_budget": 6144,
+    "measured_reasoning_tokens": 415,
+    "answer_chars": 357,
+    "answer_nonempty": true,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 42,
+      "total_tokens": 530,
+      "completion_tokens": 488,
+      "prompt_tokens_details": null
+    }
+  },
+  "fp8_kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+    "size_bytes": 37486695672,
+    "weight_files": [
+      {
+        "name": "layers-0.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-1.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-10.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-11.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-12.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-13.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-14.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-15.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-16.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-17.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-18.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-19.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-2.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-20.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-21.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-22.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-23.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-24.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-25.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-26.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-27.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-28.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-29.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-3.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-30.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-31.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-32.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-33.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-34.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-35.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-36.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-37.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-38.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-39.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-4.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-5.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-6.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-7.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-8.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-9.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "mtp.safetensors",
+        "size_bytes": 853860608
+      },
+      {
+        "name": "outside.safetensors",
+        "size_bytes": 2927422112
+      }
+    ]
+  },
+  "inputs": {
+    "workload": "/run/user/1009/ducct/rivf26/datasets/processed/pubmed_azure_bursty_1000.jsonl",
+    "workload_sha256": "6b842e6cd2771085c1dd7120c89153b2167b339f914f1922a5eb2784776cd751",
+    "trace_csv": "/home/ducct/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv",
+    "trace_csv_sha256": "3b487d345f3ae02d5a4dcfc8d303a060322d6fe03763af638cda2695d11977d0",
+    "trace_rows": 1000
+  },
+  "commands": {
+    "server": "/home/ducct/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B-FP8 --tokenizer /dev/shm/Qwen3.6-35B-A3B-FP8 --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8000 --tensor-parallel-size 4 --max-model-len 65536 --max-num-seqs 128 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend FLASHINFER --reasoning-parser qwen3 --reasoning-config \\{\\\"reasoning_start_str\\\":\\\"\\<think\\>\\\"\\,\\\"reasoning_end_str\\\":\\\"\\</think\\>\\\"\\} --enable-logging-iteration-details --quantization fp8 --max-num-batched-tokens 16384",
+    "client": "BENCH_ARRIVAL_RATE=azure /home/ducct/repos/vllm/.venv/bin/python /home/ducct/repos/inference-bench/rivf26/scripts/performance/run_pubmed_trace.py --workload /run/user/1009/ducct/rivf26/datasets/processed/pubmed_azure_bursty_1000.jsonl --trace-csv /home/ducct/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv --output-dir /home/ducct/repos/inference-bench/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128 --base-url http://127.0.0.1:8000 --model Qwen3.6-35B-A3B --server-log-file /run/user/1009/ducct/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128/logs/server.log --server-metrics-poll-interval 0.2 --max-num-batched-tokens 16384 --thinking-token-budget 6144 --timeout 43200"
+  },
+  "bulk_run_dir": "/run/user/1009/ducct/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128",
+  "artifacts": [
+    {
+      "relative_path": "logs/client.log",
+      "size_bytes": 64526,
+      "modified_epoch_s": 1786861051.82071
+    },
+    {
+      "relative_path": "logs/resource_guard.log",
+      "size_bytes": 0,
+      "modified_epoch_s": 1786856023.5750465
+    },
+    {
+      "relative_path": "logs/server.log",
+      "size_bytes": 6925610,
+      "modified_epoch_s": 1786861056.1126797
+    },
+    {
+      "relative_path": "logs/server_command.txt",
+      "size_bytes": 568,
+      "modified_epoch_s": 1786855753.0780644
+    },
+    {
+      "relative_path": "raw/hbm.csv",
+      "size_bytes": 37282551,
+      "modified_epoch_s": 1786861059.348657
+    },
+    {
+      "relative_path": "raw/hbm.nsys-rep",
+      "size_bytes": 6565053,
+      "modified_epoch_s": 1786861051.4007127
+    },
+    {
+      "relative_path": "raw/iteration_metrics.iteration_metrics.csv",
+      "size_bytes": 11287863,
+      "modified_epoch_s": 1786861045.1407568
+    },
+    {
+      "relative_path": "raw/iteration_metrics.iteration_metrics.jsonl",
+      "size_bytes": 31934025,
+      "modified_epoch_s": 1786861044.7967591
+    },
+    {
+      "relative_path": "raw/iteration_metrics.prometheus_samples.jsonl",
+      "size_bytes": 32215725,
+      "modified_epoch_s": 1786861044.4647615
+    },
+    {
+      "relative_path": "raw/per_request.csv",
+      "size_bytes": 89902,
+      "modified_epoch_s": 1786861045.216756
+    },
+    {
+      "relative_path": "raw/resource_guard.csv",
+      "size_bytes": 15853,
+      "modified_epoch_s": 1786861033.684837
+    },
+    {
+      "relative_path": "raw/responses.jsonl",
+      "size_bytes": 46752875,
+      "modified_epoch_s": 1786861046.640746
+    }
+  ],
+  "log_growth": {
+    "bytes_written": 173134551,
+    "elapsed_s": 5017.03949713707,
+    "requests": 1000,
+    "successful_requests": 1000,
+    "generated_tokens": 2256451,
+    "gib_per_hour": 0.11570146441606026,
+    "mib_per_request": 0.16511397457122803,
+    "bytes_per_generated_token": 76.72869962609425
+  },
+  "e2e_metrics": {
+    "csv": "/home/ducct/repos/inference-bench/rivf26/e2e_metrics_record.csv",
+    "record_input": "/home/ducct/repos/inference-bench/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128/20260816_044905_performance_pubmed_w8kv8_mns128_e2e_record_input.json",
+    "record_script": "/home/ducct/repos/inference-bench/record_e2e_metrics.py"
+  }
+}

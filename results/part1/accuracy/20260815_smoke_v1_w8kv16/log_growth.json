@@ -1,0 +1,9 @@
+{
+  "elapsed_s": 4.236311245709658,
+  "requests": 4,
+  "generated_tokens": 420,
+  "bytes_written": 1270184,
+  "gb_per_hour_decimal": 1.0793971771151099,
+  "mb_per_request_decimal": 0.317546,
+  "bytes_per_generated_token": 3024.247619047619
+}

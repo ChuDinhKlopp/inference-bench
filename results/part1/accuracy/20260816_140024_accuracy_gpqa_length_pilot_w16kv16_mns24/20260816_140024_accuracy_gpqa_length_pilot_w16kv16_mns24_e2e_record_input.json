@@ -1,0 +1,341 @@
+{
+  "model": "Qwen3.6-35B-A3B",
+  "dataset": "gpqa",
+  "num_prompts": 198,
+  "num_requests": 198,
+  "isl_stats": {
+    "avg": 251.91,
+    "p25": 167.25,
+    "p50": 218.5,
+    "p90": 376.5
+  },
+  "osl_stats": {
+    "avg": 17803.62,
+    "p25": 6027.25,
+    "p50": 17278.0,
+    "p90": 32768.0
+  },
+  "dataset_info": {
+    "dataset_id": "Idavidrein/gpqa",
+    "config": "gpqa_diamond",
+    "split": "train",
+    "revision": "633f5ee89ab8ad4522a9f850766b73f62147ffdd",
+    "schema": "canonical_csv",
+    "local_csv": "/home/ducct/.cache/huggingface/hub/datasets--Idavidrein--gpqa/blobs/7589e3e467d69a1dceb126a60c4108d6d4f1d166",
+    "sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+    "num_instances": 198,
+    "max_gen_toks": 32768,
+    "sampling_top_k": 20
+  },
+  "frozen_requests_path": null,
+  "arrival_source": null,
+  "burstgpt_csv": null,
+  "azure_trace_csv": null,
+  "uniform_arrival_rate": null,
+  "arrival_scale": 1.0,
+  "max_concurrency": 24,
+  "temperature": 1.0,
+  "request_api": "chat/completions",
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  },
+  "num_fewshot": 5,
+  "lcb_release_version": "release_latest",
+  "lcb_not_fast": false,
+  "lcb_request_mode": "chat",
+  "lcb_num_process_evaluate": 12,
+  "lcb_eval_timeout": 6,
+  "repobench_dataset_name": null,
+  "repobench_language": "python",
+  "repobench_subsets": null,
+  "repobench_levels": null,
+  "repobench_start_date": "2023-12-01",
+  "repobench_end_date": "2023-12-31",
+  "repobench_max_prompt_toks": 15800,
+  "repobench_max_gen_toks": 128,
+  "mrcr_n_needles": null,
+  "mrcr_max_chars": null,
+  "mrcr_max_gen_toks": 1024,
+  "supergpqa_dataset": "m-a-p/SuperGPQA",
+  "supergpqa_max_gen_toks": 2048,
+  "hmmt25_dataset": "MathArena/hmmt_feb_2025",
+  "hmmt25_max_gen_toks": 8192,
+  "server_log_file": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24/logs/server.log",
+  "server_metrics_poll_interval": 0.2,
+  "extra_prometheus_metrics": [],
+  "benchmark_duration_s": 6515.735,
+  "serving_metrics": {
+    "completed": 198,
+    "failed": 0,
+    "total_input": 51660,
+    "total_output": 3525117,
+    "request_throughput": 0.030387977519901445,
+    "request_goodput": 0.0,
+    "output_throughput": 541.0160411667799,
+    "total_token_throughput": 548.9445407560632,
+    "mean_ttft_ms": 1313.1240262753433,
+    "median_ttft_ms": 310.56419387459755,
+    "std_ttft_ms": 2349.2400324438336,
+    "percentiles_ttft_ms": [
+      [
+        50.0,
+        310.56419387459755
+      ],
+      [
+        90.0,
+        7566.347983852029
+      ],
+      [
+        95.0,
+        7567.418711446226
+      ],
+      [
+        99.0,
+        7568.85432086885
+      ]
+    ],
+    "mean_tpot_ms": 42.44875990419943,
+    "median_tpot_ms": 42.962258157473094,
+    "std_tpot_ms": 2.196718112895204,
+    "percentiles_tpot_ms": [
+      [
+        50.0,
+        42.962258157473094
+      ],
+      [
+        90.0,
+        43.98566905963076
+      ],
+      [
+        95.0,
+        44.48075536036645
+      ],
+      [
+        99.0,
+        45.31841671025613
+      ]
+    ],
+    "mean_itl_ms": 42.37032144548577,
+    "median_itl_ms": 41.429661214351654,
+    "std_itl_ms": 11.675076738479689,
+    "percentiles_itl_ms": [
+      [
+        50.0,
+        41.429661214351654
+      ],
+      [
+        90.0,
+        46.11938372254372
+      ],
+      [
+        95.0,
+        56.00523799657822
+      ],
+      [
+        99.0,
+        57.32788905501366
+      ]
+    ],
+    "mean_e2el_ms": 754579.3404169381,
+    "median_e2el_ms": 727645.77402547,
+    "std_e2el_ms": 490526.1171702703,
+    "percentiles_e2el_ms": [
+      [
+        50.0,
+        727645.77402547
+      ],
+      [
+        90.0,
+        1408142.699604854
+      ],
+      [
+        95.0,
+        1422243.298866786
+      ],
+      [
+        99.0,
+        1431958.1625389308
+      ]
+    ],
+    "max_output_tokens_per_s": 624.0,
+    "max_concurrent_requests": 32,
+    "rtfx": 0.0
+  },
+  "iteration_metrics": {
+    "poll_interval_s": 0.2,
+    "scrape_failures": 0,
+    "server_log_file": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24/logs/server.log",
+    "server_log_start_offset": 37431,
+    "num_prometheus_samples": 31052,
+    "num_iterations_parsed": 159358,
+    "num_iterations_merged": 159358,
+    "num_requests_processed": 198,
+    "num_preemptions": 0,
+    "prometheus_samples_jsonl_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24/raw/bench_results.prometheus_samples.jsonl",
+    "iteration_metrics_jsonl_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24/raw/bench_results.iteration_metrics.jsonl",
+    "iteration_metrics_csv_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24/raw/bench_results.iteration_metrics.csv",
+    "initial_snapshot": {
+      "timestamp_epoch_s": 1786888962.6090252,
+      "timestamp_iso": "2026-08-16T14:02:42.609025+00:00",
+      "elapsed_s": 0.0,
+      "metrics": {
+        "requests_running": {
+          "alias": "requests_running",
+          "metric_name": "vllm:num_requests_running",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_waiting": {
+          "alias": "requests_waiting",
+          "metric_name": "vllm:num_requests_waiting",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "preemptions_cum": {
+          "alias": "preemptions_cum",
+          "metric_name": "vllm:num_preemptions_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "kv_cache_usage": {
+          "alias": "kv_cache_usage",
+          "metric_name": "vllm:kv_cache_usage_perc",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iteration_tokens_cum": {
+          "alias": "iteration_tokens_cum",
+          "metric_name": "vllm:iteration_tokens_total_sum",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iterations_cum": {
+          "alias": "iterations_cum",
+          "metric_name": "vllm:iteration_tokens_total_count",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_processed_cum": {
+          "alias": "requests_processed_cum",
+          "metric_name": "vllm:request_success_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "final_snapshot": {
+      "timestamp_epoch_s": 1786895478.3486836,
+      "timestamp_iso": "2026-08-16T15:51:18.348684+00:00",
+      "elapsed_s": 6515.739659104496,
+      "metrics": {
+        "requests_running": {
+          "alias": "requests_running",
+          "metric_name": "vllm:num_requests_running",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_waiting": {
+          "alias": "requests_waiting",
+          "metric_name": "vllm:num_requests_waiting",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "preemptions_cum": {
+          "alias": "preemptions_cum",
+          "metric_name": "vllm:num_preemptions_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "kv_cache_usage": {
+          "alias": "kv_cache_usage",
+          "metric_name": "vllm:kv_cache_usage_perc",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iteration_tokens_cum": {
+          "alias": "iteration_tokens_cum",
+          "metric_name": "vllm:iteration_tokens_total_sum",
+          "per_engine": {
+            "0": 3576777.0
+          },
+          "sum": 3576777.0,
+          "avg": 3576777.0,
+          "max": 3576777.0
+        },
+        "iterations_cum": {
+          "alias": "iterations_cum",
+          "metric_name": "vllm:iteration_tokens_total_count",
+          "per_engine": {
+            "0": 159357.0
+          },
+          "sum": 159357.0,
+          "avg": 159357.0,
+          "max": 159357.0
+        },
+        "requests_processed_cum": {
+          "alias": "requests_processed_cum",
+          "metric_name": "vllm:request_success_total",
+          "per_engine": {
+            "0": 198.0
+          },
+          "sum": 198.0,
+          "avg": 198.0,
+          "max": 198.0
+        }
+      }
+    }
+  },
+  "evaluation_metrics": {
+    "overall_correct": 145,
+    "overall_total": 198,
+    "overall_accuracy": 0.7323
+  },
+  "generation_bundle_path": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260816_140024_accuracy_gpqa_length_pilot_w16kv16_mns24/raw/generations.json",
+  "evaluation_skipped": false,
+  "num_preempted": 0,
+  "num_requests_processed": 198
+}

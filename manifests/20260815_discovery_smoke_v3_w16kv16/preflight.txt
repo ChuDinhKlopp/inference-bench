@@ -1,0 +1,20 @@
+RIVF26 Stage A preflight: PASS
+run_id: 20260815_discovery_smoke_v3_w16kv16
+[FAIL] ADVISORY git_worktree: fatal: not a git repository (or any of the parent directories): .git
+[PASS] MANDATORY result_filesystem_capacity: free=137.5 GiB; required=22.0 GiB
+[PASS] MANDATORY result_filesystem_inodes: free_fraction=1.000
+[PASS] MANDATORY host_ram: available=497.9 GiB; minimum=256.0 GiB
+[FAIL] ADVISORY swap_usage: used_fraction=0.963; host available RAM is the mandatory pressure gate
+[PASS] MANDATORY tmpfs_host_ram_after_estimated_output: available=497.9 GiB; required host floor + output/reserve=278.0 GiB
+[PASS] MANDATORY dev_shm_capacity: free=46.6 GiB; minimum=32.0 GiB
+[PASS] MANDATORY local_model: path=/dev/shm/Qwen3.6-35B-A3B; safetensors=26; missing=[]
+[PASS] MANDATORY gpu_inventory: found=[(0, 'NVIDIA A100-PCIE-40GB'), (1, 'NVIDIA A100-PCIE-40GB'), (2, 'NVIDIA A100-PCIE-40GB'), (3, 'NVIDIA A100-PCIE-40GB')]; stderr=
+[PASS] MANDATORY gpu_hbm_before_server: free_mib=[(0, 40442), (1, 40442), (2, 40442), (3, 40442)]
+[PASS] MANDATORY gpu_processes: none
+[PASS] MANDATORY stale_vllm_servers: none
+[FAIL] ADVISORY other_benchmark_clients: [{"pid": 3992676, "uid": "1004", "command": "/home/hieupm/repos/base/.venv/bin/python /home/hieupm/repos/base/scripts/bench.py --server-log-file /home/hieupm/repos/base/scripts/logs/server_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.log --server-metrics-poll-interval 0.2 --dataset livecodebench --model /dev/shm/gemma-4-26B-A4B-it-FP8-dynamic --base-url http://localhost:8006 --max-concurrency 128 --temperature 0.0 --timeout 7200 --arrival-scale 200 --output /home/hieupm/repos/base/scripts/logs/bench_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.json --num-prompts 1055 --azure-trace-csv /home/hieupm/repos/base/scripts/busiest_AzureLMMInferenceTrace_multimodal.csv --lcb-release-version release_latest --lcb-max-gen-toks 8192 --lcb-num-process-evaluate 12 --lcb-eval-timeout 6"}]
+[PASS] MANDATORY server_port: 127.0.0.1:8000
+[PASS] MANDATORY vllm_runtime: 2.11.0+cu130
+0.26.0
+[PASS] MANDATORY hbm_sampler: /usr/local/bin/nsys
+PASS

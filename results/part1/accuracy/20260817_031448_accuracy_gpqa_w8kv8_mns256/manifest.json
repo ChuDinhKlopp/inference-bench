@@ -1,0 +1,283 @@
+{
+  "schema_version": "rivf26.run_manifest.v1",
+  "status": "PASS",
+  "created_epoch_s": 1786940535.844774,
+  "created_iso": "2026-08-17T04:22:15.844774+00:00",
+  "run_id": "20260817_031448_accuracy_gpqa_w8kv8_mns256",
+  "run_kind": "official",
+  "mode": "accuracy",
+  "dataset": "gpqa_diamond",
+  "precision": "w8kv8",
+  "max_num_seqs": 256,
+  "max_num_batched_tokens": 16384,
+  "repeats_per_question": 1,
+  "git_commit": "a1a2962e4a89376547f7a8b145b6d40bd62d0fdc",
+  "started_epoch_s": 1786936650.6090693,
+  "ended_epoch_s": 1786940528.4985616,
+  "preflight_status": "PASS",
+  "post_server_status": "PASS",
+  "fp8_kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+    "size_bytes": 37486695672,
+    "weight_files": [
+      {
+        "name": "layers-0.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-1.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-10.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-11.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-12.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-13.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-14.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-15.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-16.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-17.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-18.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-19.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-2.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-20.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-21.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-22.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-23.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-24.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-25.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-26.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-27.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-28.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-29.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-3.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-30.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-31.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-32.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-33.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-34.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-35.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-36.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-37.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-38.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-39.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-4.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-5.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-6.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-7.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-8.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-9.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "mtp.safetensors",
+        "size_bytes": 853860608
+      },
+      {
+        "name": "outside.safetensors",
+        "size_bytes": 2927422112
+      }
+    ]
+  },
+  "commands": {
+    "server": "/home/ducct/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B-FP8 --tokenizer /dev/shm/Qwen3.6-35B-A3B-FP8 --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8000 --tensor-parallel-size 4 --max-model-len 65536 --max-num-seqs 256 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend FLASHINFER --reasoning-parser qwen3 --reasoning-config \\{\\\"reasoning_start_str\\\":\\\"\\<think\\>\\\"\\,\\\"reasoning_end_str\\\":\\\"\\</think\\>\\\"\\} --enable-logging-iteration-details --quantization fp8 --max-num-batched-tokens 16384",
+    "client": "/home/ducct/repos/vllm/.venv/bin/python /home/ducct/repos/inference-bench/rivf26/scripts/accuracy/run_gpqa.py --gpqa-local-csv /home/ducct/.cache/huggingface/hub/datasets--Idavidrein--gpqa/snapshots/633f5ee89ab8ad4522a9f850766b73f62147ffdd/gpqa_diamond.csv --local-tokenizer /dev/shm/Qwen3.6-35B-A3B-FP8 --gpqa-expected-sha256 41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305 --gpqa-expected-rows 198 --gpqa-revision 633f5ee89ab8ad4522a9f850766b73f62147ffdd --sampling-top-k 20 --dataset gpqa --gpqa-dataset Idavidrein/gpqa --gpqa-config gpqa_diamond --gpqa-split train --gpqa-max-gen-toks 32768 --num-prompts 198 --num-samples 1 --seed 42 --model Qwen3.6-35B-A3B --base-url http://127.0.0.1:8000 --max-concurrency 256 --temperature 1.0 --top-p 0.95 --timeout 43200 --enable-thinking --server-log-file /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_031448_accuracy_gpqa_w8kv8_mns256/logs/server.log --server-metrics-poll-interval 0.2 --iteration-metrics-prefix /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_031448_accuracy_gpqa_w8kv8_mns256/raw/bench_results --save-generations /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_031448_accuracy_gpqa_w8kv8_mns256/raw/generations.json --output /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_031448_accuracy_gpqa_w8kv8_mns256/raw/bench_results.json"
+  },
+  "bulk_run_dir": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_031448_accuracy_gpqa_w8kv8_mns256",
+  "artifacts": [
+    {
+      "relative_path": "logs/client.log",
+      "size_bytes": 15360,
+      "modified_epoch_s": 1786940528.4385774
+    },
+    {
+      "relative_path": "logs/resource_guard.log",
+      "size_bytes": 0,
+      "modified_epoch_s": 1786936650.3908165
+    },
+    {
+      "relative_path": "logs/server.log",
+      "size_bytes": 9428608,
+      "modified_epoch_s": 1786940530.5305657
+    },
+    {
+      "relative_path": "logs/server_command.txt",
+      "size_bytes": 568,
+      "modified_epoch_s": 1786936497.192528
+    },
+    {
+      "relative_path": "raw/bench_results.iteration_metrics.csv",
+      "size_bytes": 18718986,
+      "modified_epoch_s": 1786940519.2826288
+    },
+    {
+      "relative_path": "raw/bench_results.iteration_metrics.jsonl",
+      "size_bytes": 53489180,
+      "modified_epoch_s": 1786940518.694632
+    },
+    {
+      "relative_path": "raw/bench_results.json",
+      "size_bytes": 9354,
+      "modified_epoch_s": 1786940524.042602
+    },
+    {
+      "relative_path": "raw/bench_results.per_request.csv",
+      "size_bytes": 17816,
+      "modified_epoch_s": 1786940524.042602
+    },
+    {
+      "relative_path": "raw/bench_results.prometheus_samples.jsonl",
+      "size_bytes": 25198197,
+      "modified_epoch_s": 1786940518.166635
+    },
+    {
+      "relative_path": "raw/generations.json",
+      "size_bytes": 593406,
+      "modified_epoch_s": 1786940524.042602
+    },
+    {
+      "relative_path": "raw/hbm.csv",
+      "size_bytes": 29144779,
+      "modified_epoch_s": 1786940534.4185438
+    },
+    {
+      "relative_path": "raw/hbm.nsys-rep",
+      "size_bytes": 5298688,
+      "modified_epoch_s": 1786940528.3065782
+    },
+    {
+      "relative_path": "raw/resource_guard.csv",
+      "size_bytes": 12281,
+      "modified_epoch_s": 1786940520.466622
+    }
+  ],
+  "log_growth": {
+    "bytes_written": 141927223,
+    "elapsed_s": 3877.8894922733307,
+    "requests": 198,
+    "successful_requests": 198,
+    "generated_tokens": 3526799,
+    "gib_per_hour": 0.12270800835988513,
+    "mib_per_request": 0.6835977140099111,
+    "bytes_per_generated_token": 40.24250403836454
+  },
+  "e2e_metrics": {
+    "csv": "/home/ducct/repos/inference-bench/rivf26/e2e_metrics_record.csv",
+    "record_input": "/home/ducct/repos/inference-bench/rivf26/results/part1/accuracy/20260817_031448_accuracy_gpqa_w8kv8_mns256/20260817_031448_accuracy_gpqa_w8kv8_mns256_e2e_record_input.json",
+    "record_script": "/home/ducct/repos/inference-bench/record_e2e_metrics.py"
+  }
+}

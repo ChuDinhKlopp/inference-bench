@@ -1,0 +1,200 @@
+{
+  "schema_version": "rivf26.pubmed_summary.v1",
+  "mode": "performance",
+  "dataset": "ccdv/pubmed-summarization",
+  "arrival_mode": "azure",
+  "trace_csv": "/home/ducct/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv",
+  "request_count": 1000,
+  "successful_requests": 1000,
+  "failed_requests": 0,
+  "benchmark_duration_s": 4996.431295655668,
+  "trace_duration_s": 303.144999981,
+  "max_gen_toks": 10240,
+  "max_num_batched_tokens": 16384,
+  "reasoning_effort": "low",
+  "enable_thinking": true,
+  "thinking_token_budget": 6144,
+  "client_concurrency_limit": null,
+  "client_open_file_soft_limit": 65536,
+  "metrics_summary": {
+    "poll_interval_s": 0.2,
+    "scrape_failures": 0,
+    "server_log_file": "/run/user/1009/ducct/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128/logs/server.log",
+    "server_log_start_offset": 159563,
+    "num_prometheus_samples": 23269,
+    "num_iterations_parsed": 19460,
+    "num_iterations_merged": 19460,
+    "num_requests_processed": 1000,
+    "num_preemptions": 0,
+    "prometheus_samples_jsonl_path": "/home/ducct/repos/inference-bench/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128/raw/iteration_metrics.prometheus_samples.jsonl",
+    "iteration_metrics_jsonl_path": "/home/ducct/repos/inference-bench/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128/raw/iteration_metrics.iteration_metrics.jsonl",
+    "iteration_metrics_csv_path": "/home/ducct/repos/inference-bench/rivf26/results/part1/performance/20260816_044905_performance_pubmed_w8kv8_mns128/raw/iteration_metrics.iteration_metrics.csv",
+    "initial_snapshot": {
+      "timestamp_epoch_s": 1786856045.9924073,
+      "timestamp_iso": "2026-08-16T04:54:05.992407+00:00",
+      "elapsed_s": 0.0,
+      "metrics": {
+        "requests_running": {
+          "alias": "requests_running",
+          "metric_name": "vllm:num_requests_running",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_waiting": {
+          "alias": "requests_waiting",
+          "metric_name": "vllm:num_requests_waiting",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "preemptions_cum": {
+          "alias": "preemptions_cum",
+          "metric_name": "vllm:num_preemptions_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "kv_cache_usage": {
+          "alias": "kv_cache_usage",
+          "metric_name": "vllm:kv_cache_usage_perc",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iteration_tokens_cum": {
+          "alias": "iteration_tokens_cum",
+          "metric_name": "vllm:iteration_tokens_total_sum",
+          "per_engine": {
+            "0": 530.0
+          },
+          "sum": 530.0,
+          "avg": 530.0,
+          "max": 530.0
+        },
+        "iterations_cum": {
+          "alias": "iterations_cum",
+          "metric_name": "vllm:iteration_tokens_total_count",
+          "per_engine": {
+            "0": 488.0
+          },
+          "sum": 488.0,
+          "avg": 488.0,
+          "max": 488.0
+        },
+        "requests_processed_cum": {
+          "alias": "requests_processed_cum",
+          "metric_name": "vllm:request_success_total",
+          "per_engine": {
+            "0": 1.0
+          },
+          "sum": 1.0,
+          "avg": 1.0,
+          "max": 1.0
+        }
+      }
+    },
+    "final_snapshot": {
+      "timestamp_epoch_s": 1786861042.4280753,
+      "timestamp_iso": "2026-08-16T06:17:22.428075+00:00",
+      "elapsed_s": 4996.4356682784855,
+      "metrics": {
+        "requests_running": {
+          "alias": "requests_running",
+          "metric_name": "vllm:num_requests_running",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "requests_waiting": {
+          "alias": "requests_waiting",
+          "metric_name": "vllm:num_requests_waiting",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "preemptions_cum": {
+          "alias": "preemptions_cum",
+          "metric_name": "vllm:num_preemptions_total",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "kv_cache_usage": {
+          "alias": "kv_cache_usage",
+          "metric_name": "vllm:kv_cache_usage_perc",
+          "per_engine": {
+            "0": 0.0
+          },
+          "sum": 0.0,
+          "avg": 0.0,
+          "max": 0.0
+        },
+        "iteration_tokens_cum": {
+          "alias": "iteration_tokens_cum",
+          "metric_name": "vllm:iteration_tokens_total_sum",
+          "per_engine": {
+            "0": 6142487.0
+          },
+          "sum": 6142487.0,
+          "avg": 6142487.0,
+          "max": 6142487.0
+        },
+        "iterations_cum": {
+          "alias": "iterations_cum",
+          "metric_name": "vllm:iteration_tokens_total_count",
+          "per_engine": {
+            "0": 19947.0
+          },
+          "sum": 19947.0,
+          "avg": 19947.0,
+          "max": 19947.0
+        },
+        "requests_processed_cum": {
+          "alias": "requests_processed_cum",
+          "metric_name": "vllm:request_success_total",
+          "per_engine": {
+            "0": 1001.0
+          },
+          "sum": 1001.0,
+          "avg": 1001.0,
+          "max": 1001.0
+        }
+      }
+    }
+  },
+  "run_id": "20260816_044905_performance_pubmed_w8kv8_mns128",
+  "precision": "w8kv8",
+  "max_num_seqs": 128,
+  "log_growth": {
+    "bytes_written": 173134551,
+    "elapsed_s": 5017.03949713707,
+    "requests": 1000,
+    "successful_requests": 1000,
+    "generated_tokens": 2256451,
+    "gib_per_hour": 0.11570146441606026,
+    "mib_per_request": 0.16511397457122803,
+    "bytes_per_generated_token": 76.72869962609425
+  }
+}

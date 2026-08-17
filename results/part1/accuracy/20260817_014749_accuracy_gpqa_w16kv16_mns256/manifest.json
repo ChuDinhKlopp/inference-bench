@@ -1,0 +1,219 @@
+{
+  "schema_version": "rivf26.run_manifest.v1",
+  "status": "PASS",
+  "created_epoch_s": 1786936477.251997,
+  "created_iso": "2026-08-17T03:14:37.251997+00:00",
+  "run_id": "20260817_014749_accuracy_gpqa_w16kv16_mns256",
+  "run_kind": "official",
+  "mode": "accuracy",
+  "dataset": "gpqa_diamond",
+  "precision": "w16kv16",
+  "max_num_seqs": 256,
+  "max_num_batched_tokens": 16384,
+  "repeats_per_question": 1,
+  "git_commit": "dbc80657e2e0a9985d689e855bc332cd993090ec",
+  "started_epoch_s": 1786931415.4006753,
+  "ended_epoch_s": 1786936467.8315551,
+  "preflight_status": "PASS",
+  "post_server_status": "PASS",
+  "fp8_kv_scale_policy": "not_applicable",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B",
+    "size_bytes": 71926872555,
+    "weight_files": [
+      {
+        "name": "model-00001-of-00026.safetensors",
+        "size_bytes": 3996199712
+      },
+      {
+        "name": "model-00002-of-00026.safetensors",
+        "size_bytes": 1284907696
+      },
+      {
+        "name": "model-00003-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00004-of-00026.safetensors",
+        "size_bytes": 3370808712
+      },
+      {
+        "name": "model-00005-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00006-of-00026.safetensors",
+        "size_bytes": 3959424904
+      },
+      {
+        "name": "model-00007-of-00026.safetensors",
+        "size_bytes": 1096788232
+      },
+      {
+        "name": "model-00008-of-00026.safetensors",
+        "size_bytes": 3946842008
+      },
+      {
+        "name": "model-00009-of-00026.safetensors",
+        "size_bytes": 1096460848
+      },
+      {
+        "name": "model-00010-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00011-of-00026.safetensors",
+        "size_bytes": 1096460752
+      },
+      {
+        "name": "model-00012-of-00026.safetensors",
+        "size_bytes": 3409971080
+      },
+      {
+        "name": "model-00013-of-00026.safetensors",
+        "size_bytes": 1633331664
+      },
+      {
+        "name": "model-00014-of-00026.safetensors",
+        "size_bytes": 3422553872
+      },
+      {
+        "name": "model-00015-of-00026.safetensors",
+        "size_bytes": 1633659224
+      },
+      {
+        "name": "model-00016-of-00026.safetensors",
+        "size_bytes": 3946842136
+      },
+      {
+        "name": "model-00017-of-00026.safetensors",
+        "size_bytes": 1096460608
+      },
+      {
+        "name": "model-00018-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00019-of-00026.safetensors",
+        "size_bytes": 1096460808
+      },
+      {
+        "name": "model-00020-of-00026.safetensors",
+        "size_bytes": 3409971072
+      },
+      {
+        "name": "model-00021-of-00026.safetensors",
+        "size_bytes": 1633331744
+      },
+      {
+        "name": "model-00022-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00023-of-00026.safetensors",
+        "size_bytes": 3357898392
+      },
+      {
+        "name": "model-00024-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00025-of-00026.safetensors",
+        "size_bytes": 3832888256
+      },
+      {
+        "name": "model-00026-of-00026.safetensors",
+        "size_bytes": 2231416848
+      }
+    ]
+  },
+  "commands": {
+    "server": "/home/ducct/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B --tokenizer /dev/shm/Qwen3.6-35B-A3B --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8000 --tensor-parallel-size 4 --max-model-len 65536 --max-num-seqs 256 --gpu-memory-utilization 0.90 --kv-cache-dtype bfloat16 --attention-backend FLASHINFER --reasoning-parser qwen3 --reasoning-config \\{\\\"reasoning_start_str\\\":\\\"\\<think\\>\\\"\\,\\\"reasoning_end_str\\\":\\\"\\</think\\>\\\"\\} --enable-logging-iteration-details --max-num-batched-tokens 16384",
+    "client": "/home/ducct/repos/vllm/.venv/bin/python /home/ducct/repos/inference-bench/rivf26/scripts/accuracy/run_gpqa.py --gpqa-local-csv /home/ducct/.cache/huggingface/hub/datasets--Idavidrein--gpqa/snapshots/633f5ee89ab8ad4522a9f850766b73f62147ffdd/gpqa_diamond.csv --local-tokenizer /dev/shm/Qwen3.6-35B-A3B --gpqa-expected-sha256 41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305 --gpqa-expected-rows 198 --gpqa-revision 633f5ee89ab8ad4522a9f850766b73f62147ffdd --sampling-top-k 20 --dataset gpqa --gpqa-dataset Idavidrein/gpqa --gpqa-config gpqa_diamond --gpqa-split train --gpqa-max-gen-toks 32768 --num-prompts 198 --num-samples 1 --seed 42 --model Qwen3.6-35B-A3B --base-url http://127.0.0.1:8000 --max-concurrency 256 --temperature 1.0 --top-p 0.95 --timeout 43200 --enable-thinking --server-log-file /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/logs/server.log --server-metrics-poll-interval 0.2 --iteration-metrics-prefix /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/bench_results --save-generations /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/generations.json --output /run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/raw/bench_results.json"
+  },
+  "bulk_run_dir": "/run/user/1009/ducct/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256",
+  "artifacts": [
+    {
+      "relative_path": "logs/client.log",
+      "size_bytes": 16412,
+      "modified_epoch_s": 1786936467.7646663
+    },
+    {
+      "relative_path": "logs/resource_guard.log",
+      "size_bytes": 0,
+      "modified_epoch_s": 1786931415.1864276
+    },
+    {
+      "relative_path": "logs/server.log",
+      "size_bytes": 15264739,
+      "modified_epoch_s": 1786936465.7646756
+    },
+    {
+      "relative_path": "logs/server_command.txt",
+      "size_bytes": 546,
+      "modified_epoch_s": 1786931275.779822
+    },
+    {
+      "relative_path": "raw/bench_results.iteration_metrics.csv",
+      "size_bytes": 31815167,
+      "modified_epoch_s": 1786936458.5807095
+    },
+    {
+      "relative_path": "raw/bench_results.iteration_metrics.jsonl",
+      "size_bytes": 90920457,
+      "modified_epoch_s": 1786936457.572714
+    },
+    {
+      "relative_path": "raw/bench_results.json",
+      "size_bytes": 9378,
+      "modified_epoch_s": 1786936463.132688
+    },
+    {
+      "relative_path": "raw/bench_results.per_request.csv",
+      "size_bytes": 17766,
+      "modified_epoch_s": 1786936463.136688
+    },
+    {
+      "relative_path": "raw/bench_results.prometheus_samples.jsonl",
+      "size_bytes": 32933908,
+      "modified_epoch_s": 1786936456.6687183
+    },
+    {
+      "relative_path": "raw/generations.json",
+      "size_bytes": 605521,
+      "modified_epoch_s": 1786936463.132688
+    },
+    {
+      "relative_path": "raw/hbm.csv",
+      "size_bytes": 38035327,
+      "modified_epoch_s": 1786936475.3606305
+    },
+    {
+      "relative_path": "raw/hbm.nsys-rep",
+      "size_bytes": 6460612,
+      "modified_epoch_s": 1786936467.644667
+    },
+    {
+      "relative_path": "raw/resource_guard.csv",
+      "size_bytes": 15947,
+      "modified_epoch_s": 1786936455.2727249
+    }
+  ],
+  "log_growth": {
+    "bytes_written": 216095780,
+    "elapsed_s": 5052.430879831314,
+    "requests": 198,
+    "successful_requests": 198,
+    "generated_tokens": 3434224,
+    "gib_per_hour": 0.1433997967963282,
+    "mib_per_request": 1.04083330944331,
+    "bytes_per_generated_token": 62.924194810821895
+  },
+  "e2e_metrics": {
+    "csv": "/home/ducct/repos/inference-bench/rivf26/e2e_metrics_record.csv",
+    "record_input": "/home/ducct/repos/inference-bench/rivf26/results/part1/accuracy/20260817_014749_accuracy_gpqa_w16kv16_mns256/20260817_014749_accuracy_gpqa_w16kv16_mns256_e2e_record_input.json",
+    "record_script": "/home/ducct/repos/inference-bench/record_e2e_metrics.py"
+  }
+}
