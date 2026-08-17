@@ -29,7 +29,7 @@ run_kind=${RIVF26_GPQA_RUN_KIND:-official}
 if [[ "$run_kind" == length_pilot ]]; then
   max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
 else
-  max_num_seqs=${RIVF26_MAX_NUM_SEQS:-128}
+  max_num_seqs=${RIVF26_MAX_NUM_SEQS:-256}
 fi
 if [[ ! "$max_num_seqs" =~ ^[1-9][0-9]*$ ]] || (( max_num_seqs > 4096 )); then
   echo "GPQA requires a positive RIVF26_MAX_NUM_SEQS no larger than 4096; got $max_num_seqs" >&2
@@ -42,8 +42,8 @@ case "$run_kind:$num_samples" in
     exit 2
     ;;
 esac
-if [[ "$run_kind" == official && "$max_num_seqs" != 128 ]]; then
-  echo "the selected GPQA accuracy configuration requires RIVF26_MAX_NUM_SEQS=128; got $max_num_seqs" >&2
+if [[ "$run_kind" == official && "$max_num_seqs" != 256 ]]; then
+  echo "the selected GPQA accuracy configuration requires RIVF26_MAX_NUM_SEQS=256; got $max_num_seqs" >&2
   exit 2
 fi
 total_requests=$((198 * num_samples))

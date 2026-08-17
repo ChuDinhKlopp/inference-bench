@@ -4,7 +4,7 @@
     "arrival_mode": "none",
     "reasoning_effort": "high",
     "max_num_batched_tokens": 16384,
-    "max_num_seqs": 128,
+    "max_num_seqs": 256,
     "max_gen_toks": 32768,
     "source_samples": 198,
     "repeats": 1,

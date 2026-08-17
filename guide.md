@@ -86,7 +86,8 @@ The original `AGENTS.md` proposed an accuracy sweep at MNS 24/48/96. The later
 experiment decision superseded that provisional sweep: first run one
 198-question BF16 length pilot, inspect ISL/OSL and KV-capacity ratios, then use
 one deliberately selected MNS for all four official precision arms. The owner
-selected MNS 128 and one repeat per question on 2026-08-17.
+selected MNS 256 and one repeat per question on 2026-08-17, superseding the
+briefly launched and interrupted MNS128 attempt.
 
 The performance run is evaluated against two borrowed comparison SLOs. These
 are not official Qwen requirements:
@@ -577,14 +578,14 @@ measured scheduler optimum. Record the chosen value and rationale in a compact
 manifest or experiment note.
 
 Replace the length-pilot row in `configs/part1_matrix.csv` with four official
-accuracy rows using MNS 128, one repeat, and 198 total requests.
+accuracy rows using MNS 256, one repeat, and 198 total requests.
 This keeps the declared experiment matrix consistent with what the driver will
 execute.
 
 Preview the four official commands at that one MNS:
 
 ```bash
-export RIVF26_ACCURACY_MAX_NUM_SEQS=128
+export RIVF26_ACCURACY_MAX_NUM_SEQS=256
 RIVF26_DRY_RUN=1 scripts/accuracy/run_accuracy_matrix.sh
 ```
 

@@ -7,13 +7,13 @@ source "$rivf26_root/scripts/common/venv.sh"
 source "$rivf26_root/scripts/common/paths.sh"
 
 matrix_id=${RIVF26_MATRIX_ID:-$(date -u +%Y%m%d_%H%M%S)_accuracy_gpqa_matrix}
-selected_mns=${RIVF26_ACCURACY_MAX_NUM_SEQS:-128}
-if [[ "$selected_mns" != 128 ]]; then
-  echo "the selected GPQA accuracy matrix requires RIVF26_ACCURACY_MAX_NUM_SEQS=128; got $selected_mns" >&2
+selected_mns=${RIVF26_ACCURACY_MAX_NUM_SEQS:-256}
+if [[ "$selected_mns" != 256 ]]; then
+  echo "the selected GPQA accuracy matrix requires RIVF26_ACCURACY_MAX_NUM_SEQS=256; got $selected_mns" >&2
   exit 2
 fi
 
-# Use the owner-selected MNS 128 for all formats. Alternating weight/KV
+# Use the owner-selected MNS 256 for all formats. Alternating weight/KV
 # precision limits monotonic precision and thermal bias.
 precisions=(w16kv16 w8kv8 w8kv16 w16kv8)
 

@@ -141,7 +141,7 @@ Profiler is enabled in Part 1.
 ## Experiment matrix
 
 `configs/part1_matrix.csv` records four official 198-request GPQA arms at the
-owner-selected `max-num-seqs=128`, replacing the original provisional 24/48/96
+owner-selected `max-num-seqs=256`, replacing the original provisional 24/48/96
 sweep. Interactive and Server SLOs are two evaluations of
 the same performance run unless a later trace-selection study establishes a
 scenario-specific arrival policy; they do not duplicate measurements by
@@ -199,18 +199,18 @@ Inspect an exact matrix command without starting the server:
 
 ```bash
 RIVF26_DRY_RUN=1 \
-RIVF26_RUN_ID=DRYRUN_accuracy_gpqa_w16kv16_mns128 \
-RIVF26_MAX_NUM_SEQS=128 \
+RIVF26_RUN_ID=DRYRUN_accuracy_gpqa_w16kv16_mns256 \
+RIVF26_MAX_NUM_SEQS=256 \
 scripts/accuracy/run_trace_azure_gpqa_Qwen3.6-35B-A3B_w16kv16.sh
 ```
 
 Remove `RIVF26_DRY_RUN=1` only when the generated long-run preflight can pass.
 Use the corresponding `w8kv16`, `w8kv8`, or `w16kv8` launcher at the selected
-MNS 128. Every accuracy request uses high thinking,
+MNS 256. Every accuracy request uses high thinking,
 `MAX_GEN_TOKS=32768`, model-default sampling temperature 1.0 and top-p 0.95,
 top-k 20, and `BENCH_ARRIVAL_RATE=none`. The RIVF adapter injects top-k into the
 existing vLLM request object without modifying the parent client. The 198
-questions are sampled once for 198 requests at `max-num-seqs=128`;
+questions are sampled once for 198 requests at `max-num-seqs=256`;
 `summary.json` reports Pass@1 for that pass. After final validation, the
 unchanged parent `record_e2e_metrics.py` also appends the run to
 `rivf26/e2e_metrics_record.csv` using the original `bench.py` result JSON.
@@ -219,7 +219,7 @@ After selecting a concurrency from the pilot, inspect the four exact precision
 commands without allocating a GPU:
 
 ```bash
-RIVF26_ACCURACY_MAX_NUM_SEQS=128 \
+RIVF26_ACCURACY_MAX_NUM_SEQS=256 \
 RIVF26_DRY_RUN=1 \
 scripts/accuracy/run_accuracy_matrix.sh
 ```
@@ -228,7 +228,7 @@ After the GPUs are idle and a fresh resource preflight can pass, launch the
 fail-fast matrix with:
 
 ```bash
-RIVF26_ACCURACY_MAX_NUM_SEQS=128 \
+RIVF26_ACCURACY_MAX_NUM_SEQS=256 \
 scripts/accuracy/run_accuracy_matrix.sh
 ```
 
