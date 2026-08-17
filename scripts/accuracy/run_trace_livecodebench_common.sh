@@ -67,5 +67,13 @@ kv=$($RIVF26_VENV_BIN/python -c 'import re,sys; t=open(sys.argv[1],errors="repla
 plot=("$RIVF26_VENV_BIN/python" "$rivf26_root/analysis/build_plot_data.py" --per-request "$bulk/raw/bench_results.per_request.csv" --prometheus "$bulk/raw/bench_results.prometheus_samples.jsonl" --hbm "$bulk/raw/hbm.csv" --output "$run_dir/plot_data.json" --run-id "$run_id" --precision "$precision" --mode accuracy --max-num-seqs "$max_num_seqs" --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" --experiment-start-epoch-s "$started")
 [[ -n "$kv" ]] && plot+=(--kv-capacity-tokens "$kv")
 "${plot[@]}"
+record_script=$parent_root/record_e2e_metrics.py
+e2e_csv=$rivf26_root/e2e_metrics_record.csv
+[[ -f "$record_script" ]] || { echo "missing legacy recorder: $record_script" >&2; exit 2; }
+"$RIVF26_VENV_BIN/python" "$record_script" "$bulk/raw/bench_results.json" \
+  --csv "$e2e_csv" \
+  --server-log "$server_log" \
+  --model-suffix "$precision" \
+  --attn-backend FLASHINFER
 "$RIVF26_VENV_BIN/python" -c 'import json,sys; json.dump({"schema_version":"rivf26.livecodebench_run.v1","status":"PASS","run_id":sys.argv[1],"precision":sys.argv[2],"dataset":"livecodebench","release":"v6","requests":int(sys.argv[3]),"max_num_seqs":int(sys.argv[4]),"max_gen_toks":int(sys.argv[5]),"arrival_mode":"none"},open(sys.argv[6],"w"),indent=2)' "$run_id" "$precision" "$num_requests" "$max_num_seqs" "$max_gen_toks" "$run_dir/manifest.json"
 echo "RIVF26 LiveCodeBench v6 run completed: $run_dir"
