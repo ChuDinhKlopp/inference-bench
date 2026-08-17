@@ -35,7 +35,7 @@ def main() -> int:
     parser.add_argument("--preflight", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8000)
-    parser.add_argument("--max-num-batched-tokens", type=int, choices=(8192,), default=8192)
+    parser.add_argument("--max-num-batched-tokens", type=int, default=8192)
     parser.add_argument("--monitor-pid", type=int, action="append", default=[])
     parser.add_argument("--min-post-load-free-mib", type=int, default=1024)
     parser.add_argument(

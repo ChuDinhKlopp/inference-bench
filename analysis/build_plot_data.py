@@ -102,7 +102,6 @@ def main() -> int:
     parser.add_argument(
         "--max-num-batched-tokens",
         type=int,
-        choices=(8192,),
         default=8192,
         help="Must match the RIVF26 scheduler token budget",
     )

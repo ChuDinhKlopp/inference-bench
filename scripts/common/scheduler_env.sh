@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-# Part 1 keeps the scheduler token budget identical across every precision,
-# workload, and max-num-seqs matrix cell.
+# Keep the scheduler token budget explicit and consistent within each run.
 rivf26_set_scheduler_env() {
-  local expected_max_num_batched_tokens=8192
-  if [[ -n ${RIVF26_MAX_NUM_BATCHED_TOKENS+x} \
-        && "$RIVF26_MAX_NUM_BATCHED_TOKENS" != "$expected_max_num_batched_tokens" ]]; then
-    echo "RIVF26 requires RIVF26_MAX_NUM_BATCHED_TOKENS=$expected_max_num_batched_tokens; got $RIVF26_MAX_NUM_BATCHED_TOKENS" >&2
+  local value=${RIVF26_MAX_NUM_BATCHED_TOKENS:-8192}
+  if [[ ! "$value" =~ ^[1-9][0-9]*$ ]]; then
+    echo "RIVF26_MAX_NUM_BATCHED_TOKENS must be a positive integer; got $value" >&2
     return 2
   fi
-  export RIVF26_MAX_NUM_BATCHED_TOKENS=$expected_max_num_batched_tokens
+  export RIVF26_MAX_NUM_BATCHED_TOKENS=$value
 }

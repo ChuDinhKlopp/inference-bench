@@ -9,10 +9,9 @@ env -u RIVF26_MAX_NUM_BATCHED_TOKENS \
   bash -c 'source "$1"; rivf26_set_scheduler_env; [[ $RIVF26_MAX_NUM_BATCHED_TOKENS == 8192 ]]' \
   _ "$scheduler_env"
 
-if RIVF26_MAX_NUM_BATCHED_TOKENS=2048 bash -c 'source "$1"; rivf26_set_scheduler_env' _ "$scheduler_env"; then
-  echo "scheduler environment accepted a non-matrix token budget" >&2
-  exit 1
-fi
+RIVF26_MAX_NUM_BATCHED_TOKENS=2048 \
+  bash -c 'source "$1"; rivf26_set_scheduler_env; [[ $RIVF26_MAX_NUM_BATCHED_TOKENS == 2048 ]]' \
+  _ "$scheduler_env"
 
 env -u MAX_GEN_TOKS -u RIVF26_MAX_GEN_TOKS -u GPQA_MAX_GEN_TOKS \
   -u PUBMED_MAX_GEN_TOKS -u BENCH_ARRIVAL_RATE \

@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default="Qwen3.6-35B-A3B")
     parser.add_argument("--server-log-file", type=Path)
     parser.add_argument("--server-metrics-poll-interval", type=float, default=0.2)
-    parser.add_argument("--max-num-batched-tokens", type=int, choices=(8192,), default=8192)
+    parser.add_argument("--max-num-batched-tokens", type=int, default=8192)
     parser.add_argument("--thinking-token-budget", type=int, choices=(6144,), default=6144)
     parser.add_argument("--expected-requests", type=int, default=1000)
     parser.add_argument("--timeout", type=float, default=86400.0)
