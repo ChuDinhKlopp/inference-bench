@@ -4,10 +4,11 @@
     "arrival_mode": "none",
     "reasoning_effort": "high",
     "max_num_batched_tokens": 16384,
+    "max_num_seqs": 128,
     "max_gen_toks": 32768,
     "source_samples": 198,
-    "repeats": 5,
-    "total_requests": 990
+    "repeats": 1,
+    "total_requests": 198
   },
   "performance": {
     "dataset": "ccdv/pubmed-summarization",

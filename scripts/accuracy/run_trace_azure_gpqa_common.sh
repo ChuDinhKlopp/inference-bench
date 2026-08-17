@@ -24,20 +24,28 @@ export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-65536}
 rivf26_set_scheduler_env
 rivf26_set_workload_env accuracy
 
-max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
+num_samples=${RIVF26_GPQA_NUM_SAMPLES:-1}
+run_kind=${RIVF26_GPQA_RUN_KIND:-official}
+if [[ "$run_kind" == length_pilot ]]; then
+  max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
+else
+  max_num_seqs=${RIVF26_MAX_NUM_SEQS:-128}
+fi
 if [[ ! "$max_num_seqs" =~ ^[1-9][0-9]*$ ]] || (( max_num_seqs > 4096 )); then
   echo "GPQA requires a positive RIVF26_MAX_NUM_SEQS no larger than 4096; got $max_num_seqs" >&2
   exit 2
 fi
-num_samples=${RIVF26_GPQA_NUM_SAMPLES:-5}
-run_kind=${RIVF26_GPQA_RUN_KIND:-official}
 case "$run_kind:$num_samples" in
-  official:5|length_pilot:1) ;;
+  official:1|length_pilot:1) ;;
   *)
-    echo "GPQA run kind/sample mismatch: official requires 5 repeats; length_pilot requires 1" >&2
+    echo "GPQA run kind/sample mismatch: official and length_pilot both require 1 repeat" >&2
     exit 2
     ;;
 esac
+if [[ "$run_kind" == official && "$max_num_seqs" != 128 ]]; then
+  echo "the selected GPQA accuracy configuration requires RIVF26_MAX_NUM_SEQS=128; got $max_num_seqs" >&2
+  exit 2
+fi
 total_requests=$((198 * num_samples))
 
 port=${RIVF26_PORT:-8000}

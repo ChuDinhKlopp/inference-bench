@@ -1,5 +1,8 @@
 run_key,mode,dataset,precision,max_num_seqs,max_num_batched_tokens,num_source_samples,repeats,total_requests,reasoning_effort,max_output_tokens,arrival_mode,scenario_evaluation
-accuracy_gpqa_length_pilot_w16kv16_mns24,accuracy,gpqa_diamond,w16kv16,24,16384,198,1,198,high,32768,none,length_pilot
+accuracy_gpqa_w16kv16_mns128,accuracy,gpqa_diamond,w16kv16,128,16384,198,1,198,high,32768,none,pass_at_1
+accuracy_gpqa_w8kv8_mns128,accuracy,gpqa_diamond,w8kv8,128,16384,198,1,198,high,32768,none,pass_at_1
+accuracy_gpqa_w8kv16_mns128,accuracy,gpqa_diamond,w8kv16,128,16384,198,1,198,high,32768,none,pass_at_1
+accuracy_gpqa_w16kv8_mns128,accuracy,gpqa_diamond,w16kv8,128,16384,198,1,198,high,32768,none,pass_at_1
 performance_pubmed_w16kv16,performance,ccdv/pubmed-summarization,w16kv16,256,16384,1000,1,1000,low,10240,azure,interactive+server
 performance_pubmed_w8kv16,performance,ccdv/pubmed-summarization,w8kv16,256,16384,1000,1,1000,low,10240,azure,interactive+server
 performance_pubmed_w8kv8,performance,ccdv/pubmed-summarization,w8kv8,256,16384,1000,1,1000,low,10240,azure,interactive+server

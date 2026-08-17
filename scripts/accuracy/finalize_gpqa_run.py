@@ -121,7 +121,7 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--precision", required=True)
     parser.add_argument("--run-kind", choices=("official", "length_pilot"), default="official")
-    parser.add_argument("--num-samples", type=int, choices=(1, 5), default=5)
+    parser.add_argument("--num-samples", type=int, choices=(1,), default=1)
     parser.add_argument("--smoke-matrix", type=Path, required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
     parser.add_argument("--max-num-batched-tokens", type=int, choices=(16384,), default=16384)
@@ -129,7 +129,7 @@ def main() -> int:
     parser.add_argument("--ended-epoch-s", type=float, required=True)
     args = parser.parse_args()
 
-    expected_samples = 1 if args.run_kind == "length_pilot" else 5
+    expected_samples = 1
     if args.num_samples != expected_samples:
         raise ValueError(
             f"{args.run_kind} requires num_samples={expected_samples}; got {args.num_samples}"

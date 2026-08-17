@@ -71,22 +71,22 @@ introduce `--calculate-kv-scales` or a different calibration policy.
 |---|---|---:|---|---|---:|
 | Performance | PubMed test articles bound to the selected Azure window | 1,000 | replay normalized Azure offsets | thinking enabled, budget 6,144 | 10,240 |
 | Accuracy pilot | GPQA Diamond | 198 × 1 | none | high/unbounded within cap | 32,768 |
-| Official accuracy | GPQA Diamond | 198 × 5 | none | high/unbounded within cap | 32,768 |
+| Official accuracy | GPQA Diamond | 198 × 1 | none | high/unbounded within cap | 32,768 |
 
 Performance uses `max-num-seqs=256`. The thinking budget forces the
 `</think>` boundary by token 6,144 and leaves at least 4,096 tokens for the
 answer. Turning thinking off is not the low-reasoning configuration.
 
-Official GPQA reports repeat-level Pass@1 and the mean over five independent
-samples per question, for 990 total requests. Sampling is temperature 1.0,
+Official GPQA reports Pass@1 over one sample per question, for 198 total
+requests per precision arm. Sampling is temperature 1.0,
 top-p 0.95, top-k 20, and seed 42. `BENCH_ARRIVAL_RATE=none` means there is no
 artificial arrival trace.
 
 The original `AGENTS.md` proposed an accuracy sweep at MNS 24/48/96. The later
 experiment decision superseded that provisional sweep: first run one
 198-question BF16 length pilot, inspect ISL/OSL and KV-capacity ratios, then use
-one deliberately selected MNS for all four official precision arms. Do not
-silently choose the official value. Record the selection rationale.
+one deliberately selected MNS for all four official precision arms. The owner
+selected MNS 128 and one repeat per question on 2026-08-17.
 
 The performance run is evaluated against two borrowed comparison SLOs. These
 are not official Qwen requirements:
@@ -577,18 +577,18 @@ measured scheduler optimum. Record the chosen value and rationale in a compact
 manifest or experiment note.
 
 Replace the length-pilot row in `configs/part1_matrix.csv` with four official
-accuracy rows using the selected MNS, five repeats, and 990 total requests.
+accuracy rows using MNS 128, one repeat, and 198 total requests.
 This keeps the declared experiment matrix consistent with what the driver will
 execute.
 
 Preview the four official commands at that one MNS:
 
 ```bash
-export RIVF26_ACCURACY_MAX_NUM_SEQS=<selected-value>
+export RIVF26_ACCURACY_MAX_NUM_SEQS=128
 RIVF26_DRY_RUN=1 scripts/accuracy/run_accuracy_matrix.sh
 ```
 
-Confirm the preview says four precisions, five repeats, 990 requests per arm,
+Confirm the preview says four precisions, one repeat, 198 requests per arm,
 `BENCH_ARRIVAL_RATE=none`, high reasoning, and 32,768 maximum output tokens.
 After another full resource inspection, run:
 
@@ -620,7 +620,7 @@ for client progress:
 ```bash
 mode=accuracy                 # or performance
 run_id=<run-id>
-total=198                     # 990 official GPQA; 1000 performance
+total=198                     # official GPQA; 1000 performance
 log="$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/client.log"
 watch -n 5 "n=\$(tr '\r' '\n' < '$log' 2>/dev/null | rg -o -- '[0-9]+/$total \\[' | tail -n1 | cut -d' ' -f1); echo \"\${n:-0/$total}\""
 ```
