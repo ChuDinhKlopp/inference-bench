@@ -19,10 +19,10 @@ max_num_seqs=${RIVF26_MAX_NUM_SEQS:-24}
 max_model_len=${RIVF26_MAX_MODEL_LEN:-262144}
 gpu_memory_utilization=${RIVF26_GPU_MEMORY_UTILIZATION:-0.90}
 vllm_python=$RIVF26_VENV_BIN/python
-attention_backend=${RIVF26_ATTENTION_BACKEND:-FLASHINFER}
+attention_backend=${RIVF26_ATTENTION_BACKEND:-TRITON_ATTN}
 
-if [[ "$attention_backend" != "FLASHINFER" ]]; then
-  echo "Part 1 requires one A100-compatible attention backend across all arms; expected FLASHINFER" >&2
+if [[ "$attention_backend" != "TRITON_ATTN" ]]; then
+  echo "Part 1 requires one MI250-compatible attention backend across all arms; expected TRITON_ATTN" >&2
   exit 2
 fi
 
@@ -33,12 +33,12 @@ case "$precision" in
     kv_dtype=bfloat16
     ;;
   w8kv16)
-    model_path=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8}
+    model_path=${RIVF26_FP8_MODEL_PATH:-$HOME/models/Qwen3.6-35B-A3B-FP8}
     kv_dtype=bfloat16
     quant_args=(--quantization fp8)
     ;;
   w8kv8)
-    model_path=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8}
+    model_path=${RIVF26_FP8_MODEL_PATH:-$HOME/models/Qwen3.6-35B-A3B-FP8}
     kv_dtype=fp8
     quant_args=(--quantization fp8)
     ;;
@@ -64,7 +64,7 @@ cmd=(
   --served-model-name Qwen3.6-35B-A3B
   --host 127.0.0.1
   --port "$port"
-  --tensor-parallel-size 4
+  --tensor-parallel-size 2
   --max-model-len "$max_model_len"
   --max-num-seqs "$max_num_seqs"
   --gpu-memory-utilization "$gpu_memory_utilization"
@@ -142,7 +142,8 @@ done
 # Prevent model/tokenizer resolution from creating a hidden remote duplicate.
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
-export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3}
+export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-$HIP_VISIBLE_DEVICES}
 # vLLM 0.27's thinking-token budget is implemented by the V1 model runner.
 export VLLM_USE_V2_MODEL_RUNNER=0
 if [[ "$calculate_kv_scales" == 1 ]]; then
@@ -152,4 +153,25 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
   export PYTHONPATH=$scale_audit_site${PYTHONPATH:+:$PYTHONPATH}
 fi
 
-exec "${cmd[@]}"
+# HBM read/write bandwidth is captured by wrapping the server itself with classic
+# rocprof (v1), not rocprofv3/amdsmi: rocprofv3's hardware-counter injection SIGABRTs
+# (launch mode) or silently no-ops (attach mode) on any process that imports this
+# environment's PyTorch, and amdsmi/amd-smi/rocm-smi's UMC activity telemetry is
+# frozen on this host under any workload or privilege level. Classic rocprof avoids
+# the collision and gives real per-kernel FETCH_SIZE/WRITE_SIZE counters (see
+# scripts/monitoring/parse_rocprof_hbm.py). rocprof only writes its output CSV if its
+# own wrapper process is left running long enough to see the wrapped vLLM process
+# exit on its own -- callers MUST NOT process-group-kill this server; they must send
+# SIGTERM to the vLLM child PID specifically and let this rocprof wrapper finish its
+# post-processing and exit by itself.
+hbm_dir=$bulk_run_dir/raw/hbm_kernel
+mkdir -p "$hbm_dir"
+cp "$rivf26_root/scripts/monitoring/rocm_hbm_rpl_rc.xml" "$hbm_dir/rpl_rc.xml"
+"$RIVF26_VENV_BIN/python" -c \
+  'import time,json,sys; json.dump({"reference_epoch_s": time.time(), "reference_monotonic_ns": time.monotonic_ns()}, open(sys.argv[1], "w"))' \
+  "$hbm_dir/reference.json"
+cd "$hbm_dir"
+exec rocprof -i "$rivf26_root/scripts/monitoring/rocm_hbm_counters.txt" \
+  -o "$hbm_dir/kernel_dispatches.csv" \
+  -d "$hbm_dir/rocprof_data" \
+  "${cmd[@]}"

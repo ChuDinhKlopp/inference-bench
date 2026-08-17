@@ -12,18 +12,23 @@ rivf26_root=${RIVF26_ROOT:-$(cd -- "$script_dir/../.." && pwd)}
 source "$rivf26_root/scripts/common/venv.sh"
 source "$rivf26_root/scripts/common/paths.sh"
 source "$rivf26_root/scripts/common/scheduler_env.sh"
+source "$rivf26_root/scripts/common/hbm_env.sh"
 rivf26_set_scheduler_env
 
 run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_smoke_mbt16384_${precision}}
 port=${RIVF26_PORT:-8000}
 max_num_seqs=2
+export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-$HIP_VISIBLE_DEVICES}
+IFS=',' read -ra hbm_visible_array <<< "$HIP_VISIBLE_DEVICES"
+hbm_expected_gpu_count=${#hbm_visible_array[@]}
 run_dir=$rivf26_root/results/part1/smoke/$run_id
 bulk_run_dir=$RIVF26_BULK_ROOT/results/part1/smoke/$run_id
 manifest_dir=$rivf26_root/manifests/$run_id
 preflight=$manifest_dir/preflight.json
 post_server=$manifest_dir/post_server.json
 server_log=$bulk_run_dir/logs/server.log
-hbm_prefix=$bulk_run_dir/raw/hbm
+hbm_kernel_dir=$bulk_run_dir/raw/hbm_kernel
 hbm_csv=$bulk_run_dir/raw/hbm.csv
 server_launcher=$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh
 case "$precision" in
@@ -45,15 +50,7 @@ cleanup() {
   local rc=$?
   trap - EXIT
   if [[ -n ${server_pid:-} ]]; then
-    kill -TERM -- "-$server_pid" 2>/dev/null || true
-    for _ in {1..120}; do
-      kill -0 -- "-$server_pid" 2>/dev/null || break
-      sleep 0.5
-    done
-    if kill -0 -- "-$server_pid" 2>/dev/null; then
-      kill -KILL -- "-$server_pid" 2>/dev/null || true
-    fi
-    wait "$server_pid" 2>/dev/null || true
+    rivf26_stop_rocprof_server "$server_pid" "$port"
   fi
   if (( run_complete == 0 )); then
     printf '{"status":"FAIL","exit_code":%d,"run_id":"%s"}\n' "$rc" "$run_id" > "$run_dir/failure.json"
@@ -115,14 +112,23 @@ fi
   "$post_server"
 
 started_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
-"$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" \
-  "$RIVF26_VENV_BIN/python" "$script_dir/smoke_client.py" \
+"$RIVF26_VENV_BIN/python" "$script_dir/smoke_client.py" \
   --output-dir "$bulk_run_dir/raw" --base-url "http://127.0.0.1:$port" \
   --model Qwen3.6-35B-A3B --model-path "$model_path" --server-log-file "$server_log" \
   --max-gen-toks 128 --max-concurrency "$max_num_seqs" --metrics-poll-interval 0.2
 
-"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/parse_nsys_hbm.py" \
-  "$hbm_prefix.nsys-rep" "$hbm_csv" --metadata-json "$run_dir/hbm_metadata.json" \
+# rocprof only finishes writing kernel_dispatches.csv once its wrapped vLLM process
+# exits, so the server must be stopped (gracefully, via the vLLM PID specifically --
+# see scripts/common/hbm_env.sh) before HBM data can be parsed.
+rivf26_stop_rocprof_server "$server_pid" "$port"
+server_pid=
+
+"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/parse_rocprof_hbm.py" \
+  --kernel-csv "$hbm_kernel_dir/kernel_dispatches.csv" \
+  --reference-json "$hbm_kernel_dir/reference.json" \
+  --output-csv "$hbm_csv" --metadata-json "$run_dir/hbm_metadata.json" \
+  --expected-gpu-count "$hbm_expected_gpu_count" \
+  --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}" \
   --experiment-start-epoch-s "$started_epoch_s"
 kv_capacity=$("$RIVF26_VENV_BIN/python" -c \
   'import re,sys; t=open(sys.argv[1],errors="replace").read(); m=re.search(r"GPU KV cache size:\s*([0-9,]+) tokens",t,re.I); print(m.group(1).replace(",","") if m else "")' \

@@ -17,7 +17,7 @@ depending on the source machine's run history.
 
 This is a MI250 port specification. Before launching, the server common
 launcher and validators must be configured for `RIVF26_TENSOR_PARALLEL_SIZE=2`
-and `RIVF26_ATTENTION_BACKEND=ROCM_ATTN`; the checked-in A100 defaults remain
+and `RIVF26_ATTENTION_BACKEND=TRITON_ATTN`; the checked-in A100 defaults remain
 TP=4/`FLASHINFER` until that port is applied. Do not treat an A100 smoke PASS
 as MI250 runtime validation.
 
@@ -44,10 +44,10 @@ full-run PyTorch profiling during Part 1.
 | vLLM | 0.27.0 environment used by this harness |
 | Server context limit | 32,768 tokens |
 | `max-num-batched-tokens` | 8,192 default; record any deliberate override |
-| Attention backend | `ROCM_ATTN` for every Part 1 arm |
+| Attention backend | `TRITON_ATTN` for every Part 1 arm |
 | Server endpoint | `127.0.0.1:8000` by default |
 
-`ROCM_ATTN` is pinned for the ROCm MI250 attention path and must be used
+`TRITON_ATTN` is pinned for the ROCm MI250 attention path and must be used
 consistently across all arms. `max-num-batched-tokens` is configurable, but
 must be recorded identically in the server command, preflight, and plot data.
 
@@ -240,6 +240,42 @@ mkdir -p "$RIVF26_BULK_ROOT"/{datasets/processed,logs,results/part1}
 host RAM. It is acceptable only when it has the required capacity and results
 will be archived deliberately. A large local NVMe path is safer; the harness
 supports it through the same variable.
+
+### Runtime paths that must not be copied from the A100 host
+
+The A100 machine used `/run/user/1009/ducct/rivf26`. That path is not portable:
+the numeric UID and username differ between machines, and `/run/user` may be a
+volatile RAM-backed filesystem. Do not place this literal path in commands,
+configuration, or manifests. Always derive it or choose persistent storage:
+
+```bash
+# Volatile per-user runtime storage (only if capacity is sufficient)
+export RIVF26_BULK_ROOT="/run/user/$(id -u)/$(id -un)/rivf26"
+
+# Preferred for large runs: persistent local/NVMe storage
+# export RIVF26_BULK_ROOT=/data/rivf26
+mkdir -p "$RIVF26_BULK_ROOT"/{datasets/processed,logs,results/part1}
+```
+
+The default is defined in `scripts/common/paths.sh` and is also repeated in
+`scripts/utilities/preflight.py` and
+`scripts/performance/score_registered_pubmed_runs.py`. Set
+`RIVF26_BULK_ROOT` before invoking any harness so all logs, raw telemetry,
+profiler output, and generated datasets use the MI250 filesystem. Verify the
+resolved location with:
+
+```bash
+printf 'RIVF26_ROOT=%s\nRIVF26_BULK_ROOT=%s\n' "$RIVF26_ROOT" "$RIVF26_BULK_ROOT"
+df -h "$RIVF26_BULK_ROOT"
+df -i "$RIVF26_BULK_ROOT"
+```
+
+The checked-in scripts also contain A100-specific `/dev/shm` model defaults
+and `/dev/shm` capacity checks. Override `RIVF26_BF16_MODEL_PATH` and
+`RIVF26_FP8_MODEL_PATH` after locating the MI250 model files; do not copy
+weights into `rivf26/`. If the model is not in `/dev/shm`, the preflight's
+`Path("/dev/shm")` check must be ported to the MI250 model/storage location
+before a long run.
 
 Confirm the software identity:
 
@@ -436,7 +472,7 @@ done
 ```
 
 Each command must show the intended local model/tokenizer path, TP=2,
-MBT=8,192 by default, context 32,768, `ROCM_ATTN`, precision mapping, and mode-specific
+MBT=8,192 by default, context 32,768, `TRITON_ATTN`, precision mapping, and mode-specific
 output cap. Dry run does not prove runtime precision; the smoke matrix does.
 
 ## 8. Record fresh host state and run preflight inspection
@@ -746,7 +782,7 @@ Do not call a run complete merely because the client exited zero. Verify:
 - Stage A `preflight.json` is PASS;
 - Stage B `post_server.json` is PASS and `long_run_eligible` is true;
 - all expected requests succeeded;
-- runtime logs prove intended weights, KV dtype, TP=2, ROCM_ATTN, and MBT;
+- runtime logs prove intended weights, KV dtype, TP=2, TRITON_ATTN, and MBT;
 - HBM report parsed successfully for all eight GPUs;
 - Prometheus includes running, waiting, preemption, and KV metrics;
 - per-request TTFT/TPOT and token lengths exist;
@@ -828,3 +864,4 @@ An agent may launch a long matrix only when every item is true:
 
 Only then run performance or official accuracy. Part 2 remains separate until
 Part 1 is complete and the experiment owner requests it.
+

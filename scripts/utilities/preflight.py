@@ -93,25 +93,74 @@ def add_check(
     )
 
 
-def parse_gpu_csv(text: str) -> list[dict[str, Any]]:
-    rows = []
-    for line in text.splitlines():
-        parts = [part.strip() for part in line.split(",")]
-        if len(parts) != 8:
-            continue
-        rows.append(
-            {
-                "index": int(parts[0]),
-                "name": parts[1],
-                "memory_total_mib": int(parts[2]),
-                "memory_used_mib": int(parts[3]),
-                "memory_free_mib": int(parts[4]),
-                "utilization_gpu_percent": int(parts[5]),
-                "temperature_c": int(parts[6]),
-                "power_w": float(parts[7]),
-            }
-        )
-    return rows
+def _numeric(value: Any, default: float = 0.0) -> float:
+    return float(value) if isinstance(value, (int, float)) else default
+
+
+def amdsmi_gpu_inventory() -> tuple[list[dict[str, Any]], str]:
+    try:
+        import amdsmi
+    except ImportError as exc:
+        return [], f"amdsmi import failed: {exc}"
+    try:
+        amdsmi.amdsmi_init()
+    except Exception as exc:  # driver/init failures must not crash preflight
+        return [], f"amdsmi_init failed: {exc}"
+    try:
+        handles = amdsmi.amdsmi_get_processor_handles()
+        rows = []
+        for index, handle in enumerate(handles):
+            asic = amdsmi.amdsmi_get_gpu_asic_info(handle)
+            vram = amdsmi.amdsmi_get_gpu_vram_info(handle)
+            used_bytes = amdsmi.amdsmi_get_gpu_memory_usage(handle, amdsmi.AmdSmiMemoryType.VRAM)
+            activity = amdsmi.amdsmi_get_gpu_activity(handle)
+            power = amdsmi.amdsmi_get_power_info(handle)
+            temp = amdsmi.amdsmi_get_temp_metric(
+                handle, amdsmi.AmdSmiTemperatureType.EDGE, amdsmi.AmdSmiTemperatureMetric.CURRENT
+            )
+            total_mib = _numeric(vram.get("vram_size"))
+            used_mib = used_bytes / (1024**2)
+            rows.append(
+                {
+                    "index": index,
+                    "name": asic.get("market_name", "unknown"),
+                    "memory_total_mib": round(total_mib),
+                    "memory_used_mib": round(used_mib),
+                    "memory_free_mib": round(total_mib - used_mib),
+                    "utilization_gpu_percent": round(_numeric(activity.get("gfx_activity"))),
+                    "temperature_c": round(_numeric(temp)),
+                    "power_w": _numeric(power.get("current_socket_power"))
+                    or _numeric(power.get("average_socket_power"))
+                    or _numeric(power.get("socket_power")),
+                }
+            )
+        return rows, ""
+    except Exception as exc:
+        return [], f"amdsmi query failed: {exc}"
+    finally:
+        amdsmi.amdsmi_shut_down()
+
+
+def amdsmi_gpu_processes() -> tuple[list[str], str]:
+    try:
+        import amdsmi
+    except ImportError as exc:
+        return [], f"amdsmi import failed: {exc}"
+    try:
+        amdsmi.amdsmi_init()
+    except Exception as exc:
+        return [], f"amdsmi_init failed: {exc}"
+    try:
+        handles = amdsmi.amdsmi_get_processor_handles()
+        lines = []
+        for index, handle in enumerate(handles):
+            for proc in amdsmi.amdsmi_get_gpu_process_list(handle):
+                lines.append(f"gpu={index} {proc}")
+        return lines, ""
+    except Exception as exc:
+        return [], f"amdsmi process query failed: {exc}"
+    finally:
+        amdsmi.amdsmi_shut_down()
 
 
 def main() -> int:
@@ -217,24 +266,22 @@ def main() -> int:
         f"path={model_path}; safetensors={len(weight_files)}; missing={missing}",
     )
 
-    gpu_query = run([
-        "nvidia-smi",
-        "--query-gpu=index,name,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw",
-        "--format=csv,noheader,nounits",
-    ])
-    gpus = parse_gpu_csv(gpu_query["stdout"]) if gpu_query["returncode"] == 0 else []
-    gpu_shape_ok = len(gpus) == 4 and all("A100" in gpu["name"] for gpu in gpus)
-    add_check(checks, "gpu_inventory", gpu_shape_ok, True, f"found={[(g['index'], g['name']) for g in gpus]}; stderr={gpu_query['stderr']}")
+    gpus, gpu_query_error = amdsmi_gpu_inventory()
+    gpu_shape_ok = len(gpus) == 8 and all("MI250" in gpu["name"] for gpu in gpus)
+    add_check(checks, "gpu_inventory", gpu_shape_ok, True, f"found={[(g['index'], g['name']) for g in gpus]}; stderr={gpu_query_error}")
     gpu_free_ok = gpu_shape_ok and all(gpu["memory_free_mib"] >= args.min_gpu_free_mib for gpu in gpus)
     add_check(checks, "gpu_hbm_before_server", gpu_free_ok, True, f"free_mib={[(g['index'], g['memory_free_mib']) for g in gpus]}")
 
-    gpu_process_query = run([
-        "nvidia-smi",
-        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
-        "--format=csv,noheader,nounits",
-    ])
-    gpu_process_lines = [line for line in gpu_process_query["stdout"].splitlines() if line.strip()]
-    add_check(checks, "gpu_processes", not gpu_process_lines, True, "none" if not gpu_process_lines else "; ".join(gpu_process_lines))
+    gpu_process_lines, gpu_process_error = amdsmi_gpu_processes()
+    add_check(
+        checks,
+        "gpu_processes",
+        not gpu_process_lines,
+        True,
+        "none" if not gpu_process_lines else "; ".join(gpu_process_lines),
+    )
+    if gpu_process_error:
+        add_check(checks, "gpu_process_query", False, False, gpu_process_error)
 
     stale_servers = matching_processes(("vllm.entrypoints", "vllm serve", "api_server.py"))
     add_check(checks, "stale_vllm_servers", not stale_servers, True, "none" if not stale_servers else json.dumps(stale_servers[:20]))
@@ -271,8 +318,25 @@ def main() -> int:
         (extension_probe["stdout"] + "\n" + extension_probe["stderr"]).strip(),
     )
 
-    nsys = shutil.which("nsys")
-    add_check(checks, "hbm_sampler", nsys is not None, True, nsys or "nsys not found")
+    # HBM read/write bandwidth is captured by wrapping the server with classic
+    # rocprof (v1), which requires the `rocprof` binary; amdsmi is only used
+    # afterward for the static per-device peak-bandwidth constant. See
+    # scripts/monitoring/parse_rocprof_hbm.py for why rocprofv3/amdsmi's dynamic
+    # activity telemetry cannot be used directly on this host.
+    rocprof_path = shutil.which("rocprof")
+    try:
+        import amdsmi as _amdsmi_probe  # noqa: F401
+
+        amdsmi_probe_error = ""
+    except ImportError as exc:
+        amdsmi_probe_error = str(exc)
+    add_check(
+        checks,
+        "hbm_sampler",
+        rocprof_path is not None and not amdsmi_probe_error,
+        True,
+        f"rocprof={rocprof_path or 'not found'}; amdsmi={'available' if not amdsmi_probe_error else amdsmi_probe_error}",
+    )
 
     mandatory_failures = [check["name"] for check in checks if check["mandatory"] and check["result"] == "FAIL"]
     status = "PASS" if not mandatory_failures else "FAIL"

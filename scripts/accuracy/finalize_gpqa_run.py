@@ -290,7 +290,7 @@ def main() -> int:
             "--model-suffix",
             args.precision if args.run_kind == "official" else f"{args.precision}_length_pilot",
             "--attn-backend",
-            "FLASHINFER",
+            "TRITON_ATTN",
         ],
         check=True,
     )

@@ -146,8 +146,8 @@ def main() -> int:
                 blocking=not args.accept_fp8_kv_scale_one,
             )
 
-    backend_evidence = [line[:500] for line in log_text.splitlines() if "flashinfer" in line.lower() and "backend" in line.lower()]
-    check("attention_backend_runtime_evidence", bool(backend_evidence), f"expected=FLASHINFER; evidence={backend_evidence[:5]}")
+    backend_evidence = [line[:500] for line in log_text.splitlines() if "triton_attn" in line.lower() and "backend" in line.lower()]
+    check("attention_backend_runtime_evidence", bool(backend_evidence), f"expected=TRITON_ATTN; evidence={backend_evidence[:5]}")
 
     reasoning_evidence = [
         line[:1000]
@@ -175,19 +175,36 @@ def main() -> int:
     capacity_evidence = [match.group(0) for pattern in capacity_patterns for match in re.finditer(pattern, log_text, re.IGNORECASE)]
     check("kv_capacity_runtime_evidence", bool(capacity_evidence), f"evidence={capacity_evidence[:5]}")
 
-    query = run([
-        "nvidia-smi",
-        "--query-gpu=index,memory.used,memory.free",
-        "--format=csv,noheader,nounits",
-    ])
     gpu_rows = []
-    if query.returncode == 0:
-        for line in query.stdout.splitlines():
-            parts = [part.strip() for part in line.split(",")]
-            if len(parts) == 3:
-                gpu_rows.append({"index": int(parts[0]), "used_mib": int(parts[1]), "free_mib": int(parts[2])})
-    gpu_ok = len(gpu_rows) == 4 and all(row["used_mib"] > 1000 and row["free_mib"] >= args.min_post_load_free_mib for row in gpu_rows)
-    check("tp4_hbm_after_load", gpu_ok, f"gpus={gpu_rows}; stderr={query.stderr.strip()}")
+    gpu_query_error = ""
+    try:
+        import amdsmi
+
+        amdsmi.amdsmi_init()
+        try:
+            for index, handle in enumerate(amdsmi.amdsmi_get_processor_handles()):
+                vram = amdsmi.amdsmi_get_gpu_vram_info(handle)
+                used_bytes = amdsmi.amdsmi_get_gpu_memory_usage(handle, amdsmi.AmdSmiMemoryType.VRAM)
+                total_mib = float(vram.get("vram_size")) if isinstance(vram.get("vram_size"), (int, float)) else 0.0
+                used_mib = used_bytes / (1024**2)
+                gpu_rows.append({"index": index, "used_mib": round(used_mib), "free_mib": round(total_mib - used_mib)})
+        finally:
+            amdsmi.amdsmi_shut_down()
+    except Exception as exc:
+        gpu_query_error = str(exc)
+    visible_devices_raw = os.environ.get("HIP_VISIBLE_DEVICES") or os.environ.get("CUDA_VISIBLE_DEVICES") or "0,1"
+    replica_indices = {int(part) for part in visible_devices_raw.split(",") if part.strip() != ""}
+    replica_rows = [row for row in gpu_rows if row["index"] in replica_indices]
+    gpu_ok = (
+        len(gpu_rows) == 8
+        and len(replica_rows) == len(replica_indices)
+        and all(row["used_mib"] > 1000 and row["free_mib"] >= args.min_post_load_free_mib for row in replica_rows)
+    )
+    check(
+        "tp2_hbm_after_load",
+        gpu_ok,
+        f"replica_gpus({sorted(replica_indices)})={replica_rows}; all_gpus={gpu_rows}; stderr={gpu_query_error}",
+    )
 
     dead_monitors = [pid for pid in args.monitor_pid if not alive(pid)]
     check("monitor_processes", not dead_monitors, f"configured={args.monitor_pid}; dead={dead_monitors}")

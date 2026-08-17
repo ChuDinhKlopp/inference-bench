@@ -1,0 +1,7 @@
+<defaults
+  basenames=off
+  timestamp=on
+  ctx-limit=0
+  heartbeat=0
+  obj-tracking=off
+></defaults>

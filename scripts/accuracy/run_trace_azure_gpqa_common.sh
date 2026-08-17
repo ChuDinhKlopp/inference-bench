@@ -19,6 +19,7 @@ source "$rivf26_root/scripts/common/venv.sh"
 source "$rivf26_root/scripts/common/paths.sh"
 source "$rivf26_root/scripts/common/scheduler_env.sh"
 source "$rivf26_root/scripts/common/workload_env.sh"
+source "$rivf26_root/scripts/common/hbm_env.sh"
 
 export RIVF26_MAX_MODEL_LEN=${RIVF26_MAX_MODEL_LEN:-262144}
 rivf26_set_scheduler_env
@@ -47,6 +48,10 @@ if [[ "$run_kind" == official && "$max_num_seqs" != 256 ]]; then
   exit 2
 fi
 total_requests=$((198 * num_samples))
+export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-$HIP_VISIBLE_DEVICES}
+IFS=',' read -ra hbm_visible_array <<< "$HIP_VISIBLE_DEVICES"
+hbm_expected_gpu_count=${#hbm_visible_array[@]}
 
 port=${RIVF26_PORT:-8000}
 if [[ "$run_kind" == length_pilot ]]; then
@@ -77,7 +82,7 @@ resource_guard_csv=$bulk_run_dir/raw/resource_guard.csv
 bench_results=$bulk_run_dir/raw/bench_results.json
 generations=$bulk_run_dir/raw/generations.json
 metrics_prefix=$bulk_run_dir/raw/bench_results
-hbm_prefix=$bulk_run_dir/raw/hbm
+hbm_kernel_dir=$bulk_run_dir/raw/hbm_kernel
 hbm_csv=$bulk_run_dir/raw/hbm.csv
 server_launcher=$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh
 
@@ -162,7 +167,6 @@ if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
     "$server_launcher"
   print_command "Stage B validation" "${post_cmd[@]}"
   print_command "GPQA client" "${client_cmd[@]}"
-  print_command "HBM-wrapped client" "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}"
   printf 'MAX_GEN_TOKS=%s THINKING_TOKEN_BUDGET=%s MAX_NUM_BATCHED_TOKENS=%s BENCH_ARRIVAL_RATE=%s reasoning_effort=%s run_kind=%s repeats=%s total_requests=%s\n' \
     "$MAX_GEN_TOKS" "$RIVF26_THINKING_TOKEN_BUDGET" "$RIVF26_MAX_NUM_BATCHED_TOKENS" "$BENCH_ARRIVAL_RATE" \
     "$RIVF26_REASONING_EFFORT" "$run_kind" "$num_samples" "$total_requests"
@@ -204,15 +208,7 @@ cleanup() {
     wait "$guard_pid" 2>/dev/null || true
   fi
   if [[ -n ${server_pid:-} ]]; then
-    kill -TERM -- "-$server_pid" 2>/dev/null || true
-    for _ in {1..120}; do
-      kill -0 -- "-$server_pid" 2>/dev/null || break
-      sleep 0.5
-    done
-    if kill -0 -- "-$server_pid" 2>/dev/null; then
-      kill -KILL -- "-$server_pid" 2>/dev/null || true
-    fi
-    wait "$server_pid" 2>/dev/null || true
+    rivf26_stop_rocprof_server "$server_pid" "$port"
   fi
   if (( run_completed == 0 )); then
     printf '{"status":"FAIL","exit_code":%d,"run_id":"%s"}\n' "$rc" "$run_id" > "$run_dir/failure.json"
@@ -288,7 +284,7 @@ started_epoch_s=$(
   "$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())'
 )
 set +e
-"$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
+"${client_cmd[@]}" \
   2>&1 | tee "$client_log"
 client_rc=${PIPESTATUS[0]}
 set -e
@@ -296,7 +292,7 @@ ended_epoch_s=$(
   "$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())'
 )
 if (( client_rc != 0 )); then
-  echo "GPQA client/HBM capture failed with exit code $client_rc" >&2
+  echo "GPQA client failed with exit code $client_rc" >&2
   exit "$client_rc"
 fi
 if ! kill -0 "$guard_pid" 2>/dev/null; then
@@ -308,9 +304,18 @@ kill -TERM "$guard_pid"
 wait "$guard_pid" 2>/dev/null || true
 guard_pid=
 
-"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/parse_nsys_hbm.py" \
-  "$hbm_prefix.nsys-rep" "$hbm_csv" \
-  --metadata-json "$run_dir/hbm_metadata.json" \
+# rocprof only finishes writing kernel_dispatches.csv once its wrapped vLLM process
+# exits, so the server must be stopped (gracefully, via the vLLM PID specifically --
+# see scripts/common/hbm_env.sh) before HBM data can be parsed.
+rivf26_stop_rocprof_server "$server_pid" "$port"
+server_pid=
+
+"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/parse_rocprof_hbm.py" \
+  --kernel-csv "$hbm_kernel_dir/kernel_dispatches.csv" \
+  --reference-json "$hbm_kernel_dir/reference.json" \
+  --output-csv "$hbm_csv" --metadata-json "$run_dir/hbm_metadata.json" \
+  --expected-gpu-count "$hbm_expected_gpu_count" \
+  --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}" \
   --experiment-start-epoch-s "$started_epoch_s"
 
 kv_capacity=$(

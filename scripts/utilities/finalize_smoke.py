@@ -37,8 +37,9 @@ def main() -> int:
         errors.append("Stage B did not establish long-run eligibility")
     if client.get("request_count") != 4 or client.get("successful_requests") != 4:
         errors.append("four smoke requests did not succeed")
-    if hbm.get("gpu_count") != 4 or hbm.get("sample_rows", 0) <= 0:
-        errors.append("four-GPU HBM telemetry is incomplete")
+    expected_gpu_count = hbm.get("expected_gpu_count")
+    if not expected_gpu_count or hbm.get("gpu_count") != expected_gpu_count or hbm.get("sample_rows", 0) <= 0:
+        errors.append("HBM telemetry is incomplete")
     series = plot.get("TS", {}).get(f"Qwen3.6-35B-A3B|{args.precision}", {})
     runs = series.get("runs", {})
     plotted = runs.get(args.run_id)

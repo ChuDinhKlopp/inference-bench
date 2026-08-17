@@ -207,7 +207,7 @@ def main() -> int:
             "--model-suffix",
             args.precision,
             "--attn-backend",
-            "FLASHINFER",
+            "TRITON_ATTN",
         ],
         check=True,
     )
