@@ -1,7 +1,7 @@
 # RIVF26 portable experiment guide
 
 This is the bootstrap, validation, and operations guide for an AI agent moving
-the RIVF26 harness to another 4×A100 machine. It assumes the destination has:
+the RIVF26 harness to another 8×MI250 machine. It assumes the destination has:
 
 ```text
 ~/repos/inference-bench/
@@ -15,12 +15,18 @@ Read it before changing or running the harness. This guide restates the
 experiment design so that the receiving agent can understand the study without
 depending on the source machine's run history.
 
+This is a MI250 port specification. Before launching, the server common
+launcher and validators must be configured for `RIVF26_TENSOR_PARALLEL_SIZE=2`
+and `RIVF26_ATTENTION_BACKEND=ROCM_ATTN`; the checked-in A100 defaults remain
+TP=4/`FLASHINFER` until that port is applied. Do not treat an A100 smoke PASS
+as MI250 runtime validation.
+
 ## 1. What the experiment is
 
 The research question is:
 
 > How does vLLM inference behavior change when model-weight and KV-cache
-> precision change, and which scheduler, KV-cache, latency, or A100 HBM effects
+> precision change, and which scheduler, KV-cache, latency, or MI250 HBM effects
 > explain the performance difference?
 
 Part 1 is the priority. It records complete runtime time series, not only final
@@ -32,30 +38,29 @@ full-run PyTorch profiling during Part 1.
 
 | Item | Required value |
 |---|---|
-| GPUs | 4 × NVIDIA A100 PCIe 40 GB |
-| Tensor parallelism | 4 |
+| GPUs | 8 × AMD Instinct MI250 (80 GiB each) |
+| Tensor parallelism | 2 |
 | Model family | Qwen3.6-35B-A3B |
 | vLLM | 0.27.0 environment used by this harness |
-| Server context limit | 65,536 tokens |
+| Server context limit | 32,768 tokens |
 | `max-num-batched-tokens` | 8,192 default; record any deliberate override |
-| Attention backend | `FLASHINFER` for every Part 1 arm |
+| Attention backend | `ROCM_ATTN` for every Part 1 arm |
 | Server endpoint | `127.0.0.1:8000` by default |
 
-`FLASHINFER` is pinned because vLLM's SM80 Triton attention path rejects FP8
-KV cache. Do not change the backend in one arm only. Record
-`max-num-batched-tokens` identically in the server command, preflight, and
-plot data for each run.
+`ROCM_ATTN` is pinned for the ROCm MI250 attention path and must be used
+consistently across all arms. `max-num-batched-tokens` is configurable, but
+must be recorded identically in the server command, preflight, and plot data.
 
 ### Precision arms
 
-| Arm | Checkpoint | Effective A100 weight path | KV-cache dtype | vLLM quantization |
+| Arm | Checkpoint | Effective MI250 weight path | KV-cache dtype | vLLM quantization |
 |---|---|---|---|---|
 | `w16kv16` | BF16 | BF16 | `bfloat16` | none |
 | `w8kv16` | FP8 | FP8 weight-only Marlin, BF16 activations | `bfloat16` | `fp8` |
 | `w8kv8` | FP8 | FP8 weight-only Marlin, BF16 activations | `float8_e4m3fn` | `fp8` |
 | `w16kv8` | BF16 | BF16 | `float8_e4m3fn` | none |
 
-A100 has no native FP8 compute. The `w8` arms therefore use vLLM's FP8
+MI250 has no native FP8 compute path equivalent to newer architectures. The `w8` arms therefore use vLLM's FP8
 weight-only Marlin implementation rather than native FP8 tensor-core
 execution. Runtime server logs and Stage B validation are the evidence; names
 alone are not.
@@ -92,6 +97,8 @@ briefly launched and interrupted MNS128 attempt.
 Performance pairs the burstiest selected Azure 1,000-request window with the
 1,000 longest intact PubMed prompts satisfying the context constraint. The
 frozen workload metadata must record `selection_policy=longest_prompt_tokens`.
+For this MI250 guide, regenerate the workload with `--max-model-len 32768`;
+the A100 workload generated with a 65,536-token context is not compatible.
 
 The performance run is evaluated against two borrowed comparison SLOs. These
 are not official Qwen requirements:
@@ -113,11 +120,13 @@ Every arm must retain timestamped data for:
 - running and waiting requests;
 - cumulative/event preemptions;
 - KV-cache utilization and runtime KV-token capacity;
-- A100 HBM read, write, aggregate throughput, and normalized utilization;
+- MI250 HBM read, write, aggregate throughput, and normalized utilization;
 - resource-guard samples, throughput, latency, token counts, and failures.
 
-Prometheus scheduler/KV data defaults to 5 Hz. Nsight Systems GA100 GPU Metrics
-samples all four GPUs at 10 Hz. Compact plot data defaults to deterministic
+Prometheus scheduler/KV data defaults to 5 Hz. Use the MI250-compatible ROCm
+telemetry collector at the documented sampling rate; the A100 GA100 sampler is
+not portable to MI250.
+samples all eight GPUs at 10 Hz. Compact plot data defaults to deterministic
 one-second bins while raw samples remain the source of truth.
 
 ## 2. Harness architecture
@@ -129,7 +138,7 @@ it:
 precision wrapper
   -> offline dataset/trace validation
   -> Stage A machine preflight
-  -> precision-specific vLLM server, TP=4
+  -> precision-specific vLLM server, TP=2
   -> Stage B runtime precision/HBM/monitor validation
   -> resource guard + HBM collector
   -> parent bench.py transport and vLLM metrics collection
@@ -385,13 +394,13 @@ offline execution:
 "$RIVF26_VENV_BIN/python" scripts/performance/prepare_pubmed_azure_workload.py \
   --trace traces/processed/azure_multimodal_bursty_1000.csv \
   --output-jsonl "$RIVF26_PUBMED_WORKLOAD" \
-  --output-metadata "$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000.metadata.json" \
+  --output-metadata "$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_1000_longest.metadata.json" \
   --cache-dir "$RIVF26_BULK_ROOT/datasets/cache" \
   --model-path "$RIVF26_BF16_MODEL_PATH" \
   --select-longest-prompts \
   --max-gen-toks 10240 \
   --thinking-token-budget 6144 \
-  --max-model-len 65536
+  --max-model-len 32768
 sha256sum "$RIVF26_PUBMED_WORKLOAD"
 ```
 
@@ -426,8 +435,8 @@ for precision in w16kv16 w8kv16 w8kv8 w16kv8; do
 done
 ```
 
-Each command must show the intended local model/tokenizer path, TP=4,
-MBT=8,192 by default, context 65,536, `FLASHINFER`, precision mapping, and mode-specific
+Each command must show the intended local model/tokenizer path, TP=2,
+MBT=8,192 by default, context 32,768, `ROCM_ATTN`, precision mapping, and mode-specific
 output cap. Dry run does not prove runtime precision; the smoke matrix does.
 
 ## 8. Record fresh host state and run preflight inspection
@@ -454,7 +463,7 @@ pgrep -af 'vllm|EngineCore|bench.py|run_(gpqa|pubmed)|nsys profile' || true
 ```
 
 Treat result-filesystem space, host RAM/swap, `/dev/shm`, and GPU HBM as four
-separate resources. Never kill another user's process. TP=4 requires all four
+separate resources. Never kill another user's process. TP=2 requires all eight
 GPUs to be available.
 
 Long-run defaults estimate 80 GiB output and require another 50 GiB safety
@@ -478,7 +487,7 @@ export RIVF26_SMOKE_MATRIX="$RIVF26_ROOT/manifests/$matrix_id.json"
 
 This sequentially runs `w16kv16`, `w8kv16`, `w8kv8`, and `w16kv8`. Each smoke
 owns Stage A, server startup, Stage B, four requests, TTFT/TPOT, Prometheus,
-10 Hz four-GPU HBM telemetry, plot conversion, log-growth measurement, and
+10 Hz eight-GPU MI250 telemetry, plot conversion, log-growth measurement, and
 shutdown. The matrix gate is PASS only if all four summaries are complete.
 
 Verify the gate:
@@ -503,7 +512,10 @@ precision and completeness, not exact token-capacity equality.
 
 ## 10. Run performance mode
 
-Performance is exactly four runs:
+Performance is exactly four precision runs. Because each MI250 serves one
+TP=2 replica, two MI250s are used per replica and up to four replicas may run
+in parallel on an eight-GPU host. Use distinct ports and bulk-output
+directories; never share a server or run directory between replicas.
 
 | Order | Precision | MNS | Requests |
 |---:|---|---:|---:|
@@ -536,12 +548,14 @@ scripts/performance/run_performance_matrix.sh
 The driver is sequential and fail-fast. Each arm independently validates the
 frozen 1,000-row workload and trace, runs both safety stages, probes the 6,144
 thinking budget for a non-empty answer, raises the open-file soft limit to
-65,536, replays Azure offsets, finalizes telemetry, appends through the parent
+32,768, replays Azure offsets, finalizes telemetry, appends through the parent
 recorder, and shuts down its server.
 
-Do not run arms concurrently. Do not alter arrival offsets or add a client
-concurrency semaphore; `max-num-seqs=256` controls vLLM running residency while
-the trace supplies arrivals.
+Concurrent arms are supported only when each TP=2 replica has an exclusive
+GPU pair, port, run ID, and bulk-output directory. Do not share a server or
+GPU between arms. Do not alter arrival offsets or add a client concurrency
+semaphore; `max-num-seqs=256` controls vLLM running residency while the trace
+supplies arrivals.
 
 After all four runs, score PubMed offline:
 
@@ -555,16 +569,16 @@ ROUGE-1, ROUGE-2, and sentence-agnostic ROUGE-L F1.
 
 ## 10.1 Run LiveCodeBench release v6
 
-LiveCodeBench accuracy uses the pinned `release_v6` lite set (1,055 prompts),
-the local Qwen tokenizer, `max-num-seqs=256`, `max-model-len=262,144`,
-`max-gen-toks=253,952`, and an explicit 32,768-token thinking budget:
+LiveCodeBench accuracy uses the pinned `release_v6` lite set (1,055 prompts).
+With the MI250 32,768-token context limit, use a reduced completion cap that
+fits the context (`max-gen-toks=22,528`) and a 16,384-token thinking budget:
 
 ```bash
 RIVF26_MAX_NUM_SEQS=256 \
-RIVF26_MAX_MODEL_LEN=262144 \
-RIVF26_LCB_MAX_GEN_TOKS=253952 \
+RIVF26_MAX_MODEL_LEN=32768 \
+RIVF26_LCB_MAX_GEN_TOKS=22528 \
 RIVF26_LCB_NUM_PROMPTS=1055 \
-RIVF26_THINKING_TOKEN_BUDGET=32768 \
+RIVF26_THINKING_TOKEN_BUDGET=16384 \
 RIVF26_RUN_ID=$(date -u +%Y%m%d_%H%M%S)_accuracy_livecodebench_release_v6_w8kv8_mns256 \
 scripts/accuracy/run_trace_livecodebench_Qwen3.6-35B-A3B_w8kv8.sh
 ```
@@ -646,7 +660,7 @@ for client progress:
 ```bash
 mode=accuracy                 # or performance
 run_id=<run-id>
-total=198                     # official GPQA; 1000 performance
+total=198                     # official GPQA; 1000 longest-PubMed performance
 log="$RIVF26_BULK_ROOT/results/part1/$mode/$run_id/logs/client.log"
 watch -n 5 "n=\$(tr '\r' '\n' < '$log' 2>/dev/null | rg -o -- '[0-9]+/$total \\[' | tail -n1 | cut -d' ' -f1); echo \"\${n:-0/$total}\""
 ```
@@ -732,8 +746,8 @@ Do not call a run complete merely because the client exited zero. Verify:
 - Stage A `preflight.json` is PASS;
 - Stage B `post_server.json` is PASS and `long_run_eligible` is true;
 - all expected requests succeeded;
-- runtime logs prove intended weights, KV dtype, TP=4, FLASHINFER, and MBT;
-- HBM report parsed successfully for all four GPUs;
+- runtime logs prove intended weights, KV dtype, TP=2, ROCM_ATTN, and MBT;
+- HBM report parsed successfully for all eight GPUs;
 - Prometheus includes running, waiting, preemption, and KV metrics;
 - per-request TTFT/TPOT and token lengths exist;
 - `plot_data.json` contains non-empty required series;
