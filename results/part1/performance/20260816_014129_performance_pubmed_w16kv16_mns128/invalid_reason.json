@@ -1,9 +1,0 @@
-{
-  "status": "INVALID",
-  "run_id": "20260816_014129_performance_pubmed_w16kv16_mns128",
-  "reasons": [
-    "workload used enable_thinking=false instead of low-effort thinking",
-    "7 of 1000 requests failed because the client hit its 1024 open-file limit"
-  ],
-  "preserve_artifacts": true
-}
