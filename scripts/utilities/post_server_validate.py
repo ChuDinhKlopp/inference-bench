@@ -194,22 +194,27 @@ def main() -> int:
         gpu_query_error = str(exc)
     # amdsmi's processor-handle index does not correlate to HIP_VISIBLE_DEVICES on
     # this host's topology (empirically: HIP_VISIBLE_DEVICES=0,1 loaded the model
-    # onto amdsmi indices 2,3), so which specific indices the replica landed on
-    # cannot be predicted in advance. Instead, verify that exactly as many GPUs as
-    # the replica's configured size are actually busy, whichever indices they are.
+    # onto amdsmi indices 2,3), so which specific indices this replica landed on
+    # cannot be predicted in advance -- and under concurrent arms (guide-mi250.md
+    # section 10), sibling replicas' own GPUs are legitimately busy too, so an
+    # exact system-wide busy count no longer identifies just this replica. Instead
+    # verify that at least as many GPUs as this replica's configured size are both
+    # busy and individually meet the post-load free-memory floor; that's satisfied
+    # whichever indices this replica's own pair turned out to be.
     visible_devices_raw = os.environ.get("HIP_VISIBLE_DEVICES") or os.environ.get("CUDA_VISIBLE_DEVICES") or "0,1"
     expected_replica_size = len([part for part in visible_devices_raw.split(",") if part.strip() != ""])
     busy_rows = [row for row in gpu_rows if row["used_mib"] > 1000]
     idle_rows = [row for row in gpu_rows if row["used_mib"] <= 1000]
+    qualifying_busy_rows = [row for row in busy_rows if row["free_mib"] >= args.min_post_load_free_mib]
     gpu_ok = (
         len(gpu_rows) == 8
-        and len(busy_rows) == expected_replica_size
-        and all(row["free_mib"] >= args.min_post_load_free_mib for row in busy_rows)
+        and len(busy_rows) >= expected_replica_size
+        and len(qualifying_busy_rows) >= expected_replica_size
     )
     check(
         "tp2_hbm_after_load",
         gpu_ok,
-        f"expected_replica_size={expected_replica_size}; busy_gpus={busy_rows}; idle_gpus={idle_rows}; stderr={gpu_query_error}",
+        f"expected_replica_size={expected_replica_size}; qualifying_busy_gpus={qualifying_busy_rows}; all_busy_gpus={busy_rows}; idle_gpus={idle_rows}; stderr={gpu_query_error}",
     )
 
     dead_monitors = [pid for pid in args.monitor_pid if not alive(pid)]

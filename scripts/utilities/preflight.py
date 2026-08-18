@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -163,6 +164,19 @@ def amdsmi_gpu_processes() -> tuple[list[str], str]:
         amdsmi.amdsmi_shut_down()
 
 
+def _line_pid_alive(line: str) -> bool:
+    match = re.search(r"'pid':\s*(\d+)", line)
+    if not match:
+        return True
+    try:
+        os.kill(int(match.group(1)), 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
 def main() -> int:
     script = Path(__file__).resolve()
     root = script.parents[2]
@@ -269,21 +283,48 @@ def main() -> int:
     gpus, gpu_query_error = amdsmi_gpu_inventory()
     gpu_shape_ok = len(gpus) == 8 and all("MI250" in gpu["name"] for gpu in gpus)
     add_check(checks, "gpu_inventory", gpu_shape_ok, True, f"found={[(g['index'], g['name']) for g in gpus]}; stderr={gpu_query_error}")
-    gpu_free_ok = gpu_shape_ok and all(gpu["memory_free_mib"] >= args.min_gpu_free_mib for gpu in gpus)
-    add_check(checks, "gpu_hbm_before_server", gpu_free_ok, True, f"free_mib={[(g['index'], g['memory_free_mib']) for g in gpus]}")
+    # Concurrent arms are supported (guide-mi250.md section 10): a sibling replica's
+    # own GPU pair legitimately shows reduced free memory once it starts loading.
+    # amdsmi's processor-handle index also does not correlate with
+    # HIP_VISIBLE_DEVICES on this host's topology, so this replica's own pair can't
+    # be identified by index in advance either. Require enough idle GPUs to exist
+    # somewhere in the inventory (HIP_VISIBLE_DEVICES itself is what actually
+    # constrains which physical devices this replica's server will use), not that
+    # every one of the host's 8 GPUs is free.
+    visible_devices_raw = os.environ.get("HIP_VISIBLE_DEVICES") or os.environ.get("CUDA_VISIBLE_DEVICES") or "0,1"
+    expected_replica_size = len([part for part in visible_devices_raw.split(",") if part.strip() != ""])
+    free_gpus = [gpu for gpu in gpus if gpu["memory_free_mib"] >= args.min_gpu_free_mib]
+    gpu_free_ok = gpu_shape_ok and len(free_gpus) >= expected_replica_size
+    add_check(
+        checks,
+        "gpu_hbm_before_server",
+        gpu_free_ok,
+        True,
+        f"expected_replica_size={expected_replica_size}; free_gpu_count={len(free_gpus)}; free_mib={[(g['index'], g['memory_free_mib']) for g in gpus]}",
+    )
 
     gpu_process_lines, gpu_process_error = amdsmi_gpu_processes()
+    # amdsmi can report ghost process-list entries for PIDs that have long since
+    # exited (observed after killing unrelated processes on this shared host);
+    # those aren't real conflicts. Only flag entries for PIDs that are still alive.
+    live_gpu_process_lines = [line for line in gpu_process_lines if _line_pid_alive(line)]
     add_check(
         checks,
         "gpu_processes",
-        not gpu_process_lines,
+        not live_gpu_process_lines,
         True,
-        "none" if not gpu_process_lines else "; ".join(gpu_process_lines),
+        "none" if not live_gpu_process_lines else "; ".join(live_gpu_process_lines[:20]),
     )
     if gpu_process_error:
         add_check(checks, "gpu_process_query", False, False, gpu_process_error)
 
-    stale_servers = matching_processes(("vllm.entrypoints", "vllm serve", "api_server.py"))
+    # Concurrent arms are supported (distinct GPU pair, port, run ID, bulk-output
+    # directory per replica -- see guide-mi250.md section 10), so a vLLM server
+    # bound to a DIFFERENT port than this run's is a legitimate sibling replica,
+    # not a stale conflict. Only flag processes sharing this run's own port.
+    all_vllm_servers = matching_processes(("vllm.entrypoints", "vllm serve", "api_server.py"))
+    own_port_marker = f"--port {args.port}"
+    stale_servers = [proc for proc in all_vllm_servers if own_port_marker in proc["command"]]
     add_check(checks, "stale_vllm_servers", not stale_servers, True, "none" if not stale_servers else json.dumps(stale_servers[:20]))
     other_benchmarks = matching_processes(("bench.py",))
     add_check(
