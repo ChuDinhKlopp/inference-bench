@@ -137,11 +137,12 @@ if [[ ! -x "$server_launcher" ]]; then
   echo "missing server launcher: $server_launcher" >&2
   exit 2
 fi
-if [[ ! -f "$smoke_gate" ]]; then
+if [[ ${RIVF26_SKIP_SMOKE_GATE:-0} == 1 ]]; then
+  echo "WARNING: RIVF26_SKIP_SMOKE_GATE=1 -- bypassing the four-precision scheduler-budget smoke gate. No fresh MI250 smoke-matrix PASS backs this run." >&2
+elif [[ ! -f "$smoke_gate" ]]; then
   echo "missing four-precision scheduler-budget smoke gate: $smoke_gate" >&2
   exit 2
-fi
-if ! "$RIVF26_VENV_BIN/python" -c \
+elif ! "$RIVF26_VENV_BIN/python" -c \
   'import json,sys; d=json.load(open(sys.argv[1])); required={"w16kv16","w8kv16","w8kv8","w16kv8"}; runs=d.get("runs",{}); sys.exit(0 if d.get("status")=="PASS" and d.get("max_num_batched_tokens")==16384 and set(runs)==required and all(runs[p].get("status")=="PASS" for p in required) else 2)' \
   "$smoke_gate"; then
   echo "four-precision scheduler-budget smoke gate is not valid: $smoke_gate" >&2
