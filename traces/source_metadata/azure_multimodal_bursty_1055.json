@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-08-18T09:35:05.945459+00:00",
+  "source": {
+    "path": "/home/ducct/repos/inference-bench/AzureLMMInferenceTrace_multimodal.csv",
+    "sha256": "eeaba4bae383eeb3724a4fc804ab49f160e918b6dbe356250111bc3ab50d4a95",
+    "rows_total": 1000000,
+    "rows_usable_generated_tokens_gt_zero": 999854
+  },
+  "selection": {
+    "window_size": 1055,
+    "candidate_windows_evaluated": 998800,
+    "high_load_definition": "shortest-duration contiguous windows",
+    "high_load_quantile": 0.1,
+    "eligible_windows": 99880,
+    "high_load_duration_cutoff_s": 368.59699988365173,
+    "burstiness_metric": "population coefficient of variation of inter-arrival times",
+    "selected_cv_rank_within_high_load_set": 1,
+    "selected_cv_percentile_among_all_windows": 1.0,
+    "selected_duration_percentile_among_all_windows": 0.03572787344813776,
+    "tie_breakers": [
+      "shorter_duration",
+      "earlier_source_position"
+    ],
+    "sorted_start_index_zero_based": 837215,
+    "sorted_stop_index_exclusive": 838270,
+    "source_first_csv_row_one_based": 837267,
+    "source_last_csv_row_one_based": 838321,
+    "first_timestamp": "2024-10-21T12:16:01.098Z",
+    "last_timestamp": "2024-10-21T12:21:16.591Z",
+    "duration_s": 315.49300026893616,
+    "mean_request_rate_rps": 3.343972763581711,
+    "mean_inter_arrival_s": 0.29932922226654285,
+    "inter_arrival_cv": 2.1598256642461573,
+    "max_requests_in_same_timestamp": 2
+  },
+  "output": {
+    "path": "/home/ducct/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1055.csv",
+    "sha256": "7b069002494de21af862cd1050e4cdd89ee6efdcb53e0430ccdf4b976a8e51ed",
+    "timestamp_semantics": "original UTC timestamp plus normalized offset from first selected request",
+    "arrival_scale": 1.0
+  }
+}
