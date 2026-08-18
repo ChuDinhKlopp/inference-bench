@@ -63,7 +63,7 @@ gpqa_sha256=41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305
 gpqa_csv=${RIVF26_GPQA_CSV:-$HOME/.cache/huggingface/hub/datasets--Idavidrein--gpqa/snapshots/$revision/gpqa_diamond.csv}
 smoke_gate=${RIVF26_SMOKE_MATRIX:-$rivf26_root/manifests/smoke_matrix_mbt16384_20260816.json}
 case "$precision" in
-  w8kv16|w8kv8) local_tokenizer=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8} ;;
+  w8kv16|w8kv8) local_tokenizer=${RIVF26_FP8_MODEL_PATH:-$HOME/models/Qwen3.6-35B-A3B-FP8} ;;
   *) local_tokenizer=${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B} ;;
 esac
 

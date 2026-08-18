@@ -18,7 +18,7 @@ max_gen_toks=${RIVF26_LCB_MAX_GEN_TOKS:-253952}
 export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-$HIP_VISIBLE_DEVICES}
 case "$precision" in
-  w8kv16|w8kv8) local_tokenizer=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8} ;;
+  w8kv16|w8kv8) local_tokenizer=${RIVF26_FP8_MODEL_PATH:-$HOME/models/Qwen3.6-35B-A3B-FP8} ;;
   *) local_tokenizer=${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B} ;;
 esac
 port=${RIVF26_PORT:-8000}

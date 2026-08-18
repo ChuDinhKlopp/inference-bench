@@ -29,7 +29,7 @@ server_log=$bulk_run_dir/logs/server.log
 hbm_csv=$bulk_run_dir/raw/hbm.csv
 server_launcher=$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh
 case "$precision" in
-  w8*) model_path=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8} ;;
+  w8*) model_path=${RIVF26_FP8_MODEL_PATH:-$HOME/models/Qwen3.6-35B-A3B-FP8} ;;
   *) model_path=${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B} ;;
 esac
 

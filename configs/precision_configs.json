@@ -19,7 +19,7 @@
     },
     "w8kv16": {
       "model_logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
-      "model_path_default": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+      "model_path_default": "/home/tuan/models/Qwen3.6-35B-A3B-FP8",
       "model_revision": "95a723d08a9490559dae23d0cff1d9466213d989",
       "checkpoint_weight_format": "fp8_e4m3_block_128x128",
       "checkpoint_activation_scheme": "dynamic_fp8",
@@ -30,7 +30,7 @@
     },
     "w8kv8": {
       "model_logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
-      "model_path_default": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+      "model_path_default": "/home/tuan/models/Qwen3.6-35B-A3B-FP8",
       "model_revision": "95a723d08a9490559dae23d0cff1d9466213d989",
       "checkpoint_weight_format": "fp8_e4m3_block_128x128",
       "checkpoint_activation_scheme": "dynamic_fp8",

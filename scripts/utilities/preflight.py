@@ -307,12 +307,28 @@ def main() -> int:
     # exited (observed after killing unrelated processes on this shared host);
     # those aren't real conflicts. Only flag entries for PIDs that are still alive.
     live_gpu_process_lines = [line for line in gpu_process_lines if _line_pid_alive(line)]
+    # Concurrent arms (same rationale as gpu_hbm_before_server above): a sibling
+    # replica already mid-load legitimately has live compute processes on its
+    # own GPUs. Require only that enough GPUs somewhere in the inventory are
+    # process-free for this replica's own HIP_VISIBLE_DEVICES size, not that
+    # the whole host has zero live processes.
+    busy_gpu_indices = {
+        int(match.group(1))
+        for line in live_gpu_process_lines
+        if (match := re.search(r"^gpu=(\d+)", line))
+    }
+    process_free_gpu_count = len(gpus) - len(busy_gpu_indices)
+    gpu_processes_ok = process_free_gpu_count >= expected_replica_size
     add_check(
         checks,
         "gpu_processes",
-        not live_gpu_process_lines,
+        gpu_processes_ok,
         True,
-        "none" if not live_gpu_process_lines else "; ".join(live_gpu_process_lines[:20]),
+        (
+            f"expected_replica_size={expected_replica_size}; "
+            f"process_free_gpu_count={process_free_gpu_count}; "
+            f"busy={'none' if not live_gpu_process_lines else '; '.join(live_gpu_process_lines[:20])}"
+        ),
     )
     if gpu_process_error:
         add_check(checks, "gpu_process_query", False, False, gpu_process_error)
