@@ -1,0 +1,29 @@
+{
+  "schema_version": "rivf26.hbm.v4",
+  "collector": "amdsmi (out-of-process, umc_activity)",
+  "session_start_epoch_s": 1787036756.2580805,
+  "session_start_utc": "2026-08-18T07:05:56.258080+00:00",
+  "sample_rows": 179212,
+  "gpu_count": 2,
+  "expected_gpu_count": 2,
+  "frequency_hz": 10.0,
+  "normalization": "hbm_utilization_percent/hbm_aggregate_gbps come from AMD SMU average_umc_activity (combined memory-controller busy %, via amdsmi, confirmed working against a live vLLM server 2026-08-18), scaled by each device's theoretical peak HBM bandwidth (max mem clock * 2 * bus width). This hardware/tooling combination cannot separate HBM read from write bandwidth -- amdsmi only exposes the combined UMC signal; hbm_read_percent/hbm_read_gbps and hbm_write_percent/hbm_write_gbps therefore both report this same combined value, not independent measurements. gpu_index is the HIP_VISIBLE_DEVICES value for this replica; gpu_bus_id/gpu_uuid are resolved via this host's known HIP-to-amdsmi Device index mapping (see HIP_TO_AMDSMI_DEVICE in this script).",
+  "devices": [
+    {
+      "hip_index": 6,
+      "amdsmi_index": 4,
+      "name": "AMD Instinct MI250X/MI250",
+      "bus_id": "0000:8e:00.0",
+      "uuid": "b4ff740c-0000-1000-801f-56bea6e0ff92",
+      "peak_hbm_gbps": 1638.4
+    },
+    {
+      "hip_index": 7,
+      "amdsmi_index": 5,
+      "name": "AMD Instinct MI250X/MI250",
+      "bus_id": "0000:93:00.0",
+      "uuid": "2cff740c-0000-1000-807a-396752e14da5",
+      "peak_hbm_gbps": 1638.4
+    }
+  ]
+}

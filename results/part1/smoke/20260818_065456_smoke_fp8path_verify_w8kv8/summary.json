@@ -1,0 +1,88 @@
+{
+  "schema_version": "rivf26.smoke_result.v2",
+  "status": "PASS",
+  "run_id": "20260818_065456_smoke_fp8path_verify_w8kv8",
+  "precision": "w8kv8",
+  "max_num_batched_tokens": 8192,
+  "requests_successful": 4,
+  "hbm_samples": 6616,
+  "plot_bins": 40,
+  "runtime_checks": [
+    {
+      "name": "server_health",
+      "result": "PASS",
+      "detail": "status=200; error="
+    },
+    {
+      "name": "prometheus_metrics",
+      "result": "PASS",
+      "detail": "resolved={'requests_running': 'vllm:num_requests_running', 'requests_waiting': 'vllm:num_requests_waiting', 'kv_cache_usage': 'vllm:kv_cache_usage_perc'}; missing=[]; error="
+    },
+    {
+      "name": "max_num_batched_tokens_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=8192; evidence=['--max-num-batched-tokens 8192']"
+    },
+    {
+      "name": "kv_dtype_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=fp8; evidence=['kv-cache-dtype fp8 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_str\\\\\":\\\\\"\\\\</think\\\\>\\\\\"\\\\} --enable-logging-iteration-details --quantization fp8', \"kv_cache_dtype': 'fp8\", \"kv_cache_dtype=fp8, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='qwen3', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=\", 'cache-dtype fp8 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_str\\\\\":\\\\\"\\\\</think\\\\>\\\\\"\\\\} --enable-logging-iteration-details --quantization fp8', \"cache_dtype': 'fp8\"]"
+    },
+    {
+      "name": "attention_backend_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=TRITON_ATTN; evidence=['RIVF26 server command: /home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /home/tuan/models/Qwen3.6-35B-A3B-FP8 --tokenizer /home/tuan/models/Qwen3.6-35B-A3B-FP8 --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8001 --tensor-parallel-size 2 --max-model-len 65536 --max-num-seqs 2 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_st', \"(APIServer pid=4067372) INFO 08-18 06:55:13 [api_utils.py:273] non-default args: {'model_tag': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'host': '127.0.0.1', 'port': 8001, 'model': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'tokenizer': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'max_model_len': 65536, 'quantization': 'fp8', 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dty\", '(Worker_TP0 pid=4068012) INFO 08-18 06:55:51 [rocm.py:606] Using TRITON_ATTN backend (selected via --attention-backend).']"
+    },
+    {
+      "name": "reasoning_parser_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=qwen3; evidence=[\"(APIServer pid=4067372) INFO 08-18 06:55:13 [api_utils.py:273] non-default args: {'model_tag': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'host': '127.0.0.1', 'port': 8001, 'model': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'tokenizer': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'max_model_len': 65536, 'quantization': 'fp8', 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'enable_logging_iteration_details': True, 'max_num_batched_tokens': 8192, 'max_num_seqs': 2, 'reasoning_config': ReasoningConfig(reasoning_parser='', reasoning_start_str='<think>', reasoning_end_str='</think>')}\", \"(EngineCore pid=4067764) INFO 08-18 06:55:31 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/home/tuan/models/Qwen3.6-35B-A3B-FP8', speculative_config=None, tokenizer='/home/tuan/models/Qwen3.6-35B-A3B-FP8', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=65536, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=fp8, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=fp8, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='qwen3', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metric\"]"
+    },
+    {
+      "name": "weight_format_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=fp8; evidence=['RIVF26 server command: /home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /home/tuan/models/Qwen3.6-35B-A3B-FP8 --tokenizer /home/tuan/models/Qwen3.6-35B-A3B-FP8 --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8001 --tensor-parallel-size 2 --max-model-len 65536 --max-num-seqs 2 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_st', \"(APIServer pid=4067372) INFO 08-18 06:55:13 [api_utils.py:273] non-default args: {'model_tag': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'host': '127.0.0.1', 'port': 8001, 'model': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'tokenizer': '/home/tuan/models/Qwen3.6-35B-A3B-FP8', 'max_model_len': 65536, 'quantization': 'fp8', 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dty\", \"(EngineCore pid=4067764) INFO 08-18 06:55:31 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/home/tuan/models/Qwen3.6-35B-A3B-FP8', speculative_config=None, tokenizer='/home/tuan/models/Qwen3.6-35B-A3B-FP8', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=65536, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, dec\", '(Worker_TP0 pid=4068012) WARNING 08-18 06:57:47 [fp8_utils.py:851] Using default W8A8 Block FP8 kernel config. Performance might be sub-optimal! Config file not found at /home/tuan/repos/vllm/vllm/model_executor/layers/quantization/utils/configs/N=6144,K=2048,device_name=AMD_Instinct_MI250X_MI250,dtype=fp8_w8a8,block_shape=[128,128].json', '(Worker_TP1 pid=4068013) WARNING 08-18 06:57:48 [fp8_utils.py:851] Using default W8A8 Block FP8 kernel config. Performance might be sub-optimal! Config file not found at /home/tuan/repos/vllm/vllm/model_executor/layers/quantization/utils/configs/N=6144,K=2048,device_name=AMD_Instinct_MI250X_MI250,dtype=fp8_w8a8,block_shape=[128,128].json']"
+    },
+    {
+      "name": "kv_capacity_runtime_evidence",
+      "result": "PASS",
+      "detail": "evidence=['GPU KV cache size: 7,001,117 tokens', 'Available KV cache memory: 37.37 GiB']"
+    },
+    {
+      "name": "tp2_hbm_after_load",
+      "result": "PASS",
+      "detail": "expected_replica_size=2; qualifying_busy_gpus=[{'index': 0, 'used_mib': 59161, 'free_mib': 6359}, {'index': 1, 'used_mib': 59161, 'free_mib': 6359}]; all_busy_gpus=[{'index': 0, 'used_mib': 59161, 'free_mib': 6359}, {'index': 1, 'used_mib': 59161, 'free_mib': 6359}]; idle_gpus=[{'index': 2, 'used_mib': 11, 'free_mib': 65509}, {'index': 3, 'used_mib': 11, 'free_mib': 65509}, {'index': 4, 'used_mib': 11, 'free_mib': 65509}, {'index': 5, 'used_mib': 11, 'free_mib': 65509}, {'index': 6, 'used_mib': 11, 'free_mib': 65509}, {'index': 7, 'used_mib': 11, 'free_mib': 65509}]; stderr="
+    },
+    {
+      "name": "monitor_processes",
+      "result": "PASS",
+      "detail": "configured=[]; dead=[]"
+    },
+    {
+      "name": "output_writable_and_headroom",
+      "result": "PASS",
+      "detail": "path=/home/tuan/rivf26-bulk; writable=True; free=25.5 GiB"
+    },
+    {
+      "name": "max_num_batched_tokens_preflight_consistency",
+      "result": "PASS",
+      "detail": "expected=8192; preflight=8192"
+    },
+    {
+      "name": "model_path_identity",
+      "result": "PASS",
+      "detail": "path=/home/tuan/models/Qwen3.6-35B-A3B-FP8"
+    }
+  ],
+  "fp8_kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+  "log_growth": {
+    "bytes_written": 2123566,
+    "elapsed_s": 29.751980612054467,
+    "requests": 4,
+    "generated_tokens": 426,
+    "gib_per_hour": 0.23930540722604923,
+    "mib_per_request": 0.5062975883483887,
+    "bytes_per_generated_token": 4984.896713615023
+  },
+  "errors": []
+}

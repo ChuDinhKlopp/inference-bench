@@ -1,0 +1,121 @@
+{
+  "model": "Qwen3.6-35B-A3B",
+  "dataset": "ccdv/pubmed-summarization",
+  "num_prompts": 1000,
+  "num_requests": 1000,
+  "isl_stats": {
+    "avg": 8868.82,
+    "p25": 7120.0,
+    "p50": 8005.0,
+    "p90": 12026.5
+  },
+  "osl_stats": {
+    "avg": 2445.41,
+    "p25": 2199.75,
+    "p50": 2402.0,
+    "p90": 2908.2
+  },
+  "arrival_source": "azure_trace",
+  "azure_trace_csv": "/home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv",
+  "max_concurrency": null,
+  "benchmark_duration_s": 8560.076858891174,
+  "serving_metrics": {
+    "completed": 1000,
+    "failed": 0,
+    "total_input": 8868818,
+    "total_output": 2445414,
+    "request_throughput": 0.11682138098577009,
+    "request_goodput": 0.0,
+    "output_throughput": 285.676640561936,
+    "total_token_throughput": 1321.7442070333916,
+    "mean_ttft_ms": 3826147.509435661,
+    "median_ttft_ms": 3986860.69677677,
+    "std_ttft_ms": 2184061.610364462,
+    "percentiles_ttft_ms": [
+      [
+        50.0,
+        3986860.69677677
+      ],
+      [
+        90.0,
+        6724560.48434116
+      ],
+      [
+        95.0,
+        7134121.717914194
+      ],
+      [
+        99.0,
+        7340054.574401788
+      ]
+    ],
+    "mean_tpot_ms": 701.3596554407893,
+    "median_tpot_ms": 733.492708011229,
+    "std_tpot_ms": 132.25885665199985,
+    "percentiles_tpot_ms": [
+      [
+        50.0,
+        733.492708011229
+      ],
+      [
+        90.0,
+        818.1338934548163
+      ],
+      [
+        95.0,
+        862.4068081646027
+      ],
+      [
+        99.0,
+        986.8821260456618
+      ]
+    ],
+    "mean_itl_ms": 702.9114728983276,
+    "median_itl_ms": 433.01545083522797,
+    "std_itl_ms": 2023.860871019802,
+    "percentiles_itl_ms": [
+      [
+        50.0,
+        433.01545083522797
+      ],
+      [
+        90.0,
+        443.8788365572691
+      ],
+      [
+        95.0,
+        2929.137672483921
+      ],
+      [
+        99.0,
+        6519.336367622018
+      ]
+    ],
+    "mean_e2el_ms": 5544002.004523471,
+    "median_e2el_ms": 5869175.607471727,
+    "std_e2el_ms": 1965596.2200720515,
+    "percentiles_e2el_ms": [
+      [
+        50.0,
+        5869175.607471727
+      ],
+      [
+        90.0,
+        7958372.5494293505
+      ],
+      [
+        95.0,
+        8112181.5543555645
+      ],
+      [
+        99.0,
+        8211542.706107479
+      ]
+    ],
+    "max_output_tokens_per_s": 770.0,
+    "max_concurrent_requests": 1000,
+    "rtfx": 0.0
+  },
+  "num_preempted": 111,
+  "evaluation_metrics": null
+}

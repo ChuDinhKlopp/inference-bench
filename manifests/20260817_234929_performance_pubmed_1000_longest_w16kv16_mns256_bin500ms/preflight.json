@@ -1,0 +1,335 @@
+{
+  "schema_version": "rivf26.preflight.v1",
+  "stage": "A",
+  "status": "PASS",
+  "timestamp_epoch_s": 1787010578.583273,
+  "timestamp_iso": "2026-08-17T23:49:38.583273+00:00",
+  "run": {
+    "run_id": "20260817_234929_performance_pubmed_1000_longest_w16kv16_mns256_bin500ms",
+    "mode": "performance",
+    "precision": "w16kv16",
+    "max_num_seqs": 256,
+    "max_num_batched_tokens": 32768,
+    "estimated_output_gib": 5.0,
+    "safety_reserve_gib": 5.0
+  },
+  "git_commit": "5e478913470a9f18c51140f3b5259b4e60637756",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B",
+    "size_bytes": 71926880710,
+    "weight_files": [
+      {
+        "name": "model-00001-of-00026.safetensors",
+        "size_bytes": 3996199712
+      },
+      {
+        "name": "model-00002-of-00026.safetensors",
+        "size_bytes": 1284907696
+      },
+      {
+        "name": "model-00003-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00004-of-00026.safetensors",
+        "size_bytes": 3370808712
+      },
+      {
+        "name": "model-00005-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00006-of-00026.safetensors",
+        "size_bytes": 3959424904
+      },
+      {
+        "name": "model-00007-of-00026.safetensors",
+        "size_bytes": 1096788232
+      },
+      {
+        "name": "model-00008-of-00026.safetensors",
+        "size_bytes": 3946842008
+      },
+      {
+        "name": "model-00009-of-00026.safetensors",
+        "size_bytes": 1096460848
+      },
+      {
+        "name": "model-00010-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00011-of-00026.safetensors",
+        "size_bytes": 1096460752
+      },
+      {
+        "name": "model-00012-of-00026.safetensors",
+        "size_bytes": 3409971080
+      },
+      {
+        "name": "model-00013-of-00026.safetensors",
+        "size_bytes": 1633331664
+      },
+      {
+        "name": "model-00014-of-00026.safetensors",
+        "size_bytes": 3422553872
+      },
+      {
+        "name": "model-00015-of-00026.safetensors",
+        "size_bytes": 1633659224
+      },
+      {
+        "name": "model-00016-of-00026.safetensors",
+        "size_bytes": 3946842136
+      },
+      {
+        "name": "model-00017-of-00026.safetensors",
+        "size_bytes": 1096460608
+      },
+      {
+        "name": "model-00018-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00019-of-00026.safetensors",
+        "size_bytes": 1096460808
+      },
+      {
+        "name": "model-00020-of-00026.safetensors",
+        "size_bytes": 3409971072
+      },
+      {
+        "name": "model-00021-of-00026.safetensors",
+        "size_bytes": 1633331744
+      },
+      {
+        "name": "model-00022-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00023-of-00026.safetensors",
+        "size_bytes": 3357898392
+      },
+      {
+        "name": "model-00024-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00025-of-00026.safetensors",
+        "size_bytes": 3832888256
+      },
+      {
+        "name": "model-00026-of-00026.safetensors",
+        "size_bytes": 2231416848
+      }
+    ]
+  },
+  "resources": {
+    "result_filesystem": {
+      "path": "/home/tuan/rivf26-bulk",
+      "bytes_total": 469825110016,
+      "bytes_free": 50529132544,
+      "inodes_total": 29204480,
+      "inodes_free": 27531309,
+      "mount": "/home/tuan /dev/sda2[/home/tuan] ext4",
+      "filesystem_type": "ext4"
+    },
+    "dev_shm": {
+      "path": "/dev/shm",
+      "bytes_total": 270420238336,
+      "bytes_free": 41898561536,
+      "inodes_total": 66020566,
+      "inodes_free": 66015640
+    },
+    "host": {
+      "memory_total_bytes": 540840480768,
+      "memory_available_bytes": 239405121536,
+      "swap_total_bytes": 8589930496,
+      "swap_free_bytes": 7476301824
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 14,
+        "temperature_c": 39,
+        "power_w": 124.0
+      },
+      {
+        "index": 1,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 18,
+        "temperature_c": 40,
+        "power_w": 0.0
+      },
+      {
+        "index": 2,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 16,
+        "temperature_c": 35,
+        "power_w": 117.0
+      },
+      {
+        "index": 3,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 15,
+        "temperature_c": 39,
+        "power_w": 0.0
+      },
+      {
+        "index": 4,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 15,
+        "temperature_c": 36,
+        "power_w": 130.0
+      },
+      {
+        "index": 5,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 17,
+        "temperature_c": 37,
+        "power_w": 0.0
+      },
+      {
+        "index": 6,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 17,
+        "temperature_c": 28,
+        "power_w": 119.0
+      },
+      {
+        "index": 7,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 10,
+        "memory_free_mib": 65510,
+        "utilization_gpu_percent": 18,
+        "temperature_c": 34,
+        "power_w": 0.0
+      }
+    ],
+    "gpu_processes": []
+  },
+  "checks": [
+    {
+      "name": "git_worktree",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "5e478913470a9f18c51140f3b5259b4e60637756"
+    },
+    {
+      "name": "result_filesystem_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=47.1 GiB; required=10.0 GiB"
+    },
+    {
+      "name": "result_filesystem_inodes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_fraction=0.943"
+    },
+    {
+      "name": "host_ram",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=223.0 GiB; minimum=200.0 GiB"
+    },
+    {
+      "name": "swap_usage",
+      "result": "PASS",
+      "mandatory": false,
+      "detail": "used_fraction=0.130; host available RAM is the mandatory pressure gate"
+    },
+    {
+      "name": "dev_shm_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=39.0 GiB; minimum=32.0 GiB"
+    },
+    {
+      "name": "local_model",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "path=/dev/shm/Qwen3.6-35B-A3B; safetensors=26; missing=[]"
+    },
+    {
+      "name": "gpu_inventory",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "found=[(0, 'AMD Instinct MI250X/MI250'), (1, 'AMD Instinct MI250X/MI250'), (2, 'AMD Instinct MI250X/MI250'), (3, 'AMD Instinct MI250X/MI250'), (4, 'AMD Instinct MI250X/MI250'), (5, 'AMD Instinct MI250X/MI250'), (6, 'AMD Instinct MI250X/MI250'), (7, 'AMD Instinct MI250X/MI250')]; stderr="
+    },
+    {
+      "name": "gpu_hbm_before_server",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_mib=[(0, 65510), (1, 65510), (2, 65510), (3, 65510), (4, 65510), (5, 65510), (6, 65510), (7, 65510)]"
+    },
+    {
+      "name": "gpu_processes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "none"
+    },
+    {
+      "name": "stale_vllm_servers",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "none"
+    },
+    {
+      "name": "other_benchmark_clients",
+      "result": "PASS",
+      "mandatory": false,
+      "detail": "none"
+    },
+    {
+      "name": "server_port",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "127.0.0.1:8000"
+    },
+    {
+      "name": "vllm_runtime",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "WARNING 08-17 23:49:32 [rocm.py:123] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.\n2.13.0+rocm7.2\n0.27.0"
+    },
+    {
+      "name": "vllm_compiled_extension_api",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "WARNING 08-17 23:49:36 [rocm.py:123] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.\n_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()\n(topk_weights: torch.Tensor, topk_ids: torch.Tensor, token_expert_indices: torch.Tensor, gating_output: torch.Tensor, renormalize: bool = False, e_score_correction_bias: torch.Tensor | None = None, is_padding: torch.Tensor | None = None) -> None"
+    },
+    {
+      "name": "hbm_sampler",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "rocprof=/opt/rocm/bin/rocprof; amdsmi=available"
+    }
+  ],
+  "mandatory_failures": []
+}
