@@ -7,3 +7,7 @@ performance_pubmed_w16kv16,performance,ccdv/pubmed-summarization,w16kv16,256,819
 performance_pubmed_w8kv16,performance,ccdv/pubmed-summarization,w8kv16,256,8192,1000,1,1000,low,10240,azure,interactive+server
 performance_pubmed_w8kv8,performance,ccdv/pubmed-summarization,w8kv8,256,8192,1000,1,1000,low,10240,azure,interactive+server
 performance_pubmed_w16kv8,performance,ccdv/pubmed-summarization,w16kv8,256,8192,1000,1,1000,low,10240,azure,interactive+server
+performance_livecodebench_v6_w16kv16,performance,livecodebench_release_v6,w16kv16,256,8192,1055,1,1055,low,10240,azure,interactive+server
+performance_livecodebench_v6_w8kv16,performance,livecodebench_release_v6,w8kv16,256,8192,1055,1,1055,low,10240,azure,interactive+server
+performance_livecodebench_v6_w8kv8,performance,livecodebench_release_v6,w8kv8,256,8192,1055,1,1055,low,10240,azure,interactive+server
+performance_livecodebench_v6_w16kv8,performance,livecodebench_release_v6,w16kv8,256,8192,1055,1,1055,low,10240,azure,interactive+server

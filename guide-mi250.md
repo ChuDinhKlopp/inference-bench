@@ -241,6 +241,42 @@ host RAM. It is acceptable only when it has the required capacity and results
 will be archived deliberately. A large local NVMe path is safer; the harness
 supports it through the same variable.
 
+### Runtime paths that must not be copied from the A100 host
+
+The A100 machine used `/run/user/1009/ducct/rivf26`. That path is not portable:
+the numeric UID and username differ between machines, and `/run/user` may be a
+volatile RAM-backed filesystem. Do not place this literal path in commands,
+configuration, or manifests. Always derive it or choose persistent storage:
+
+```bash
+# Volatile per-user runtime storage (only if capacity is sufficient)
+export RIVF26_BULK_ROOT="/run/user/$(id -u)/$(id -un)/rivf26"
+
+# Preferred for large runs: persistent local/NVMe storage
+# export RIVF26_BULK_ROOT=/data/rivf26
+mkdir -p "$RIVF26_BULK_ROOT"/{datasets/processed,logs,results/part1}
+```
+
+The default is defined in `scripts/common/paths.sh` and is also repeated in
+`scripts/utilities/preflight.py` and
+`scripts/performance/score_registered_pubmed_runs.py`. Set
+`RIVF26_BULK_ROOT` before invoking any harness so all logs, raw telemetry,
+profiler output, and generated datasets use the MI250 filesystem. Verify the
+resolved location with:
+
+```bash
+printf 'RIVF26_ROOT=%s\nRIVF26_BULK_ROOT=%s\n' "$RIVF26_ROOT" "$RIVF26_BULK_ROOT"
+df -h "$RIVF26_BULK_ROOT"
+df -i "$RIVF26_BULK_ROOT"
+```
+
+The checked-in scripts also contain A100-specific `/dev/shm` model defaults
+and `/dev/shm` capacity checks. Override `RIVF26_BF16_MODEL_PATH` and
+`RIVF26_FP8_MODEL_PATH` after locating the MI250 model files; do not copy
+weights into `rivf26/`. If the model is not in `/dev/shm`, the preflight's
+`Path("/dev/shm")` check must be ported to the MI250 model/storage location
+before a long run.
+
 Confirm the software identity:
 
 ```bash
@@ -805,6 +841,54 @@ git commit -m 'rivf26: <logical milestone>'
 Never commit model weights, response JSONL, raw logs, Nsight reports, profiler
 traces, dataset caches, or bulk telemetry. Never hand-edit aggregate results to
 make a run appear complete.
+
+## 16. Part 2 Torch Profiler capture
+
+Part 2 reuses the legacy vLLM Torch Profiler flags through
+`scripts/servers/run_server_common.sh`; it is not enabled during Part 1. The
+short wrapper captures 250 active engine iterations after a delay and warmup:
+
+```bash
+export RIVF26_ROOT="$PWD"
+export RIVF26_VENV_BIN="$HOME/repos/vllm/.venv/bin"
+export RIVF26_BULK_ROOT="/persistent/path/rivf26"
+export RIVF26_TENSOR_PARALLEL_SIZE=2
+export RIVF26_ATTENTION_BACKEND=ROCM_ATTN
+export RIVF26_TORCH_PROFILER_MAX_ITERS=250
+export RIVF26_TORCH_PROFILER_DELAY_ITERS=20
+export RIVF26_TORCH_PROFILER_WARMUP_ITERS=10
+export RIVF26_TORCH_PROFILER_WITH_STACK=0
+export RIVF26_PROFILER_AUTO_SHUTDOWN=1
+"$RIVF26_ROOT/scripts/profiling/run_torch_profile.sh" w16kv16
+```
+
+Repeat for `w8kv16`, `w8kv8`, and `w16kv8`. Override
+`RIVF26_TORCH_PROFILER_DIR` to place traces elsewhere. Outputs are under
+`results/part2/<precision>/<run-id>/raw/torch_profiler`; server/client logs
+remain under the configured bulk root. Inspect the server command and log to
+verify the profiler flags before interpreting a trace. The current checked-in
+server launcher still requires the MI250 TP=2/ROCM_ATTN port described above.
+With `RIVF26_PROFILER_AUTO_SHUTDOWN=1`, the launcher waits for vLLM's rank-0
+`profiler_out_0.txt` completion sentinel and then terminates the server. This
+is a short Part 2 capture and is not a complete Part 1/e2e run.
+
+### LiveCodeBench v6 Azure performance workload
+
+The additional performance workload uses 1,055 LiveCodeBench v6 prompts and
+the frozen 1,055-request Azure window. Regenerate or transfer
+`traces/processed/azure_multimodal_bursty_1055.csv`, then launch a precision
+wrapper under the MI250 TP=2/`ROCM_ATTN` port:
+
+```bash
+export RIVF26_AZURE_LCB_TRACE_CSV="$RIVF26_ROOT/traces/processed/azure_multimodal_bursty_1055.csv"
+RIVF26_MAX_NUM_SEQS=256 RIVF26_MAX_MODEL_LEN=32768 \
+RIVF26_MAX_NUM_BATCHED_TOKENS=8192 RIVF26_THINKING_TOKEN_BUDGET=6144 \
+RIVF26_LCB_PERFORMANCE_REQUESTS=1055 \
+./scripts/performance/run_trace_azure_livecodebench_Qwen3.6-35B-A3B_w16kv16.sh
+```
+
+Repeat for the other three precision wrappers. This uses release v6, low
+reasoning, `max_gen_toks=10240`, Azure scale 1.0, and skips accuracy scoring.
 
 ## 17. Fresh-host execution checklist
 

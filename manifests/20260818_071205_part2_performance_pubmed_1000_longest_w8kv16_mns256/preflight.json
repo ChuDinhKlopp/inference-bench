@@ -1,0 +1,367 @@
+{
+  "schema_version": "rivf26.preflight.v1",
+  "stage": "A",
+  "status": "FAIL",
+  "timestamp_epoch_s": 1787037132.720641,
+  "timestamp_iso": "2026-08-18T07:12:12.720641+00:00",
+  "run": {
+    "run_id": "20260818_071205_part2_performance_pubmed_1000_longest_w8kv16_mns256",
+    "mode": "performance",
+    "precision": "w8kv16",
+    "max_num_seqs": 256,
+    "max_num_batched_tokens": 32768,
+    "estimated_output_gib": 80.0,
+    "safety_reserve_gib": 50.0
+  },
+  "git_commit": "6a630004d714cc34a19a5fb30fbb00ed543e12d4",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B-FP8",
+    "size_bytes": 37486695672,
+    "weight_files": [
+      {
+        "name": "layers-0.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-1.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-10.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-11.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-12.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-13.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-14.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-15.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-16.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-17.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-18.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-19.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-2.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-20.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-21.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-22.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-23.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-24.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-25.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-26.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-27.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-28.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-29.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-3.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-30.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-31.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-32.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-33.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-34.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-35.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-36.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-37.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-38.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-39.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-4.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-5.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-6.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-7.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-8.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-9.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "mtp.safetensors",
+        "size_bytes": 853860608
+      },
+      {
+        "name": "outside.safetensors",
+        "size_bytes": 2927422112
+      }
+    ]
+  },
+  "resources": {
+    "result_filesystem": {
+      "path": "/run/user/1009/ducct/rivf26",
+      "bytes_total": 162323963904,
+      "bytes_free": 144121069568,
+      "inodes_total": 198149371,
+      "inodes_free": 198147233,
+      "mount": "/run/user/1009 tmpfs  tmpfs",
+      "filesystem_type": "tmpfs"
+    },
+    "dev_shm": {
+      "path": "/dev/shm",
+      "bytes_total": 811619823616,
+      "bytes_free": 50086289408,
+      "inodes_total": 198149371,
+      "inodes_free": 198142340
+    },
+    "host": {
+      "memory_total_bytes": 1623239651328,
+      "memory_available_bytes": 538341339136,
+      "swap_total_bytes": 8589930496,
+      "swap_free_bytes": 24576
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 0,
+        "memory_free_mib": 40442,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 33,
+        "power_w": 35.47
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 0,
+        "memory_free_mib": 40442,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 37,
+        "power_w": 43.67
+      },
+      {
+        "index": 2,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 4,
+        "memory_free_mib": 40439,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 38,
+        "power_w": 48.52
+      },
+      {
+        "index": 3,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 4,
+        "memory_free_mib": 40439,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 37,
+        "power_w": 43.77
+      }
+    ],
+    "gpu_processes": []
+  },
+  "checks": [
+    {
+      "name": "git_worktree",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "6a630004d714cc34a19a5fb30fbb00ed543e12d4"
+    },
+    {
+      "name": "result_filesystem_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=134.2 GiB; required=130.0 GiB"
+    },
+    {
+      "name": "result_filesystem_inodes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_fraction=1.000"
+    },
+    {
+      "name": "host_ram",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=501.4 GiB; minimum=256.0 GiB"
+    },
+    {
+      "name": "swap_usage",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "used_fraction=1.000; host available RAM is the mandatory pressure gate"
+    },
+    {
+      "name": "tmpfs_host_ram_after_estimated_output",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=501.4 GiB; required host floor + output/reserve=386.0 GiB"
+    },
+    {
+      "name": "dev_shm_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=46.6 GiB; minimum=32.0 GiB"
+    },
+    {
+      "name": "local_model",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "path=/dev/shm/Qwen3.6-35B-A3B-FP8; safetensors=42; missing=[]"
+    },
+    {
+      "name": "gpu_inventory",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "found=[(0, 'NVIDIA A100-PCIE-40GB'), (1, 'NVIDIA A100-PCIE-40GB'), (2, 'NVIDIA A100-PCIE-40GB'), (3, 'NVIDIA A100-PCIE-40GB')]; stderr="
+    },
+    {
+      "name": "gpu_hbm_before_server",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_mib=[(0, 40442), (1, 40442), (2, 40439), (3, 40439)]"
+    },
+    {
+      "name": "gpu_processes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "none"
+    },
+    {
+      "name": "stale_vllm_servers",
+      "result": "FAIL",
+      "mandatory": true,
+      "detail": "[{\"pid\": 3447924, \"uid\": \"1005\", \"command\": \"/home/huylkq/repos/vllm/.venv/bin/python3 /home/huylkq/repos/vllm/.venv/bin/vllm serve /dev/shm/Qwen3.6-35B-A3B --enforce-eager -tp 2 --max-num-batched-tokens 8k --speculative-config {\\\"method\\\":\\\"mtp\\\",\\\"num_speculative_tokens\\\":2} --port 8081 --max-model-len 13056 --max-num-seqs 128\"}]"
+    },
+    {
+      "name": "other_benchmark_clients",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "[{\"pid\": 3992676, \"uid\": \"1004\", \"command\": \"/home/hieupm/repos/base/.venv/bin/python /home/hieupm/repos/base/scripts/bench.py --server-log-file /home/hieupm/repos/base/scripts/logs/server_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.log --server-metrics-poll-interval 0.2 --dataset livecodebench --model /dev/shm/gemma-4-26B-A4B-it-FP8-dynamic --base-url http://localhost:8006 --max-concurrency 128 --temperature 0.0 --timeout 7200 --arrival-scale 200 --output /home/hieupm/repos/base/scripts/logs/bench_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.json --num-prompts 1055 --azure-trace-csv /home/hieupm/repos/base/scripts/busiest_AzureLMMInferenceTrace_multimodal.csv --lcb-release-version release_latest --lcb-max-gen-toks 8192 --lcb-num-process-evaluate 12 --lcb-eval-timeout 6\"}]"
+    },
+    {
+      "name": "server_port",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "127.0.0.1:8000"
+    },
+    {
+      "name": "vllm_runtime",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "2.13.0+cu130\n0.27.0"
+    },
+    {
+      "name": "vllm_compiled_extension_api",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()\n(topk_weights: torch.Tensor, topk_ids: torch.Tensor, token_expert_indices: torch.Tensor, gating_output: torch.Tensor, renormalize: bool = False, e_score_correction_bias: torch.Tensor | None = None, is_padding: torch.Tensor | None = None) -> None"
+    },
+    {
+      "name": "hbm_sampler",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "/usr/local/bin/nsys"
+    }
+  ],
+  "mandatory_failures": [
+    "stale_vllm_servers"
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "model": "Qwen3.6-35B-A3B",
+  "dataset": "ccdv/pubmed-summarization",
+  "num_prompts": 1000,
+  "num_requests": 1000,
+  "isl_stats": {
+    "avg": 9412.45,
+    "p25": 7184.25,
+    "p50": 8099.0,
+    "p90": 13023.2
+  },
+  "osl_stats": {
+    "avg": 2451.75,
+    "p25": 2210.0,
+    "p50": 2424.5,
+    "p90": 2892.2
+  },
+  "arrival_source": "azure_trace",
+  "azure_trace_csv": "/home/ducct/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv",
+  "max_concurrency": null,
+  "benchmark_duration_s": 9617.211557019502,
+  "serving_metrics": {
+    "completed": 1000,
+    "failed": 0,
+    "total_input": 9412446,
+    "total_output": 2451754,
+    "request_throughput": 0.10398024355304011,
+    "request_goodput": 0.0,
+    "output_throughput": 254.93397805214033,
+    "total_token_throughput": 1233.6424055619786,
+    "mean_ttft_ms": 5048112.798360728,
+    "median_ttft_ms": 5120882.806079462,
+    "std_ttft_ms": 2459679.15386595,
+    "percentiles_ttft_ms": [
+      [
+        50.0,
+        5120882.806079462
+      ],
+      [
+        90.0,
+        8419694.472629204
+      ],
+      [
+        95.0,
+        8712910.067500733
+      ],
+      [
+        99.0,
+        8953108.744458482
+      ]
+    ],
+    "mean_tpot_ms": 531.3583956450075,
+    "median_tpot_ms": 575.9537577138676,
+    "std_tpot_ms": 123.93084206244697,
+    "percentiles_tpot_ms": [
+      [
+        50.0,
+        575.9537577138676
+      ],
+      [
+        90.0,
+        631.4232278606871
+      ],
+      [
+        95.0,
+        646.3052015661348
+      ],
+      [
+        99.0,
+        688.9275823528471
+      ]
+    ],
+    "mean_itl_ms": 533.397093131788,
+    "median_itl_ms": 159.76418182253838,
+    "std_itl_ms": 1892.2447939841543,
+    "percentiles_itl_ms": [
+      [
+        50.0,
+        159.76418182253838
+      ],
+      [
+        90.0,
+        190.9830916672945
+      ],
+      [
+        95.0,
+        4039.3815591931325
+      ],
+      [
+        99.0,
+        10301.037966646254
+      ]
+    ],
+    "mean_e2el_ms": 6355101.036944322,
+    "median_e2el_ms": 6586342.091744766,
+    "std_e2el_ms": 2359109.2325254227,
+    "percentiles_e2el_ms": [
+      [
+        50.0,
+        6586342.091744766
+      ],
+      [
+        90.0,
+        9255350.91035068
+      ],
+      [
+        95.0,
+        9291373.448328674
+      ],
+      [
+        99.0,
+        9309359.12024375
+      ]
+    ],
+    "max_output_tokens_per_s": 1176.0,
+    "max_concurrent_requests": 1000,
+    "rtfx": 0.0
+  },
+  "num_preempted": 186,
+  "evaluation_metrics": null
+}

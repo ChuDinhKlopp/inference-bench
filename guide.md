@@ -792,6 +792,48 @@ Never commit model weights, response JSONL, raw logs, Nsight reports, profiler
 traces, dataset caches, or bulk telemetry. Never hand-edit aggregate results to
 make a run appear complete.
 
+## 16. Part 2 Torch Profiler capture
+
+Part 2 reuses the legacy vLLM Torch Profiler flags through
+`scripts/servers/run_server_common.sh`; it is not enabled during Part 1. A
+short capture of 250 active engine iterations can be launched with:
+
+```bash
+export RIVF26_TORCH_PROFILER_MAX_ITERS=250
+export RIVF26_TORCH_PROFILER_DELAY_ITERS=20
+export RIVF26_TORCH_PROFILER_WARMUP_ITERS=10
+export RIVF26_TORCH_PROFILER_WITH_STACK=0
+export RIVF26_PROFILER_AUTO_SHUTDOWN=1
+"$RIVF26_ROOT/scripts/profiling/run_torch_profile.sh" w16kv16
+```
+
+Repeat for all four precision arms. Traces are written to
+`$RIVF26_BULK_ROOT/results/part2/<precision>/<run-id>/raw/torch_profiler` and
+can be relocated with `RIVF26_TORCH_PROFILER_DIR`. Review the server command
+and log to confirm the profiler configuration before analysis.
+With `RIVF26_PROFILER_AUTO_SHUTDOWN=1`, the launcher waits for vLLM's rank-0
+`profiler_out_0.txt` completion sentinel and then terminates the server. This
+is a short Part 2 capture and is not a complete Part 1/e2e run.
+
+### LiveCodeBench v6 Azure performance workload
+
+The additional performance workload uses all 1,055 LiveCodeBench v6 prompts
+and the frozen 1,055-request bursty Azure window:
+
+```bash
+export RIVF26_AZURE_LCB_TRACE_CSV="$RIVF26_ROOT/traces/processed/azure_multimodal_bursty_1055.csv"
+RIVF26_MAX_NUM_SEQS=256 \
+RIVF26_MAX_MODEL_LEN=262144 \
+RIVF26_MAX_NUM_BATCHED_TOKENS=8192 \
+RIVF26_THINKING_TOKEN_BUDGET=6144 \
+RIVF26_LCB_PERFORMANCE_REQUESTS=1055 \
+./scripts/performance/run_trace_azure_livecodebench_Qwen3.6-35B-A3B_w16kv16.sh
+```
+
+Repeat the wrapper for `w8kv16`, `w8kv8`, and `w16kv8`. The workload uses
+`release_v6`, low reasoning, `max_gen_toks=10240`, Azure arrivals at scale
+1.0, and skips LiveCodeBench evaluation because this is a performance run.
+
 ## 17. Fresh-host execution checklist
 
 An agent may launch a long matrix only when every item is true:

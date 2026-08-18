@@ -23,6 +23,7 @@ COLORS = {
     "kv": "#d64545",
     "running": "#15803d",
     "waiting": "#d97706",
+    "trace": "#111827",
     "preemptions": "#7c3aed",
     "grid": "#dbe3ec",
     "axis": "#52606d",
@@ -218,6 +219,7 @@ def render(data: dict, run_id: str | None) -> str:
     kv_util = [value / kv_upper * 100.0 for value in kv]
     running = [float(value) for value in run["run"]]
     waiting = [float(value) for value in run["wait"]]
+    arrivals = [float(value) for value in run.get("arrivals", [0.0] * len(waiting))]
     preemptions = [float(value) for value in run["pre"]]
     count = len(hbm)
     last_index = count - 1
@@ -226,7 +228,7 @@ def render(data: dict, run_id: str | None) -> str:
     timestep_offset = int(data.get("_timestep_offset", 0))
     timestep_end = int(data.get("_timestep_end", timestep_offset + last_index))
     xticks = x_ticks(last_index)
-    scheduler_upper = nice_upper(max(running + waiting))
+    scheduler_upper = nice_upper(max(running + waiting + arrivals))
     preemption_upper = nice_upper(max(preemptions))
     y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(4)]
 
@@ -257,6 +259,7 @@ def render(data: dict, run_id: str | None) -> str:
     svg.append(f'<path d="{area(running, y_positions[3], scheduler_upper)}" fill="{COLORS["running"]}" opacity="0.10"/>')
     svg.append(f'<path d="{path(running, y_positions[3], scheduler_upper)}" fill="none" stroke="{COLORS["running"]}" stroke-width="2.2"/>')
     svg.append(f'<path d="{path(waiting, y_positions[3], scheduler_upper)}" fill="none" stroke="{COLORS["waiting"]}" stroke-width="2" stroke-dasharray="7 5"/>')
+    svg.append(f'<path d="{path(arrivals, y_positions[3], scheduler_upper)}" fill="none" stroke="{COLORS["trace"]}" stroke-width="1.8" stroke-dasharray="10 5"/>')
 
     pre_points = points(preemptions, y_positions[3], preemption_upper)
     pre_path = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in pre_points)
@@ -268,7 +271,8 @@ def render(data: dict, run_id: str | None) -> str:
     for offset, label, color, dash in (
         (0, "running", COLORS["running"], ""),
         (120, "waiting", COLORS["waiting"], "7 5"),
-        (235, "preemptions", COLORS["preemptions"], "3 5"),
+        (235, "Azure arrivals", COLORS["trace"], "10 5"),
+        (385, "preemptions", COLORS["preemptions"], "3 5"),
     ):
         x = legend_x + offset
         dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
@@ -306,7 +310,8 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     running = [float(value) for value in run["run"]]
     waiting = [float(value) for value in run["wait"]]
     preemptions = [float(value) for value in run["pre"]]
-    arrays = (hbm, kv, running, waiting, preemptions)
+    arrivals = [float(value) for value in run.get("arrivals", [0.0] * len(waiting))]
+    arrays = (hbm, kv, running, waiting, preemptions, arrivals)
     if any(not values for values in arrays) or len({len(values) for values in arrays}) != 1:
         raise ValueError("PNG inputs must be non-empty aligned series")
 
@@ -348,7 +353,7 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     timestep_end = int(data.get("_timestep_end", timestep_offset + last_index))
     xticks = x_ticks(last_index)
     y_positions = [TOP + index * (PANEL_HEIGHT + PANEL_GAP) for index in range(4)]
-    scheduler_upper = nice_upper(max(running + waiting))
+    scheduler_upper = nice_upper(max(running + waiting + arrivals))
 
     draw.text((LEFT, 30), "RIVF26 Part 1 — aligned inference timeline", fill=rgb("text"), font=title_font)
     draw.text(
@@ -399,15 +404,18 @@ def render_png(data: dict, run_id: str | None, output: Path) -> None:
     axes(y_positions[3], scheduler_upper, "scheduled requests", True)
     running_points = points(running, y_positions[3], scheduler_upper)
     waiting_points = points(waiting, y_positions[3], scheduler_upper)
+    arrivals_points = points(arrivals, y_positions[3], scheduler_upper)
     preemption_upper = nice_upper(max(preemptions))
     preemption_points = points(preemptions, y_positions[3], preemption_upper)
     draw.polygon([(running_points[0][0], y_positions[3] + PANEL_HEIGHT), *running_points, (running_points[-1][0], y_positions[3] + PANEL_HEIGHT)], fill=faded("running"))
     draw.line(running_points, fill=rgb("running"), width=2, joint="curve")
     dashed_line(waiting_points, "waiting", 2, 8, 5)
+    dashed_line(arrivals_points, "trace", 2, 10, 5)
     dashed_line(preemption_points, "preemptions", 2, 3, 5)
     draw.text((LEFT + PLOT_WIDTH - 335, y_positions[3] + 10), "running", fill=rgb("running"), font=small)
     draw.text((LEFT + PLOT_WIDTH - 245, y_positions[3] + 10), "waiting", fill=rgb("waiting"), font=small)
-    draw.text((LEFT + PLOT_WIDTH - 155, y_positions[3] + 10), f"preemptions ({int(max(preemptions))})", fill=rgb("preemptions"), font=small)
+    draw.text((LEFT + PLOT_WIDTH - 155, y_positions[3] + 10), "Azure arrivals", fill=rgb("trace"), font=small)
+    draw.text((LEFT + PLOT_WIDTH - 15, y_positions[3] + 10), f"preemptions ({int(max(preemptions))})", anchor="ra", fill=rgb("preemptions"), font=small)
 
     xlabel = f"sampled timestep ({bin_seconds:g} seconds per sample)"
     xlabel_box = draw.textbbox((0, 0), xlabel, font=label_font)
@@ -445,6 +453,7 @@ def comparison_runs(datasets: list[dict]) -> list[dict]:
                 "kv_util": [float(value) * 100.0 for value in run["kv"]],
                 "run": [float(value) for value in run["run"]],
                 "wait": [float(value) for value in run["wait"]],
+                "arrivals": [float(value) for value in run.get("arrivals", [0.0] * len(run["run"]))],
                 "pre": [float(value) for value in run["pre"]],
             }
         )
@@ -481,6 +490,7 @@ def render_comparison(datasets: list[dict]) -> str:
     )
     height = top + len(metrics) * panel_height + (len(metrics) - 1) * panel_gap + 105
     max_elapsed_s = max((len(run["hbm"]) - 1) * run["bin_seconds"] for run in runs)
+    trace_upper = nice_upper(max(max(run["arrivals"]) for run in runs))
     last_second = max(1, math.ceil(max_elapsed_s))
     xticks = x_ticks(last_second)
 
@@ -508,6 +518,14 @@ def render_comparison(datasets: list[dict]) -> str:
         items.append(text_node(28, cy, ylabel, text_anchor="middle", fill=COLORS["text"], font_size="15", font_weight="600", transform=f"rotate(-90 28 {cy})"))
         return items
 
+    def trace_axis(y_top: float) -> list[str]:
+        items = []
+        for value in tick_values(trace_upper):
+            y = y_top + panel_height - value / trace_upper * panel_height
+            items.append(text_node(LEFT + PLOT_WIDTH + 12, y + 5, f"{value:.0f}", fill=COLORS["trace"], font_size="12"))
+        items.append(text_node(LEFT + PLOT_WIDTH + 72, y_top + panel_height / 2, "Azure arrivals/bin", text_anchor="middle", fill=COLORS["trace"], font_size="12", transform=f"rotate(90 {LEFT + PLOT_WIDTH + 72} {y_top + panel_height / 2})"))
+        return items
+
     svg = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" '
         f'viewBox="0 0 {WIDTH} {height}" role="img" aria-label="RIVF26 four-precision comparison timeline">',
@@ -521,15 +539,22 @@ def render_comparison(datasets: list[dict]) -> str:
         svg.append(f'<line x1="{legend_x}" x2="{legend_x + 38}" y1="98" y2="98" stroke="{color}" stroke-width="3"/>')
         svg.append(text_node(legend_x + 46, 103, run["precision"], fill=color, font_size="15", font_weight="700"))
         legend_x += 190
+    svg.append(f'<line x1="{legend_x}" x2="{legend_x + 38}" y1="98" y2="98" stroke="{COLORS["trace"]}" stroke-width="2" stroke-dasharray="10 5"/>')
+    svg.append(text_node(legend_x + 46, 103, "Azure arrivals", fill=COLORS["trace"], font_size="15", font_weight="700"))
 
     for panel_index, (metric_name, ylabel, fixed_upper) in enumerate(metrics):
         y_top = top + panel_index * (panel_height + panel_gap)
         upper = fixed_upper or (
             max(run["kv_upper"] for run in runs)
             if metric_name == "kv"
-            else nice_upper(max(max(run[metric_name]) for run in runs))
+            else nice_upper(max(
+                max(max(run[metric_name]) for run in runs),
+                max(max(run["arrivals"]) for run in runs) if metric_name in {"run", "wait"} else 0.0,
+            ))
         )
         svg.extend(axes(y_top, upper, ylabel, panel_index == len(metrics) - 1))
+        if metric_name in {"run", "wait"}:
+            svg.extend(trace_axis(y_top))
         for run in runs:
             coords = comparison_points(
                 run[metric_name], run["bin_seconds"], max_elapsed_s,
@@ -538,6 +563,13 @@ def render_comparison(datasets: list[dict]) -> str:
             path_data = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in coords)
             color = VARIANT_COLORS.get(run["precision"], "#475569")
             svg.append(f'<path d="{path_data}" fill="none" stroke="{color}" stroke-width="2" opacity="0.92"/>')
+            if metric_name in {"run", "wait"}:
+                trace_coords = comparison_points(
+                    run["arrivals"], run["bin_seconds"], max_elapsed_s,
+                    y_top, panel_height, trace_upper,
+                )
+                trace_path = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in trace_coords)
+                svg.append(f'<path d="{trace_path}" fill="none" stroke="{COLORS["trace"]}" stroke-width="1.6" stroke-dasharray="10 5" opacity="0.85"/>')
 
     final_y = top + (len(metrics) - 1) * (panel_height + panel_gap) + panel_height
     svg.append(text_node(LEFT + PLOT_WIDTH / 2, final_y + 60, "elapsed inference time (seconds)", text_anchor="middle", fill=COLORS["text"], font_size="16", font_weight="600"))
@@ -575,6 +607,24 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
     title = ImageFont.truetype(bold_path, 25)
     image = Image.new("RGB", (WIDTH, height), "#f7f9fc")
     draw = ImageDraw.Draw(image)
+    trace_upper = nice_upper(max(max(run["arrivals"]) for run in runs))
+    def rgb(name: str) -> tuple[int, int, int]:
+        return ImageColor.getrgb(COLORS[name])
+
+    def dashed_line(coords: list[tuple[float, float]], color: str, width: int, dash: int, gap: int) -> None:
+        for start, end in zip(coords, coords[1:]):
+            dx, dy = end[0] - start[0], end[1] - start[1]
+            length = math.hypot(dx, dy)
+            if length == 0:
+                continue
+            position = 0.0
+            while position < length:
+                stop = min(position + dash, length)
+                first = (start[0] + dx * position / length, start[1] + dy * position / length)
+                second = (start[0] + dx * stop / length, start[1] + dy * stop / length)
+                draw.line((first, second), fill=rgb(color), width=width)
+                position += dash + gap
+
     draw.text((LEFT, 28), "RIVF26 Part 1 — precision comparison timeline", fill=COLORS["text"], font=title)
     draw.text((LEFT, 64), "elapsed inference time; every panel overlays the same precision variants", fill=COLORS["muted"], font=font)
     legend_x = LEFT
@@ -583,13 +633,18 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
         draw.line((legend_x, 98, legend_x + 38, 98), fill=color, width=3)
         draw.text((legend_x + 46, 89), run["precision"], fill=color, font=bold)
         legend_x += 190
+    draw.line((legend_x, 98, legend_x + 38, 98), fill=rgb("trace"), width=2)
+    draw.text((legend_x + 46, 89), "Azure arrivals", fill=rgb("trace"), font=bold)
 
     for panel_index, (metric_name, ylabel, fixed_upper) in enumerate(metrics):
         y_top = top + panel_index * (panel_height + panel_gap)
         upper = fixed_upper or (
             max(run["kv_upper"] for run in runs)
             if metric_name == "kv"
-            else nice_upper(max(max(run[metric_name]) for run in runs))
+            else nice_upper(max(
+                max(max(run[metric_name]) for run in runs),
+                max(max(run["arrivals"]) for run in runs) if metric_name in {"run", "wait"} else 0.0,
+            ))
         )
         draw.rectangle((LEFT, y_top, LEFT + PLOT_WIDTH, y_top + panel_height), fill="white", outline="#aebcca")
         for value in tick_values(upper):
@@ -606,9 +661,17 @@ def render_comparison_png(datasets: list[dict], output: Path) -> None:
                 box = draw.textbbox((0, 0), label, font=font)
                 draw.text((x - (box[2] - box[0]) / 2, y_top + panel_height + 7), label, fill=COLORS["muted"], font=font)
         draw.text((8, y_top + 8), ylabel, fill=COLORS["text"], font=bold)
+        if metric_name in {"run", "wait"}:
+            for value in tick_values(trace_upper):
+                y = y_top + panel_height - value / trace_upper * panel_height
+                draw.text((LEFT + PLOT_WIDTH + 12, y - 7), f"{value:.0f}", fill=rgb("trace"), font=small)
+            draw.text((LEFT + PLOT_WIDTH + 48, y_top + panel_height / 2), "Azure arrivals/bin", fill=rgb("trace"), font=small, anchor="lm")
         for run in runs:
             coords = comparison_points(run[metric_name], run["bin_seconds"], max_elapsed_s, y_top, panel_height, upper)
             draw.line(coords, fill=VARIANT_COLORS.get(run["precision"], "#475569"), width=2, joint="curve")
+            if metric_name in {"run", "wait"}:
+                trace_coords = comparison_points(run["arrivals"], run["bin_seconds"], max_elapsed_s, y_top, panel_height, trace_upper)
+                dashed_line(trace_coords, "trace", 1, 10, 5)
 
     final_y = top + (len(metrics) - 1) * (panel_height + panel_gap) + panel_height
     xlabel = "elapsed inference time (seconds)"

@@ -1,0 +1,20 @@
+{
+  "schema_version": "rivf26.thinking_budget_probe.v1",
+  "status": "PASS",
+  "timestamp_iso": "2026-08-17T15:45:35.458040+00:00",
+  "request_id": "pubmed-test-00293",
+  "prompt_tokens": 6511,
+  "max_completion_tokens": 6656,
+  "enable_thinking": true,
+  "thinking_token_budget": 6144,
+  "measured_reasoning_tokens": 1921,
+  "answer_chars": 3705,
+  "answer_nonempty": true,
+  "finish_reason": "stop",
+  "usage": {
+    "prompt_tokens": 6511,
+    "total_tokens": 9237,
+    "completion_tokens": 2726,
+    "prompt_tokens_details": null
+  }
+}

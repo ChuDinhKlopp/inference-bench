@@ -2,6 +2,7 @@
 """Plot binned per-request TTFT for an RIVF26 run."""
 
 import argparse
+import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -18,13 +19,45 @@ def resolve_csv(spec: str) -> Path:
     return path
 
 
+def label_for(spec: str) -> str:
+    match = re.search(r"(w16kv16|w8kv16|w16kv8|w8kv8)", str(spec))
+    return match.group(1) if match else Path(spec).parent.parent.name
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("run", help="RIVF26 run directory or raw/per_request.csv")
+    ap.add_argument("run", nargs="+", help="RIVF26 run directories or raw/per_request.csv files")
+    ap.add_argument("--cdf", action="store_true", help="plot TTFT CDF instead of binned TTFT over time")
+    ap.add_argument("--unit", choices=("ms", "s"), default="ms")
     ap.add_argument("--bin-ms", type=int, default=1000)
     ap.add_argument("--out", type=Path)
     args = ap.parse_args()
-    csv = resolve_csv(args.run)
+    if args.cdf:
+        fig, ax = plt.subplots(figsize=(7, 4.5))
+        scale = 1000.0 if args.unit == "ms" else 1.0
+        for spec in args.run:
+            csv = resolve_csv(spec)
+            df = pd.read_csv(csv)
+            if "ttft_s" not in df:
+                raise SystemExit(f"{csv}: missing ttft_s")
+            values = np.sort(df["ttft_s"].to_numpy(dtype=float))
+            values = values[np.isfinite(values) & (values >= 0)] * scale
+            if not len(values):
+                raise SystemExit(f"{csv}: no usable TTFT values")
+            ax.plot(values, np.arange(1, len(values) + 1) / len(values), linewidth=1.6, label=f"{label_for(spec)} (n={len(values)})")
+        ax.set(xlabel=f"TTFT ({args.unit})", ylabel="CDF", title="RIVF26 TTFT CDF")
+        ax.set_ylim(0, 1)
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc="lower right", fontsize=9)
+        out = args.out or Path("ttft_cdf.png")
+        fig.tight_layout()
+        fig.savefig(out, dpi=150)
+        print(f"wrote {out}")
+        return 0
+
+    if len(args.run) != 1:
+        raise SystemExit("over-time mode accepts exactly one run; use --cdf for multiple runs")
+    csv = resolve_csv(args.run[0])
     df = pd.read_csv(csv)
     required = {"send_epoch_s", "ttft_s"}
     missing = required - set(df.columns)

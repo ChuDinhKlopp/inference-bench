@@ -21,6 +21,15 @@ gpu_memory_utilization=${RIVF26_GPU_MEMORY_UTILIZATION:-0.90}
 vllm_python=$RIVF26_VENV_BIN/python
 attention_backend=${RIVF26_ATTENTION_BACKEND:-FLASHINFER}
 
+# Part 2 uses the same vLLM profiler configuration as the legacy server
+# harness.  Keep the legacy variable names as aliases so existing operator
+# commands remain valid, while making the output location portable.
+enable_torch_profiler=${RIVF26_ENABLE_TORCH_PROFILER:-${ENABLE_TORCH_PROFILER:-0}}
+torch_profiler_delay_iters=${RIVF26_TORCH_PROFILER_DELAY_ITERS:-${TORCH_PROFILER_DELAY_ITERS:-20}}
+torch_profiler_warmup_iters=${RIVF26_TORCH_PROFILER_WARMUP_ITERS:-${TORCH_PROFILER_WARMUP_ITERS:-10}}
+torch_profiler_max_iters=${RIVF26_TORCH_PROFILER_MAX_ITERS:-${TORCH_PROFILER_MAX_ITERS:-250}}
+torch_profiler_with_stack=${RIVF26_TORCH_PROFILER_WITH_STACK:-${TORCH_PROFILER_WITH_STACK:-0}}
+
 if [[ "$attention_backend" != "FLASHINFER" ]]; then
   echo "Part 1 requires one A100-compatible attention backend across all arms; expected FLASHINFER" >&2
   exit 2
@@ -81,6 +90,27 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
 fi
 
 cmd+=(--max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS")
+
+if [[ "$enable_torch_profiler" == "1" || "$enable_torch_profiler" == "2" ]]; then
+  if [[ -z "$run_id" ]]; then
+    echo "RIVF26_RUN_ID is required when Torch Profiler is enabled" >&2
+    exit 2
+  fi
+  profiler_dir=${RIVF26_TORCH_PROFILER_DIR:-${TORCH_PROFILER_DIR:-$RIVF26_BULK_ROOT/results/part2/$precision/$run_id/raw/torch_profiler}}
+  mkdir -p "$profiler_dir"
+  echo "Torch Profiler enabled: delay=$torch_profiler_delay_iters warmup=$torch_profiler_warmup_iters active=$torch_profiler_max_iters dir=$profiler_dir"
+  cmd+=(
+    --enforce-eager
+    --profiler-config.profiler=torch
+    "--profiler-config.torch_profiler_dir=$profiler_dir"
+    "--profiler-config.delay_iterations=$torch_profiler_delay_iters"
+    "--profiler-config.max_iterations=$torch_profiler_max_iters"
+    "--profiler-config.warmup_iterations=$torch_profiler_warmup_iters"
+    "--profiler-config.active_iterations=$torch_profiler_max_iters"
+    "--profiler-config.torch_profiler_with_stack=$torch_profiler_with_stack"
+    --profiler-config.ignore_frontend=true
+  )
+fi
 if [[ -n ${RIVF26_EXTRA_SERVER_ARGS:-} ]]; then
   echo "RIVF26_EXTRA_SERVER_ARGS is intentionally unsupported; add audited arguments to this launcher" >&2
   exit 2
@@ -150,6 +180,26 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
   export RIVF26_KV_SCALE_AUDIT_DIR=${RIVF26_KV_SCALE_AUDIT_DIR:-$bulk_run_dir/raw/kv_scale_audit}
   mkdir -p "$RIVF26_KV_SCALE_AUDIT_DIR"
   export PYTHONPATH=$scale_audit_site${PYTHONPATH:+:$PYTHONPATH}
+fi
+
+if [[ "$enable_torch_profiler" == "1" || "$enable_torch_profiler" == "2" ]] && [[ "${RIVF26_PROFILER_AUTO_SHUTDOWN:-0}" == "1" ]]; then
+  # vLLM writes profiler_out_0.txt from rank 0 after TorchProfilerWrapper._stop
+  # has flushed the trace.  Treat that file as the completion sentinel, then
+  # terminate only this server process.  This is opt-in because a profiling
+  # capture intentionally ends before a normal benchmark workload completes.
+  profiler_sentinel="$profiler_dir/profiler_out_0.txt"
+  "${cmd[@]}" &
+  server_child=$!
+  while kill -0 "$server_child" 2>/dev/null; do
+    if [[ -s "$profiler_sentinel" ]]; then
+      echo "Torch Profiler completed; shutting down server (sentinel: $profiler_sentinel)"
+      kill -TERM "$server_child" 2>/dev/null || true
+      break
+    fi
+    sleep "${RIVF26_PROFILER_POLL_SECONDS:-1}"
+  done
+  wait "$server_child" 2>/dev/null || true
+  exit 0
 fi
 
 exec "${cmd[@]}"
