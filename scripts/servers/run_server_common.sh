@@ -81,6 +81,11 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
 fi
 
 cmd+=(--max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS")
+if [[ ${RIVF26_ENFORCE_EAGER:-0} == 1 ]]; then
+  # Diagnostic-only: disables CUDA graph capture/replay to isolate whether the
+  # repeated "Worker died unexpectedly (exit code: None)" crash is graph-related.
+  cmd+=(--enforce-eager)
+fi
 if [[ -n ${RIVF26_EXTRA_SERVER_ARGS:-} ]]; then
   echo "RIVF26_EXTRA_SERVER_ARGS is intentionally unsupported; add audited arguments to this launcher" >&2
   exit 2
