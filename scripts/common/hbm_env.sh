@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 
-# Classic rocprof (v1) wraps the vLLM server for real HBM read/write bandwidth (see
-# scripts/monitoring/parse_rocprof_hbm.py for why rocprofv3/amdsmi cannot be used on
-# this host). rocprof's own bash wrapper only completes its post-processing step -- and
-# therefore only writes the kernel-dispatch CSV -- if it is left running long enough to
-# see its wrapped vLLM child exit on its own. A process-group-wide SIGTERM kills the
-# rocprof wrapper and its child simultaneously, so the wrapper never gets to finish and
-# HBM telemetry for the run is silently lost. Shutdown must instead signal only the
-# vLLM child PID and let the rocprof wrapper (server_pid) detect that exit and finish
-# by itself.
+# HBM read/write bandwidth is captured by a fully separate amdsmi-based sampler
+# process (scripts/monitoring/rocm_hbm_sampler.py), started by
+# scripts/servers/run_server_common.sh alongside the plain vLLM server (no
+# profiler wraps the server itself -- see rocm_hbm_sampler.py's docstring for
+# why: classic rocprof does capture real data but was confirmed 2026-08-18 to
+# cause the recurring "Worker died unexpectedly" crash when used to wrap the
+# server for its whole lifetime).
 
 rivf26_find_vllm_pid() {
   local port=$1
@@ -40,10 +38,12 @@ rivf26_reap_orphaned_vllm_workers() {
   done
 }
 
-# Gracefully stop a rocprof-wrapped vLLM server and wait for rocprof's own
-# post-processing to finish, falling back to a process-group kill if it hangs or the
-# vLLM child can never be identified (e.g. the server never started).
-rivf26_stop_rocprof_server() {
+# Gracefully stop the vLLM server (found by port, not by the orchestrator's
+# tracked PID, so this is safe under concurrent arms -- never process-group
+# kills, which would risk a sibling replica sharing a process group in some
+# launch patterns), falling back to a direct kill of server_pid if the vLLM
+# child can never be identified (e.g. the server never started).
+rivf26_stop_vllm_server() {
   local server_pid=$1
   local port=$2
   local timeout_iterations=${3:-120}
@@ -64,4 +64,24 @@ rivf26_stop_rocprof_server() {
   fi
   wait "$server_pid" 2>/dev/null || true
   rivf26_reap_orphaned_vllm_workers
+}
+
+# Stop the amdsmi HBM sampler started by run_server_common.sh (PID file at
+# $bulk_run_dir/raw/hbm_sampler.pid). SIGTERM lets it write final metadata
+# (sample_rows, gpu_count) before exiting; safe to call even if HBM capture
+# was disabled for this run (RIVF26_DISABLE_HBM_CAPTURE=1, no PID file).
+rivf26_stop_hbm_sampler() {
+  local bulk_run_dir=$1
+  local pid_file="$bulk_run_dir/raw/hbm_sampler.pid"
+  [[ -f "$pid_file" ]] || return 0
+  local sampler_pid
+  sampler_pid=$(cat "$pid_file" 2>/dev/null)
+  [[ -n "$sampler_pid" ]] || return 0
+  kill -TERM "$sampler_pid" 2>/dev/null || return 0
+  local _
+  for _ in $(seq 1 20); do
+    kill -0 "$sampler_pid" 2>/dev/null || return 0
+    sleep 0.5
+  done
+  kill -KILL "$sampler_pid" 2>/dev/null || true
 }

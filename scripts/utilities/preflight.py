@@ -7,7 +7,6 @@ import argparse
 import json
 import os
 import re
-import shutil
 import socket
 import subprocess
 import sys
@@ -359,12 +358,12 @@ def main() -> int:
         (extension_probe["stdout"] + "\n" + extension_probe["stderr"]).strip(),
     )
 
-    # HBM read/write bandwidth is captured by wrapping the server with classic
-    # rocprof (v1), which requires the `rocprof` binary; amdsmi is only used
-    # afterward for the static per-device peak-bandwidth constant. See
-    # scripts/monitoring/parse_rocprof_hbm.py for why rocprofv3/amdsmi's dynamic
-    # activity telemetry cannot be used directly on this host.
-    rocprof_path = shutil.which("rocprof")
+    # HBM read/write bandwidth is captured by a fully separate out-of-process
+    # amdsmi-based sampler (scripts/monitoring/rocm_hbm_sampler.py), not by
+    # wrapping the server with a profiler -- classic rocprof was confirmed to
+    # cause the recurring "Worker died unexpectedly" crash when used that way,
+    # and rocprofv3's hardware-counter injection collides with PyTorch's
+    # bundled rocprofiler-sdk. Only `amdsmi` is required here.
     try:
         import amdsmi as _amdsmi_probe  # noqa: F401
 
@@ -374,9 +373,9 @@ def main() -> int:
     add_check(
         checks,
         "hbm_sampler",
-        rocprof_path is not None and not amdsmi_probe_error,
+        not amdsmi_probe_error,
         True,
-        f"rocprof={rocprof_path or 'not found'}; amdsmi={'available' if not amdsmi_probe_error else amdsmi_probe_error}",
+        f"amdsmi={'available' if not amdsmi_probe_error else amdsmi_probe_error}",
     )
 
     mandatory_failures = [check["name"] for check in checks if check["mandatory"] and check["result"] == "FAIL"]

@@ -95,7 +95,7 @@ def build_gate(summary_paths: list[Path], root: Path) -> dict:
         "validated_data_path": [
             "per-request TTFT/TPOT",
             "Prometheus scheduler and KV metrics",
-            "rocprof per-kernel MI250 HBM read/write bandwidth, binned",
+            "amdsmi-sampled MI250 HBM (UMC) read/write bandwidth, binned",
             "rivf26.plot_data.v1 conversion",
         ],
         "runs": runs,

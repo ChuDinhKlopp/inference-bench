@@ -1,1 +1,0 @@
-pmc : FETCH_SIZE WRITE_SIZE

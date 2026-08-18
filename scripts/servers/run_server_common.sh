@@ -158,51 +158,29 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
   export PYTHONPATH=$scale_audit_site${PYTHONPATH:+:$PYTHONPATH}
 fi
 
-if [[ ${RIVF26_DISABLE_ROCPROF:-0} == 1 ]]; then
-  # Diagnostic-only: skip rocprof instrumentation entirely (no HBM capture) to
-  # test whether rocprof's per-kernel hooking is implicated in the recurring
-  # "Worker died unexpectedly" crash. Not for real runs -- no HBM data.
-  echo "WARNING: RIVF26_DISABLE_ROCPROF=1 -- running without rocprof; no HBM data will be captured" >&2
-  exec "${cmd[@]}"
+# HBM read/write bandwidth is captured by a fully separate amdsmi-based sampler
+# process (scripts/monitoring/rocm_hbm_sampler.py), not by wrapping this server
+# with a profiler. Classic rocprof does capture real per-kernel data, but
+# wrapping the server with it for its whole lifetime was confirmed 2026-08-18
+# to cause the recurring "Worker died unexpectedly" crash (decisive A/B test:
+# identical config, only variable is rocprof wrapping on/off -- on crashes
+# every time, off completed 1000/1000 requests with zero crashes). rocprofv3
+# is unusable here for an unrelated reason (its hardware-counter injection
+# SIGABRTs on any process that imports this environment's PyTorch). The
+# sampler polls amdsmi externally and never touches this process, so it
+# cannot reproduce that crash class -- and its UMC activity signal, earlier
+# believed frozen, was confirmed working 2026-08-18 (that was a monitoring
+# bug: watching the wrong amd-smi Device index for the GPU actually in use).
+if [[ ${RIVF26_DISABLE_HBM_CAPTURE:-0} != 1 ]]; then
+  mkdir -p "$bulk_run_dir/raw"
+  setsid "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/rocm_hbm_sampler.py" \
+    --output-csv "$bulk_run_dir/raw/hbm.csv" \
+    --metadata-json "$run_dir/hbm_metadata.json" \
+    --visible-devices "$HIP_VISIBLE_DEVICES" \
+    --frequency-hz "${RIVF26_HBM_FREQUENCY_HZ:-10}" \
+    > "$bulk_run_dir/logs/hbm_sampler.log" 2>&1 &
+  echo $! > "$bulk_run_dir/raw/hbm_sampler.pid"
+  disown
 fi
 
-# HBM read/write bandwidth is captured by wrapping the server itself with classic
-# rocprof (v1), not rocprofv3/amdsmi: rocprofv3's hardware-counter injection SIGABRTs
-# (launch mode) or silently no-ops (attach mode) on any process that imports this
-# environment's PyTorch, and amdsmi/amd-smi/rocm-smi's UMC activity telemetry is
-# frozen on this host under any workload or privilege level. Classic rocprof avoids
-# the collision and gives real per-kernel FETCH_SIZE/WRITE_SIZE counters (see
-# scripts/monitoring/parse_rocprof_hbm.py). rocprof only writes its output CSV if its
-# own wrapper process is left running long enough to see the wrapped vLLM process
-# exit on its own -- callers MUST NOT process-group-kill this server; they must send
-# SIGTERM to the vLLM child PID specifically and let this rocprof wrapper finish its
-# post-processing and exit by itself.
-hbm_dir=$bulk_run_dir/raw/hbm_kernel
-mkdir -p "$hbm_dir"
-cp "$rivf26_root/scripts/monitoring/rocm_hbm_rpl_rc.xml" "$hbm_dir/rpl_rc.xml"
-"$RIVF26_VENV_BIN/python" -c \
-  'import time,json,sys; json.dump({"reference_epoch_s": time.time(), "reference_monotonic_ns": time.monotonic_ns()}, open(sys.argv[1], "w"))' \
-  "$hbm_dir/reference.json"
-cd "$hbm_dir"
-
-# Classic rocprof re-evaluates its wrapped command with `eval "$APP_CMD"` after a
-# naive per-argument \"$arg\" quote-wrap. That wrapping breaks (and rocprof
-# misparses the vLLM command entirely, e.g. treating the --reasoning-config JSON's
-# "<think>" as shell input redirection) for any argument that itself contains
-# double quotes, which --reasoning-config's JSON value always does. Writing the
-# real invocation to a script file with bash's own %q-quoting and having rocprof
-# wrap that (a single argument-free command) avoids rocprof's eval reconstruction
-# ever seeing the problematic characters.
-launch_script=$hbm_dir/launch_vllm.sh
-{
-  printf '#!/usr/bin/env bash\n'
-  printf 'exec'
-  printf ' %q' "${cmd[@]}"
-  printf '\n'
-} > "$launch_script"
-chmod +x "$launch_script"
-
-exec rocprof -i "$rivf26_root/scripts/monitoring/rocm_hbm_counters.txt" \
-  -o "$hbm_dir/kernel_dispatches.csv" \
-  -d "$hbm_dir/rocprof_data" \
-  "$launch_script"
+exec "${cmd[@]}"

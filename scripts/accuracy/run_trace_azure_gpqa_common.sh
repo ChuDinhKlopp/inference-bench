@@ -50,8 +50,6 @@ fi
 total_requests=$((198 * num_samples))
 export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-$HIP_VISIBLE_DEVICES}
-IFS=',' read -ra hbm_visible_array <<< "$HIP_VISIBLE_DEVICES"
-hbm_expected_gpu_count=${#hbm_visible_array[@]}
 
 port=${RIVF26_PORT:-8000}
 if [[ "$run_kind" == length_pilot ]]; then
@@ -82,7 +80,6 @@ resource_guard_csv=$bulk_run_dir/raw/resource_guard.csv
 bench_results=$bulk_run_dir/raw/bench_results.json
 generations=$bulk_run_dir/raw/generations.json
 metrics_prefix=$bulk_run_dir/raw/bench_results
-hbm_kernel_dir=$bulk_run_dir/raw/hbm_kernel
 hbm_csv=$bulk_run_dir/raw/hbm.csv
 server_launcher=$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh
 
@@ -209,8 +206,9 @@ cleanup() {
     wait "$guard_pid" 2>/dev/null || true
   fi
   if [[ -n ${server_pid:-} ]]; then
-    rivf26_stop_rocprof_server "$server_pid" "$port"
+    rivf26_stop_vllm_server "$server_pid" "$port"
   fi
+  rivf26_stop_hbm_sampler "$bulk_run_dir"
   if (( run_completed == 0 )); then
     printf '{"status":"FAIL","exit_code":%d,"run_id":"%s"}\n' "$rc" "$run_id" > "$run_dir/failure.json"
   fi
@@ -305,19 +303,12 @@ kill -TERM "$guard_pid"
 wait "$guard_pid" 2>/dev/null || true
 guard_pid=
 
-# rocprof only finishes writing kernel_dispatches.csv once its wrapped vLLM process
-# exits, so the server must be stopped (gracefully, via the vLLM PID specifically --
-# see scripts/common/hbm_env.sh) before HBM data can be parsed.
-rivf26_stop_rocprof_server "$server_pid" "$port"
+# Stop the server now the client is done, and stop the sampler so it finalizes
+# hbm_metadata.json with the real sample_rows/gpu_count before anything below
+# reads it.
+rivf26_stop_vllm_server "$server_pid" "$port"
 server_pid=
-
-"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/parse_rocprof_hbm.py" \
-  --kernel-csv "$hbm_kernel_dir/kernel_dispatches.csv" \
-  --reference-json "$hbm_kernel_dir/reference.json" \
-  --output-csv "$hbm_csv" --metadata-json "$run_dir/hbm_metadata.json" \
-  --expected-gpu-count "$hbm_expected_gpu_count" \
-  --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}" \
-  --experiment-start-epoch-s "$started_epoch_s"
+rivf26_stop_hbm_sampler "$bulk_run_dir"
 
 kv_capacity=$(
   "$RIVF26_VENV_BIN/python" -c \

@@ -17,8 +17,6 @@ max_num_seqs=${RIVF26_MAX_NUM_SEQS:-256}
 max_gen_toks=${RIVF26_LCB_MAX_GEN_TOKS:-253952}
 export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-$HIP_VISIBLE_DEVICES}
-IFS=',' read -ra hbm_visible_array <<< "$HIP_VISIBLE_DEVICES"
-hbm_expected_gpu_count=${#hbm_visible_array[@]}
 case "$precision" in
   w8kv16|w8kv8) local_tokenizer=${RIVF26_FP8_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B-FP8} ;;
   *) local_tokenizer=${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B} ;;
@@ -30,7 +28,6 @@ bulk=${RIVF26_BULK_RUN_DIR:-$RIVF26_BULK_ROOT/results/part1/accuracy/$run_id}
 manifest=$rivf26_root/manifests/$run_id
 server_log=$bulk/logs/server.log
 client_log=$bulk/logs/client.log
-hbm_kernel_dir=$bulk/raw/hbm_kernel
 if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
   echo "precision=$precision requests=$num_requests max_num_seqs=$max_num_seqs max_gen_toks=$max_gen_toks thinking_token_budget=$RIVF26_THINKING_TOKEN_BUDGET max_num_batched_tokens=$RIVF26_MAX_NUM_BATCHED_TOKENS BENCH_ARRIVAL_RATE=none"
   exit 0
@@ -46,7 +43,7 @@ export RIVF26_RUN_ID=$run_id RIVF26_RUN_DIR=$run_dir RIVF26_BULK_RUN_DIR=$bulk R
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting server"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Server log: $server_log"
 setsid "$server_launcher" > "$server_log" 2>&1 & server_pid=$!
-cleanup() { rc=$?; if [[ -n ${server_pid:-} ]]; then rivf26_stop_rocprof_server "$server_pid" "$port"; fi; exit "$rc"; }
+cleanup() { rc=$?; if [[ -n ${server_pid:-} ]]; then rivf26_stop_vllm_server "$server_pid" "$port"; fi; rivf26_stop_hbm_sampler "$bulk"; exit "$rc"; }
 trap cleanup EXIT INT TERM
 for _ in $(seq 1 "${RIVF26_SERVER_READY_ATTEMPTS:-1800}"); do
   curl -fsS "http://127.0.0.1:$port/health" >/dev/null 2>&1 && break
@@ -67,18 +64,12 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark max concurrency: $max_num_seqs"
 started=$($RIVF26_VENV_BIN/python -c 'import time; print(time.time())')
 "${client[@]}" 2>&1 | tee "$client_log"
 ended=$($RIVF26_VENV_BIN/python -c 'import time; print(time.time())')
-# rocprof only finishes writing kernel_dispatches.csv once its wrapped vLLM process
-# exits, so the server must be stopped (gracefully, via the vLLM PID specifically --
-# see scripts/common/hbm_env.sh) before HBM data can be parsed.
-rivf26_stop_rocprof_server "$server_pid" "$port"
+# Stop the server now the client is done, and stop the sampler so it finalizes
+# hbm_metadata.json with the real sample_rows/gpu_count before anything below
+# reads it.
+rivf26_stop_vllm_server "$server_pid" "$port"
 server_pid=
-"$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/monitoring/parse_rocprof_hbm.py" \
-  --kernel-csv "$hbm_kernel_dir/kernel_dispatches.csv" \
-  --reference-json "$hbm_kernel_dir/reference.json" \
-  --output-csv "$bulk/raw/hbm.csv" --metadata-json "$run_dir/hbm_metadata.json" \
-  --expected-gpu-count "$hbm_expected_gpu_count" \
-  --bin-seconds "${RIVF26_PLOT_BIN_SECONDS:-1}" \
-  --experiment-start-epoch-s "$started" || true
+rivf26_stop_hbm_sampler "$bulk"
 kv=$($RIVF26_VENV_BIN/python -c 'import re,sys; t=open(sys.argv[1],errors="replace").read(); m=re.search(r"GPU KV cache size:\s*([0-9,]+) tokens",t,re.I); print(m.group(1).replace(",","") if m else "")' "$server_log")
 plot=("$RIVF26_VENV_BIN/python" "$rivf26_root/analysis/build_plot_data.py" --per-request "$bulk/raw/bench_results.per_request.csv" --prometheus "$bulk/raw/bench_results.prometheus_samples.jsonl" --hbm "$bulk/raw/hbm.csv" --output "$run_dir/plot_data.json" --run-id "$run_id" --precision "$precision" --mode accuracy --max-num-seqs "$max_num_seqs" --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" --experiment-start-epoch-s "$started")
 [[ -n "$kv" ]] && plot+=(--kv-capacity-tokens "$kv")
