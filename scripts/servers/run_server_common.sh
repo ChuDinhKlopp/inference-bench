@@ -158,6 +158,14 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
   export PYTHONPATH=$scale_audit_site${PYTHONPATH:+:$PYTHONPATH}
 fi
 
+if [[ ${RIVF26_DISABLE_ROCPROF:-0} == 1 ]]; then
+  # Diagnostic-only: skip rocprof instrumentation entirely (no HBM capture) to
+  # test whether rocprof's per-kernel hooking is implicated in the recurring
+  # "Worker died unexpectedly" crash. Not for real runs -- no HBM data.
+  echo "WARNING: RIVF26_DISABLE_ROCPROF=1 -- running without rocprof; no HBM data will be captured" >&2
+  exec "${cmd[@]}"
+fi
+
 # HBM read/write bandwidth is captured by wrapping the server itself with classic
 # rocprof (v1), not rocprofv3/amdsmi: rocprofv3's hardware-counter injection SIGABRTs
 # (launch mode) or silently no-ops (attach mode) on any process that imports this
