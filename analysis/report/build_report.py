@@ -212,7 +212,7 @@ def extract_batch_stats(run_dir):
             "mixed_generation": request_stats(groups["mixed"], "generation_requests"),
             "full_decode_generation": request_stats(groups["full_decode"], "generation_requests"),
         },
-        "latency": {name: latency_stats(group) for name, group in groups.items()},
+        "latency": {"all": latency_stats(rows), **{name: latency_stats(group) for name, group in groups.items()}},
         "log": str(log),
     }
 
@@ -284,6 +284,21 @@ def batch_section(batch):
       be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
       from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
     <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>'''
+
+
+def iteration_latency_section(batch):
+    order = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
+    labels = {"all": "all iterations", "full_prefill": "pure prefill", "mixed": "mixed", "full_decode": "pure decode"}
+    rows = []
+    for key in ("all", "full_prefill", "mixed", "full_decode"):
+        rows.append("<tr><td>{}</td>{}</tr>".format(
+            labels[key], "".join(f"<td>{fmt(batch[p]['latency'][key]['avg'])} ms</td>" for p in order)))
+    return f'''<h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{''.join(rows)}</tbody>
+    </table></div>
+    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>'''
 
 
 # --------------------------------------------------------------------------
@@ -407,6 +422,9 @@ def main():
     if "__BATCH_SECTION__" not in html:
         sys.exit("template is missing the __BATCH_SECTION__ placeholder")
     html = html.replace("__BATCH_SECTION__", batch_section(batch))
+    if "__ITER_LATENCY__" not in html:
+        sys.exit("template is missing the __ITER_LATENCY__ placeholder")
+    html = html.replace("__ITER_LATENCY__", iteration_latency_section(batch))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html)

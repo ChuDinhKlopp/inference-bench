@@ -568,6 +568,13 @@ python analysis/plot_stacked_timeline.py \
           alternative. Select p50 TTFT above to see the second marker fill in.</li>
       </ul></div>
 
+    <h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>all iterations</td><td>285.6 ms</td><td>457.2 ms</td><td>470.2 ms</td><td>697.2 ms</td></tr><tr><td>pure prefill</td><td>12,906.2 ms</td><td>14,184.5 ms</td><td>13,670.3 ms</td><td>14,328.3 ms</td></tr><tr><td>mixed</td><td>7,397.4 ms</td><td>8,882.8 ms</td><td>8,485.5 ms</td><td>8,697.8 ms</td></tr><tr><td>pure decode</td><td>95.8 ms</td><td>139.0 ms</td><td>149.4 ms</td><td>246.3 ms</td></tr></tbody>
+    </table></div>
+    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>
+
     <h3 class="sect-sub">5.2 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="tpot-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
