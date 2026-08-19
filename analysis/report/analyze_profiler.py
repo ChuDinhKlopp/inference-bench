@@ -71,7 +71,7 @@ def main() -> int:
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
     result = {"schema_version": "rivf26.part2_profiler_summary.v1", "arms": {}}
-    for precision in ("w8kv8", "w8kv16", "w16kv8"):
+    for precision in ("w16kv16", "w8kv16", "w16kv8", "w8kv8"):
         path = args.root / precision / "torch_profiler" / "profiler_out_0.txt"
         if not path.is_file():
             raise SystemExit(f"missing profiler summary: {path}")

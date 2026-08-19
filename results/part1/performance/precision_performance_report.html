@@ -765,39 +765,38 @@ python analysis/plot_stacked_timeline.py \
       <code class="mono">w16kv16</code> for every latency and throughput row and <code class="mono">w8kv8</code> for
       every capacity and stability row — the trade-off is that clean.</p>
 
-    <h3 class="sect-sub">5.7 Part 2 kernel characterization <span class="unit">short PyTorch Profiler captures · w8kv8, w8kv16, w16kv8</span></h3>
-    <p class="lede">These captures are rank-0 summaries from the three completed precision arms. They are not a
+    <h3 class="sect-sub">5.7 Part 2 kernel characterization <span class="unit">short PyTorch Profiler captures · all four arms</span></h3>
+    <p class="lede">These captures are rank-0 summaries from all four completed precision arms. They are not a
       full-run accounting: CUDA times are summed across asynchronous operations and can overlap. The profiler was
       enabled for a short window after workload warm-up, with the server in <code class="mono">--enforce-eager</code>
       mode. The raw traces remain outside Git; the compact source summary is
       <code class="mono">analysis/report/profiler_summary.json</code>.</p>
     <div class="tablewrap"><table>
-      <thead><tr><th>Profiler row</th><th>w8kv8</th><th>w8kv16</th><th>w16kv8</th></tr></thead>
+      <thead><tr><th>Profiler row</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
       <tbody>
-        <tr class="grouphead"><td colspan="4">TP communication</td></tr>
-        <tr><td>NCCL AllReduce self CUDA time</td><td>218.890 s (93.74%)</td><td>219.233 s (93.76%)</td><td>220.353 s (94.02%)</td></tr>
-        <tr><td><code class="mono">vllm::all_reduce</code> self CUDA time</td><td>213.322 s</td><td>213.062 s</td><td>213.314 s</td></tr>
-        <tr class="grouphead"><td colspan="4">Weight path</td></tr>
-        <tr><td><code class="mono">_C::marlin_gemm</code> self CUDA time / calls</td><td>2.789 s / 1,600</td><td>2.788 s / 1,600</td><td>absent</td></tr>
-        <tr><td><code class="mono">_moe_C::moe_wna16_marlin_gemm</code> self CUDA time / calls</td><td>3.423 s / 800</td><td>3.424 s / 800</td><td>absent</td></tr>
-        <tr class="grouphead"><td colspan="4">KV path</td></tr>
-        <tr><td><code class="mono">unified_attention_with_output</code> self CUDA time / calls</td><td>1.720 s / 100</td><td>1.849 s / 100</td><td>2.865 s / 100</td></tr>
-        <tr><td><code class="mono">reshape_and_cache_flash</code> CUDA total / calls</td><td>34.499 ms / 100</td><td>17.434 ms / 100</td><td>59.144 ms / 100</td></tr>
+        <tr class="grouphead"><td colspan="5">TP communication</td></tr>
+        <tr><td>NCCL AllReduce self CUDA time</td><td>216.866 s (94.37%)</td><td>219.233 s (93.76%)</td><td>220.353 s (94.02%)</td><td>218.890 s (93.74%)</td></tr>
+        <tr><td><code class="mono">vllm::all_reduce</code> self CUDA time</td><td>210.240 s</td><td>213.062 s</td><td>213.314 s</td><td>213.322 s</td></tr>
+        <tr class="grouphead"><td colspan="5">Weight path</td></tr>
+        <tr><td><code class="mono">_C::marlin_gemm</code> self CUDA time / calls</td><td>absent</td><td>2.788 s / 1,600</td><td>absent</td><td>2.789 s / 1,600</td></tr>
+        <tr><td><code class="mono">_moe_C::moe_wna16_marlin_gemm</code> self CUDA time / calls</td><td>absent</td><td>3.424 s / 800</td><td>absent</td><td>3.423 s / 800</td></tr>
+        <tr class="grouphead"><td colspan="5">KV path</td></tr>
+        <tr><td><code class="mono">unified_attention_with_output</code> self CUDA time / calls</td><td>1.849 s / 100</td><td>1.849 s / 100</td><td>2.865 s / 100</td><td>1.720 s / 100</td></tr>
+        <tr><td><code class="mono">reshape_and_cache_flash</code> CUDA total / calls</td><td>27.567 ms / 100</td><td>17.434 ms / 100</td><td>59.144 ms / 100</td><td>34.499 ms / 100</td></tr>
       </tbody>
     </table></div>
     <div class="obs warnline"><span class="tag">Interpretation</span>
       <ul class="obs-list">
         <li><strong>Quantization is not the largest aggregate profiler cost.</strong> NCCL AllReduce alone accounts for
-          93.7–94.0 % of rank-0 self CUDA time in all three captures. The current traces do not support the claim that
+          93.7–94.4 % of rank-0 self CUDA time in all four captures. The current traces do not support the claim that
           quant/dequant is the main absolute overhead regardless of TP communication.</li>
         <li><strong>Weight dequantization is the main precision-specific weight-path mechanism.</strong> The two
-          <code class="mono">w8</code> arms contain Marlin weight-only GEMM and MoE-Marlin rows; the BF16-weight
-          <code class="mono">w16kv8</code> arm contains neither. The Marlin call-site rows are approximately 2.8 s and
-          3.4 s of self CUDA time in both w8 arms, showing that changing KV precision does not remove the weight
-          dequant path.</li>
+          <code class="mono">w8</code> arms contain Marlin weight-only GEMM and MoE-Marlin rows; neither BF16-weight
+          arm contains them. The Marlin call-site rows are approximately 2.8 s and 3.4 s of self CUDA time in both
+          w8 arms, showing that changing KV precision does not remove the weight dequant path.</li>
         <li><strong>KV8 changes the attention/cache path, but these captures are shape-confounded.</strong> The
           <code class="mono">w8kv8</code> and <code class="mono">w16kv8</code> traces contain FP8 KV-cache kernels,
-          while <code class="mono">w8kv16</code> contains BF16 KV-cache kernels. Raw attention and cache-write times
+          while <code class="mono">w16kv16</code> and <code class="mono">w8kv16</code> contain BF16 KV-cache kernels. Raw attention and cache-write times
           cannot be interpreted as a causal KV8 tax because the arms were profiled at different live batch and
           context shapes.</li>
         <li><strong>Defensible conclusion:</strong> AllReduce dominates measured aggregate time; weight-only FP8
