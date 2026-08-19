@@ -691,6 +691,12 @@ python analysis/plot_stacked_timeline.py \
 <tr><td>mixed — decode requests</td><td>88.6 / 80.0 / 95.0 / 108.0</td><td>148.8 / 135.0 / 162.0 / 186.0</td><td>150.2 / 140.0 / 164.0 / 182.0</td><td>230.8 / 254.0 / 255.0 / 255.0</td></tr>
 <tr><td>full decode — decode requests</td><td>74.0 / 57.0 / 86.0 / 108.0</td><td>115.6 / 79.0 / 137.0 / 182.0</td><td>118.2 / 87.0 / 139.0 / 182.0</td><td>162.0 / 8.0 / 218.0 / 256.0</td></tr></tbody>
     </table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration elapsed time (ms; avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>full prefill</td><td>12,906.2 / 3,983.6 / 11,521.1 / 11,521.1</td><td>14,184.5 / 4,877.3 / 15,330.5 / 15,330.5</td><td>13,670.3 / 5,208.0 / 13,073.0 / 13,073.0</td><td>14,328.3 / 4,643.5 / 15,285.2 / 15,285.2</td></tr>
+<tr><td>mixed</td><td>7,397.4 / 4,373.4 / 5,749.6 / 12,247.0</td><td>8,882.8 / 5,145.0 / 6,526.4 / 15,717.5</td><td>8,485.5 / 5,025.4 / 6,209.4 / 15,443.2</td><td>8,697.8 / 5,269.1 / 5,774.2 / 22,559.7</td></tr>
+<tr><td>full decode</td><td>95.8 / 79.2 / 91.2 / 109.4</td><td>139.0 / 92.9 / 135.9 / 173.8</td><td>149.4 / 93.4 / 145.9 / 217.3</td><td>246.3 / 24.1 / 324.3 / 347.9</td></tr></tbody>
+    </table></div>
     <div class="obs kv"><span class="tag">Step-count interpretation</span>
       Total engine iterations are <strong>32,686 / 21,017 / 20,447 / 14,733</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
       iterations are <strong>31,839 / 20,254 / 19,662 / 13,949</strong>. Relative to w16kv16, the pure-decode step-count factors are

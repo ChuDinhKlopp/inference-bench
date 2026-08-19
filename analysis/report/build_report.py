@@ -193,6 +193,15 @@ def extract_batch_stats(run_dir):
             "p90": percentile(values, 0.90),
         }
 
+    def latency_stats(group):
+        values = [r["elapsed_ms"] for r in group]
+        return {
+            "avg": sum(values) / len(values) if values else 0.0,
+            "p25": percentile(values, 0.25),
+            "p50": percentile(values, 0.50),
+            "p90": percentile(values, 0.90),
+        }
+
     return {
         "iterations": len(rows),
         "groups": {name: len(group) for name, group in groups.items()},
@@ -203,6 +212,7 @@ def extract_batch_stats(run_dir):
             "mixed_generation": request_stats(groups["mixed"], "generation_requests"),
             "full_decode_generation": request_stats(groups["full_decode"], "generation_requests"),
         },
+        "latency": {name: latency_stats(group) for name, group in groups.items()},
         "log": str(log),
     }
 
@@ -235,6 +245,17 @@ def batch_section(batch):
         stat_row("mixed — decode requests", "mixed_generation"),
         stat_row("full decode — decode requests", "full_decode_generation"),
     ])
+    latency_rows = "\n".join(
+        "<tr><td>{}</td>{}</tr>".format(
+            labels[key], "".join(
+                "<td>{} / {} / {} / {}</td>".format(
+                    fmt(batch[p]["latency"][key]["avg"]),
+                    fmt(batch[p]["latency"][key]["p25"]),
+                    fmt(batch[p]["latency"][key]["p50"]),
+                    fmt(batch[p]["latency"][key]["p90"]),
+                ) for p in order))
+        for key in ("full_prefill", "mixed", "full_decode")
+    )
     steps = " / ".join(f"{batch[p]['iterations']:,}" for p in order)
     decode_steps = " / ".join(f"{batch[p]['groups']['full_decode']:,}" for p in order)
     ref = batch["w16kv16"]["groups"]["full_decode"]
@@ -251,6 +272,10 @@ def batch_section(batch):
     <div class="tablewrap"><table>
       <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
       <tbody>{stat_rows}</tbody>
+    </table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration elapsed time (ms; avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{latency_rows}</tbody>
     </table></div>
     <div class="obs kv"><span class="tag">Step-count interpretation</span>
       Total engine iterations are <strong>{steps}</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
