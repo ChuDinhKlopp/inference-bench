@@ -301,8 +301,11 @@
       The decisive pattern: <strong>capacity up, batch width up, throughput flat</strong> would mean quantization buys
       residency rather than speed.</div>
 
-    <div class="obs todo"><span class="tag">3 · Quantization–dequantization cost</span>
-      <p class="placeholder">To be specified.</p></div>
+    <div class="obs"><span class="tag">3 · Quantization–dequantization cost</span>
+      <p>Part 2 uses a short PyTorch Profiler capture rather than full-run instrumentation. On A100, the
+      <code class="mono">w8</code> arms use FP8 weight-only Marlin kernels with BF16 activations; the
+      <code class="mono">kv8</code> arms use FP8 KV-cache read/write kernels. The detailed evidence and its
+      TP/all-reduce limitation are reported in §5.7.</p></div>
   </section>
 
   <section>
@@ -762,7 +765,51 @@ python analysis/plot_stacked_timeline.py \
       <code class="mono">w16kv16</code> for every latency and throughput row and <code class="mono">w8kv8</code> for
       every capacity and stability row — the trade-off is that clean.</p>
 
-    <h3 class="sect-sub">5.7 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
+    <h3 class="sect-sub">5.7 Part 2 kernel characterization <span class="unit">short PyTorch Profiler captures · w8kv8, w8kv16, w16kv8</span></h3>
+    <p class="lede">These captures are rank-0 summaries from the three completed precision arms. They are not a
+      full-run accounting: CUDA times are summed across asynchronous operations and can overlap. The profiler was
+      enabled for a short window after workload warm-up, with the server in <code class="mono">--enforce-eager</code>
+      mode. The raw traces remain outside Git; the compact source summary is
+      <code class="mono">analysis/report/profiler_summary.json</code>.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Profiler row</th><th>w8kv8</th><th>w8kv16</th><th>w16kv8</th></tr></thead>
+      <tbody>
+        <tr class="grouphead"><td colspan="4">TP communication</td></tr>
+        <tr><td>NCCL AllReduce self CUDA time</td><td>218.890 s (93.74%)</td><td>219.233 s (93.76%)</td><td>220.353 s (94.02%)</td></tr>
+        <tr><td><code class="mono">vllm::all_reduce</code> self CUDA time</td><td>213.322 s</td><td>213.062 s</td><td>213.314 s</td></tr>
+        <tr class="grouphead"><td colspan="4">Weight path</td></tr>
+        <tr><td><code class="mono">_C::marlin_gemm</code> self CUDA time / calls</td><td>2.789 s / 1,600</td><td>2.788 s / 1,600</td><td>absent</td></tr>
+        <tr><td><code class="mono">_moe_C::moe_wna16_marlin_gemm</code> self CUDA time / calls</td><td>3.423 s / 800</td><td>3.424 s / 800</td><td>absent</td></tr>
+        <tr class="grouphead"><td colspan="4">KV path</td></tr>
+        <tr><td><code class="mono">unified_attention_with_output</code> self CUDA time / calls</td><td>1.720 s / 100</td><td>1.849 s / 100</td><td>2.865 s / 100</td></tr>
+        <tr><td><code class="mono">reshape_and_cache_flash</code> CUDA total / calls</td><td>34.499 ms / 100</td><td>17.434 ms / 100</td><td>59.144 ms / 100</td></tr>
+      </tbody>
+    </table></div>
+    <div class="obs warnline"><span class="tag">Interpretation</span>
+      <ul class="obs-list">
+        <li><strong>Quantization is not the largest aggregate profiler cost.</strong> NCCL AllReduce alone accounts for
+          93.7–94.0 % of rank-0 self CUDA time in all three captures. The current traces do not support the claim that
+          quant/dequant is the main absolute overhead regardless of TP communication.</li>
+        <li><strong>Weight dequantization is the main precision-specific weight-path mechanism.</strong> The two
+          <code class="mono">w8</code> arms contain Marlin weight-only GEMM and MoE-Marlin rows; the BF16-weight
+          <code class="mono">w16kv8</code> arm contains neither. The Marlin call-site rows are approximately 2.8 s and
+          3.4 s of self CUDA time in both w8 arms, showing that changing KV precision does not remove the weight
+          dequant path.</li>
+        <li><strong>KV8 changes the attention/cache path, but these captures are shape-confounded.</strong> The
+          <code class="mono">w8kv8</code> and <code class="mono">w16kv8</code> traces contain FP8 KV-cache kernels,
+          while <code class="mono">w8kv16</code> contains BF16 KV-cache kernels. Raw attention and cache-write times
+          cannot be interpreted as a causal KV8 tax because the arms were profiled at different live batch and
+          context shapes.</li>
+        <li><strong>Defensible conclusion:</strong> AllReduce dominates measured aggregate time; weight-only FP8
+          introduces a real Marlin dequantization path; KV8 introduces an FP8 attention/cache path; and this capture
+          cannot rank their causal contribution to TPOT. A matched-shape single-step profile, with TP communication
+          separately timed or held constant, is required for that claim.</li>
+      </ul>
+    </div>
+    <p class="cap">source: <code>part2/&lt;precision&gt;/torch_profiler/profiler_out_0.txt</code> · values are rank-0
+      profiler summaries; nested CUDA rows must not be summed as independent wall time</p>
+
+    <h3 class="sect-sub">5.8 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
     <div class="controls">
       <label>distribution <select id="len-metric">
         <option value="isl">prompt length (ISL)</option>
@@ -797,7 +844,7 @@ python analysis/plot_stacked_timeline.py \
     running/waiting requests, preemptions and HBM figures are derived from each run's <code>plot_data.json</code>;
     effective concurrency is runtime KV capacity ÷ (mean ISL 9,412 + mean OSL 2,437). CDFs plot all 1,000 per-request
     samples per arm with no downsampling; the timeline re-bins the 500 ms series to 5 s for the browser. Accuracy mode
-    and the Part 2 PyTorch Profiler kernel study are out of scope for this report.
+    Accuracy mode is out of scope for this report; the Part 2 PyTorch Profiler kernel study is summarized in §5.7.
   </footer>
 </div>
 

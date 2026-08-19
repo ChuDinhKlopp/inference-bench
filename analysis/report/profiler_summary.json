@@ -1,0 +1,150 @@
+{
+  "schema_version": "rivf26.part2_profiler_summary.v1",
+  "arms": {
+    "w8kv8": {
+      "profiler_output": "w8kv8/torch_profiler/profiler_out_0.txt",
+      "rows": {
+        "nccl_allreduce_kernel": {
+          "name": "ncclDevKernel_AllReduce_Sum_bf16_RING_LL(ncclDevKern...         0.00%       0.000us         0.00%       0.000us       0.000us",
+          "self_cuda_s": 218.89,
+          "self_cuda_pct": 93.74,
+          "cuda_total_s": 218.89,
+          "cuda_avg_ms": 263.089,
+          "calls": 832
+        },
+        "vllm_all_reduce": {
+          "name": "vllm::all_reduce         0.02%      46.166ms         0.66%        1.587s       1.959ms",
+          "self_cuda_s": 213.322,
+          "self_cuda_pct": 91.36,
+          "cuda_total_s": 316.779,
+          "cuda_avg_ms": 391.085,
+          "calls": 810
+        },
+        "weight_marlin_gemm": {
+          "name": "_C::marlin_gemm         0.03%      69.275ms        30.68%       73.573s      45.983ms",
+          "self_cuda_s": 2.789,
+          "self_cuda_pct": 1.19,
+          "cuda_total_s": 10.354,
+          "cuda_avg_ms": 6.471,
+          "calls": 1600
+        },
+        "moe_marlin_gemm": {
+          "name": "_moe_C::moe_wna16_marlin_gemm         0.01%      25.537ms         0.04%      89.239ms     111.548us",
+          "self_cuda_s": 3.423,
+          "self_cuda_pct": 1.47,
+          "cuda_total_s": 4.291,
+          "cuda_avg_ms": 5.364,
+          "calls": 800
+        },
+        "attention": {
+          "name": "vllm::unified_attention_with_output         0.01%      22.542ms         0.02%      44.634ms     446.339us",
+          "self_cuda_s": 1.72,
+          "self_cuda_pct": 0.74,
+          "cuda_total_s": 3.165,
+          "cuda_avg_ms": 31.652,
+          "calls": 100
+        },
+        "kv_cache_update": {
+          "name": "_C_cache_ops::reshape_and_cache_flash         0.00%       1.577ms         0.00%       3.345ms      33.448us",
+          "self_cuda_s": 0.03286,
+          "self_cuda_pct": 0.01,
+          "cuda_total_s": 0.034499,
+          "cuda_avg_ms": 0.34499,
+          "calls": 100
+        }
+      }
+    },
+    "w8kv16": {
+      "profiler_output": "w8kv16/torch_profiler/profiler_out_0.txt",
+      "rows": {
+        "nccl_allreduce_kernel": {
+          "name": "ncclDevKernel_AllReduce_Sum_bf16_RING_LL(ncclDevKern...         0.00%       0.000us         0.00%       0.000us       0.000us",
+          "self_cuda_s": 219.233,
+          "self_cuda_pct": 93.76,
+          "cuda_total_s": 219.233,
+          "cuda_avg_ms": 263.185,
+          "calls": 833
+        },
+        "vllm_all_reduce": {
+          "name": "vllm::all_reduce         0.02%      47.179ms         0.65%        1.564s       1.931ms",
+          "self_cuda_s": 213.062,
+          "self_cuda_pct": 91.12,
+          "cuda_total_s": 312.385,
+          "cuda_avg_ms": 385.66,
+          "calls": 810
+        },
+        "weight_marlin_gemm": {
+          "name": "_C::marlin_gemm         0.03%      68.458ms        29.32%       70.405s      44.003ms",
+          "self_cuda_s": 2.788,
+          "self_cuda_pct": 1.19,
+          "cuda_total_s": 10.727,
+          "cuda_avg_ms": 6.705,
+          "calls": 1600
+        },
+        "moe_marlin_gemm": {
+          "name": "_moe_C::moe_wna16_marlin_gemm         0.01%      25.032ms         0.03%      73.766ms      92.208us",
+          "self_cuda_s": 3.424,
+          "self_cuda_pct": 1.46,
+          "cuda_total_s": 3.854,
+          "cuda_avg_ms": 4.818,
+          "calls": 800
+        },
+        "attention": {
+          "name": "vllm::unified_attention_with_output         0.01%      22.447ms         0.02%      46.604ms     466.040us",
+          "self_cuda_s": 1.849,
+          "self_cuda_pct": 0.79,
+          "cuda_total_s": 3.436,
+          "cuda_avg_ms": 34.363,
+          "calls": 100
+        },
+        "kv_cache_update": {
+          "name": "_C_cache_ops::reshape_and_cache_flash         0.00%       1.472ms         0.00%       2.842ms      28.424us",
+          "self_cuda_s": 0.016603000000000003,
+          "self_cuda_pct": 0.01,
+          "cuda_total_s": 0.017434,
+          "cuda_avg_ms": 0.174337,
+          "calls": 100
+        }
+      }
+    },
+    "w16kv8": {
+      "profiler_output": "w16kv8/torch_profiler/profiler_out_0.txt",
+      "rows": {
+        "nccl_allreduce_kernel": {
+          "name": "ncclDevKernel_AllReduce_Sum_bf16_RING_LL(ncclDevKern...         0.00%       0.000us         0.00%       0.000us       0.000us",
+          "self_cuda_s": 220.353,
+          "self_cuda_pct": 94.02,
+          "cuda_total_s": 220.353,
+          "cuda_avg_ms": 263.265,
+          "calls": 837
+        },
+        "vllm_all_reduce": {
+          "name": "vllm::all_reduce         0.02%      49.772ms        14.01%       34.921s      43.113ms",
+          "self_cuda_s": 213.314,
+          "self_cuda_pct": 91.02,
+          "cuda_total_s": 320.192,
+          "cuda_avg_ms": 395.298,
+          "calls": 810
+        },
+        "weight_marlin_gemm": null,
+        "moe_marlin_gemm": null,
+        "attention": {
+          "name": "vllm::unified_attention_with_output         0.01%      24.337ms         0.69%        1.726s      17.261ms",
+          "self_cuda_s": 2.865,
+          "self_cuda_pct": 1.22,
+          "cuda_total_s": 8.834,
+          "cuda_avg_ms": 88.343,
+          "calls": 100
+        },
+        "kv_cache_update": {
+          "name": "_C_cache_ops::reshape_and_cache_flash         0.00%       1.668ms         0.32%     809.954ms       8.100ms",
+          "self_cuda_s": 0.032854999999999995,
+          "self_cuda_pct": 0.01,
+          "cuda_total_s": 0.059143999999999995,
+          "cuda_avg_ms": 0.591438,
+          "calls": 100
+        }
+      }
+    }
+  }
+}
