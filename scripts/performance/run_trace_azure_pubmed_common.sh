@@ -273,17 +273,26 @@ set +e
 if [[ "$profiler_enabled" == "1" || "$profiler_enabled" == "2" ]]; then
   # Start the workload first. The optional delay is a warm-up interval under
   # real load, not an idle wait after server readiness.
-  BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
-    > "$client_log" 2>&1 &
+  client_status_file="$client_log.exit"
+  (
+    set +e
+    BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
+      2>&1 | tee "$client_log"
+    printf '%s\n' "${PIPESTATUS[0]}" > "$client_status_file"
+  ) &
   client_pid=$!
   if (( profiler_start_delay > 0 )); then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Workload started (pid=$client_pid); waiting ${profiler_start_delay}s before starting Torch Profiler"
     sleep "$profiler_start_delay"
   fi
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Torch Profiler via /start_profile"
-  curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >> "$client_log" 2>&1 || true
+  curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >/dev/null 2>&1 || true
   wait "$client_pid"
-  client_rc=$?
+  if [[ -s "$client_status_file" ]]; then
+    client_rc=$(<"$client_status_file")
+  else
+    client_rc=2
+  fi
 else
   BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
     2>&1 | tee "$client_log"
