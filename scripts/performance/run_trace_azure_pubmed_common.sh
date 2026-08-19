@@ -101,15 +101,12 @@ post_cmd=(
 if [[ "$precision" == *kv8 ]]; then
   post_cmd+=(--accept-fp8-kv-scale-one)
 fi
-<<<<<<< HEAD
-=======
 profiler_enabled=${RIVF26_ENABLE_TORCH_PROFILER:-${ENABLE_TORCH_PROFILER:-0}}
 profiler_start_delay=${RIVF26_PROFILER_START_DELAY_SECONDS:-0}
 if [[ ! "$profiler_start_delay" =~ ^[0-9]+$ ]]; then
   echo "RIVF26_PROFILER_START_DELAY_SECONDS must be a non-negative integer" >&2
   exit 2
 fi
->>>>>>> 383a2fc... rivf26: allow delayed torch profiler trigger
 
 print_command() {
   local label=$1
@@ -271,8 +268,6 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark output directory: $run_dir"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark dataset: ccdv/pubmed-summarization"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark arrival mode: azure"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark requests: $request_count"
-<<<<<<< HEAD
-=======
 if [[ "$profiler_enabled" == "1" || "$profiler_enabled" == "2" ]]; then
   # ignore_frontend=true makes the worker profiler start only through the
   # vLLM profiling API.  Without this request, profiler-config is accepted but
@@ -284,7 +279,6 @@ if [[ "$profiler_enabled" == "1" || "$profiler_enabled" == "2" ]]; then
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Torch Profiler via /start_profile"
   curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >/dev/null
 fi
->>>>>>> 383a2fc... rivf26: allow delayed torch profiler trigger
 started_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
 set +e
 BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
