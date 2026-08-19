@@ -24,7 +24,14 @@ run_one() {
   RIVF26_THINKING_TOKEN_BUDGET=6144 \
   RIVF26_PLOT_BIN_SECONDS=0.5 \
   RIVF26_RUN_ID=${stamp}_part2_performance_pubmed_1000_longest_${variant}_mns256 \
-  "$launcher"
+  "$launcher" || {
+    # Auto-shutdown intentionally stops the client once the requested profile
+    # has flushed, so the workload may return non-zero because the server is no
+    # longer accepting requests.  Continue to the next precision arm while
+    # preserving the failed/incomplete run artifacts for auditability.
+    local rc=$?
+    echo "[$(date -u '+%Y-%m-%d %H:%M:%S')] ${variant} profiler launcher exited ${rc}; continuing to next arm"
+  }
 }
 
 # Sequential order: w8kv8 (w8a8), w8kv16 (w8a16), w16kv8 (w16a8), w16kv16.
