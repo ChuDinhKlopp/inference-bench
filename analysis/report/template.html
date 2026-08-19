@@ -286,7 +286,7 @@
           quantization axes each move it, and do they compound?</li>
         <li><strong>Token throughput</strong> — does the extra cache convert into work done, or only into residency?</li>
         <li><strong>Throughput against latency</strong> — is there a trade-off at all, or does one arm dominate?
-          Plotted as Pareto charts in §5.1: throughput vs TTFT and throughput vs TPOT.</li>
+          Plotted as Pareto charts in §5.2: throughput vs TTFT and throughput vs TPOT.</li>
       </ul></div>
 
     <div class="obs kv"><span class="tag">2 · KV cache and scheduler behaviour</span>
@@ -372,7 +372,7 @@
       ramp: <strong>25 % of the workload lands in the first 35 s</strong>, the middle of the window is comparatively
       quiet, and then <strong>44 % arrives in the final 60 s</strong> (22 % in the final 30 s alone, with the densest
       10 s starting at t = 251 s). The queue is therefore being filled hardest at the exact moment the trace ends, which
-      is why the backlog in Section 5.4 peaks just after 303 s and then takes hours to drain.</div>
+      is why the backlog in Section 5.5 peaks just after 303 s and then takes hours to drain.</div>
 
     <h4 class="minor">Prompt and output lengths <span class="unit">the 1,000 PubMed articles as actually served</span></h4>
     <p class="lede">Measured per request from each run's <code class="mono">raw/per_request.csv</code>, not from a
@@ -402,7 +402,7 @@
           served here has a median of <strong>8,099</strong>, roughly 2.5 × larger.</li>
         <li><strong>ISL is heavily right-skewed</strong> — p50 8,099 but p99 28,569 and max 53,967, a 6.7 × spread
           between median and tail. A handful of very large prefills therefore compete with the whole decode batch,
-          which is a significant contributor to the multi-second ITL tails in Section 5.2.</li>
+          which is a significant contributor to the multi-second ITL tails in Section 5.3.</li>
         <li><strong>OSL is tightly clustered and nearly arm-invariant</strong> — every arm sits at a median of
           2,391–2,424 tokens with p99 ≈ 3,370. The 6,144-token thinking budget and 10,240 output cap are almost never
           the binding constraint; only w16kv16's 6,917-token maximum comes close. The total-output spread across arms is
@@ -530,7 +530,9 @@ python analysis/plot_stacked_timeline.py \
       arm pills to isolate or compare arms — the selection is shared across all charts in this section.</p>
     <ul class="armtoggles" id="arm-toggles"></ul>
 
-    <h3 class="sect-sub">5.1 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
+    __BATCH_SECTION__
+
+    <h3 class="sect-sub">5.2 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
     <div class="controls">
       <label>throughput <select id="pf-thru">
         <option value="tot">total token (in + out)</option>
@@ -568,9 +570,7 @@ python analysis/plot_stacked_timeline.py \
           alternative. Select p50 TTFT above to see the second marker fill in.</li>
       </ul></div>
 
-    __ITER_LATENCY__
-
-    <h3 class="sect-sub">5.2 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
+    <h3 class="sect-sub">5.3 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="tpot-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
       <label>x range <select id="tpot-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
@@ -597,7 +597,7 @@ python analysis/plot_stacked_timeline.py \
       at 7.7–11.5 s in every arm — those multi-second gaps are preempted requests waiting to be rescheduled. Both SLO
       guides sit hard against the left axis: even the fastest arm misses the server target by 4 ×.</div>
 
-    <h3 class="sect-sub">5.3 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
+    <h3 class="sect-sub">5.4 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="ttft-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
       <label>x range <select id="ttft-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
@@ -630,7 +630,7 @@ python analysis/plot_stacked_timeline.py \
       consequence of a deliberate saturation design, and it means these runs characterize throughput and scheduler
       behaviour, not SLO attainment.</div>
 
-    <h3 class="sect-sub">5.4 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
+    <h3 class="sect-sub">5.5 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
     <div class="controls">
       <label>y scale <select id="ts-scale"><option value="shared">shared across arms</option><option value="free">per-panel fit</option></select></label>
       <label>smoothing <select id="ts-smooth"><option value="1">none (5 s bins)</option><option value="6">30 s</option><option value="12">60 s</option></select></label>
@@ -654,7 +654,7 @@ python analysis/plot_stacked_timeline.py \
           1,266 → 1,234 → 1,231 → <strong>1,152 tok/s</strong> and wall-clock rises 9,350 → 10,284 s. The waiting-request
           panel makes it visual: all four backlogs drain along almost the same slope, with w8kv8 the last to reach zero.
           <strong>Same work, more requests in flight, therefore proportionally more time per request</strong> — Little's
-          law, and precisely the TPOT ordering in 5.1.</li>
+          law, and precisely the TPOT ordering in 5.2.</li>
         <li><strong>Preemptions collapse: 212 → 186 → 169 → 38.</strong> This is the one unambiguous win for KV
           quantization. w8kv8 suffers <strong>5.6 × fewer</strong> preemptions than the reference, and its preemption
           curve is flat after an early step while the other three climb steadily all run long.</li>
@@ -674,8 +674,6 @@ python analysis/plot_stacked_timeline.py \
       structural rather than incidental: the A100 has no FP8 tensor cores, so <code class="mono">w8</code> pays
       dequantization on every GEMM without any arithmetic return, and the machine is nowhere near bandwidth-bound, so
       <code class="mono">kv8</code>'s lighter memory traffic has no ceiling to lift.</div>
-
-    __BATCH_SECTION__
 
     <h3 class="sect-sub">5.6 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
     <div class="tablewrap">

@@ -260,7 +260,7 @@ def batch_section(batch):
     decode_steps = " / ".join(f"{batch[p]['groups']['full_decode']:,}" for p in order)
     ref = batch["w16kv16"]["groups"]["full_decode"]
     ratios = " / ".join(f"{ref / batch[p]['groups']['full_decode']:.2f}×" for p in order)
-    return f'''<h3 class="sect-sub">5.5 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
+    return f'''<h3 class="sect-sub">5.1 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
     <p class="lede">Each row is one vLLM engine iteration. Following <code class="mono">recap.md</code>, full prefill means
       <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
       <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
@@ -283,7 +283,8 @@ def batch_section(batch):
       <strong>{ratios}</strong>. Thus the KV8 arms do process substantially fewer decode steps, but that advantage must
       be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
       from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
-    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>'''
+    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>
+    {iteration_latency_section(batch)}'''
 
 
 def iteration_latency_section(batch):
@@ -422,9 +423,6 @@ def main():
     if "__BATCH_SECTION__" not in html:
         sys.exit("template is missing the __BATCH_SECTION__ placeholder")
     html = html.replace("__BATCH_SECTION__", batch_section(batch))
-    if "__ITER_LATENCY__" not in html:
-        sys.exit("template is missing the __ITER_LATENCY__ placeholder")
-    html = html.replace("__ITER_LATENCY__", iteration_latency_section(batch))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html)
