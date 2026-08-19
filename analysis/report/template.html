@@ -1,0 +1,1787 @@
+<title>Precision Under Saturation</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface:        #fcfcfb;
+    --surface-sunken: #f2f2ef;
+    --rule:           #dcdcd6;
+    --grid:           #e6e6e1;
+    --ink:            #14161a;
+    --ink-2:          #4e5560;
+    --ink-3:          #7b828d;
+    --s1:             #2a78d6;
+    --s2:             #eb6834;
+    --s3:             #1baf7a;
+    --s4:             #7d5bbe;
+    --warn-bg:        #fbf4e6;
+    --warn-ink:       #6b4a06;
+    --slo:            #d64545;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface:        #1a1a19;
+      --surface-sunken: #232322;
+      --rule:           #35352f;
+      --grid:           #2c2c28;
+      --ink:            #f3f3ee;
+      --ink-2:          #b9b9ad;
+      --ink-3:          #8b8b80;
+      --s1:             #3987e5;
+      --s2:             #d95926;
+      --s3:             #199e70;
+      --s4:             #8f6ee0;
+      --warn-bg:        #2a2416;
+      --warn-ink:       #e2c98a;
+      --slo:            #e06060;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface:        #1a1a19;
+    --surface-sunken: #232322;
+    --rule:           #35352f;
+    --grid:           #2c2c28;
+    --ink:            #f3f3ee;
+    --ink-2:          #b9b9ad;
+    --ink-3:          #8b8b80;
+    --s1:             #3987e5;
+    --s2:             #d95926;
+    --s3:             #199e70;
+    --s4:             #8f6ee0;
+    --warn-bg:        #2a2416;
+    --warn-ink:       #e2c98a;
+    --slo:            #e06060;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 40px 24px 72px; }
+
+  .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 20px; margin-bottom: 8px; }
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-3); margin: 0 0 10px;
+  }
+  h1 { font-size: 27px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -.015em; text-wrap: balance; font-weight: 620; }
+  .sub { margin: 0; color: var(--ink-2); max-width: 68ch; }
+
+  section { margin-top: 44px; }
+  h2 {
+    font-size: 18px; margin: 0 0 4px; font-weight: 600; letter-spacing: -.01em;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  h2 .unit {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px; color: var(--ink-3); letter-spacing: .04em; font-weight: 400;
+  }
+  h2 .num {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; color: var(--ink-3); font-weight: 400;
+  }
+  .lede { margin: 0 0 18px; color: var(--ink-2); max-width: 72ch; font-size: 14.5px; }
+  .obs { margin: 0 0 16px; padding: 11px 14px 12px; border-left: 3px solid var(--s1); background: var(--surface-sunken);
+    border-radius: 0 6px 6px 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); max-width: 82ch; }
+  .obs strong { color: var(--ink); font-weight: 600; }
+  .obs-list { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
+  .obs-list li { padding-left: 2px; }
+  .obs .tag { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-3); display: block; margin-bottom: 4px; }
+  .obs.kv { border-left-color: var(--s3); }
+  .obs.warnline { border-left-color: var(--s2); }
+  /* a group that is declared but not yet specified -- dashed, so an empty slot
+     reads as deliberate rather than as something that failed to render */
+  .obs.todo { border-left-style: dashed; border-left-color: var(--ink-3); }
+  .obs .placeholder { margin: 4px 0 0; color: var(--ink-3); font-style: italic; }
+
+  h3.sect-sub { font-size: 15px; margin: 26px 0 4px; font-weight: 600; letter-spacing: -.01em;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  h3.sect-sub .unit { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px; color: var(--ink-3); letter-spacing: .04em; font-weight: 400; }
+  h4.minor { font-size: 13.5px; margin: 22px 0 4px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+  h4.minor .unit { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px; color: var(--ink-3); letter-spacing: .04em; font-weight: 400; }
+
+  /* trace summary chips: one measured fact each, value over label */
+  ul.stats { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 10px; }
+  ul.stats li {
+    background: var(--surface-sunken); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 7px 12px; min-width: 96px;
+  }
+  ul.stats .v {
+    display: block; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+  }
+  ul.stats .k {
+    display: block; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); margin-top: 2px;
+  }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 0 0 18px; padding: 0; list-style: none; }
+  .legend li { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); }
+  .legend .swatch { width: 22px; height: 3px; border-radius: 2px; flex: none; }
+  .legend .swatch.dash { height: 0; border-top: 3px dotted var(--ink-3); border-radius: 0; }
+  .legend code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--ink); }
+
+  header .setup, ul.setup { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; max-width: 900px; }
+  header .setup li, ul.setup li { display: grid; grid-template-columns: 260px 1fr; gap: 12px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
+  header .setup li code, ul.setup li code { color: var(--ink); }
+  @media (max-width: 560px) { header .setup li, ul.setup li { grid-template-columns: 1fr; gap: 2px; } }
+
+  /* ---- controls ---- */
+  .controls { display: flex; gap: 20px; flex-wrap: wrap; margin: 0 0 14px; align-items: center; }
+  .controls label { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); }
+  .controls select { font: inherit; font-size: 13px; padding: 3px 7px; background: var(--surface-sunken);
+    color: var(--ink); border: 1px solid var(--rule); border-radius: 5px; }
+  .controls select:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+  .armtoggles { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; padding: 0; list-style: none; }
+  .armtoggles button {
+    font: inherit; font-size: 12.5px; cursor: pointer;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 11px 4px 9px; border-radius: 999px;
+    border: 1px solid var(--rule); background: var(--surface-sunken); color: var(--ink-3);
+    transition: color .12s, border-color .12s, opacity .12s;
+  }
+  .armtoggles button .sw { width: 9px; height: 9px; border-radius: 50%; flex: none; opacity: .3; transition: opacity .12s; }
+  .armtoggles button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-3); }
+  .armtoggles button[aria-pressed="true"] .sw { opacity: 1; }
+  .armtoggles button:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+
+  .chartbox { position: relative; }
+  /* Must be positioned: multi-panel charts append their .tip to this container,
+     and an absolutely-positioned tooltip in an unpositioned parent escapes to
+     the document and lands nowhere near the chart. */
+  .stack { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .panelcard {
+    background: var(--surface-sunken); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 14px 14px 10px; margin: 0 0 8px; min-width: 0;
+  }
+  .panelcard .cap {
+    margin-top: 10px; font-size: 11.5px; color: var(--ink-3);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.5;
+  }
+  .stack .chartbox + .chartbox { margin-top: -1px; }
+  .pareto-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  @media (max-width: 760px) { .pareto-pair { grid-template-columns: 1fr; } }
+  .pareto-pair h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 600; color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .tip {
+    position: absolute; pointer-events: none; opacity: 0; transition: opacity .1s;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 5px;
+    padding: 7px 9px; font-size: 12px; line-height: 1.5; white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(0,0,0,.13); z-index: 5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums; color: var(--ink-2);
+  }
+  .tip .k { color: var(--ink-3); }
+  .tip .v { color: var(--ink); font-weight: 600; }
+  .tip .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+
+  .note {
+    background: var(--warn-bg); color: var(--warn-ink);
+    border-radius: 5px; padding: 11px 13px; font-size: 13.5px; margin: 18px 0 0;
+  }
+  .note strong { font-weight: 650; }
+  .note code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .tablewrap { overflow-x: auto; margin-top: 14px; border: 1px solid var(--rule); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td {
+    padding: 6px 11px; text-align: right; white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--grid);
+  }
+  th { color: var(--ink-3); font-weight: 500; text-align: right; background: var(--surface-sunken); position: sticky; top: 0; }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: none; }
+  .grouphead td {
+    background: var(--surface-sunken); color: var(--ink-2); font-weight: 600;
+    text-align: left; letter-spacing: .03em;
+  }
+  td.best { color: var(--ink); font-weight: 650; }
+  .arm { display: inline-flex; align-items: center; gap: 6px; }
+  .arm .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  details { margin-top: 16px; }
+  summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+  summary:focus-visible { outline: 2px solid var(--s1); outline-offset: 3px; border-radius: 3px; }
+  pre.cmd {
+    margin: 8px 0 0; padding: 12px 14px; background: var(--surface-sunken);
+    border: 1px solid var(--rule); border-radius: 6px; overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.6; color: var(--ink-2);
+  }
+  pre.cmd b { color: var(--ink); font-weight: 600; }
+
+  p code, li code, td code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+
+  footer { margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 12.5px; }
+  footer code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  @media (prefers-reduced-motion: reduce) { .tip, .armtoggles button, .armtoggles button .sw { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">RIVF26 Part 1 · PubMed 1,000 longest · Azure bursty replay · 8 × AMD MI250 (4 × TP=2) · vLLM 0.27.0</p>
+    <h1>Precision under saturation: what weight and KV-cache quantization actually change in vLLM</h1>
+    <p class="sub"><strong>Performance mode.</strong> Four precision arms of Qwen3.6-35B-A3B serve the identical
+      1,000-request PubMed workload replayed against the identical Azure arrival trace. Everything except weight
+      precision and KV-cache dtype is held fixed, so every difference below is attributable to precision.</p>
+    <ul class="setup">
+      <li><code class="mono">model</code> <span>Qwen3.6-35B-A3B · TP = 2 · TRITON_ATTN</span></li>
+      <li><code class="mono">precision arms</code> <span>w16kv16 (BF16 · BF16 KV) · w8kv16 (FP8 block W8A8 · BF16 KV) ·
+        w16kv8 (BF16 · FP8 KV) · w8kv8 (FP8 block W8A8 · FP8 KV)</span></li>
+      <li><code class="mono">max_num_seqs</code> <span>256 (all arms)</span></li>
+      <li><code class="mono">max_num_batched_tokens</code> <span>32,768 (all arms)</span></li>
+      <li><code class="mono">workload</code> <span>1,000 longest PubMed test articles · 8,868.8 mean ISL · 2,434.7 mean OSL</span></li>
+      <li><code class="mono">arrivals</code> <span>Azure bursty window, 303.1 s, CV ≈ 2.18, replayed unscaled</span></li>
+    </ul>
+    <p class="sub" style="margin-top:10px">All four runs completed <strong>1,000 / 1,000 requests with zero
+      failures</strong>. Run IDs are dated 2026-08-18; the four arms were executed <strong>concurrently</strong> as four
+      independent TP=2 replicas, one per GPU pair (HIP 0,1 / 2,3 / 4,5 / 6,7), at Git commit
+      <code class="mono">71788d5</code>. Every chart below is drawn live from the run artifacts — hover to read values.</p>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span> Goal</h2>
+    <p class="lede">The research question the harness exists to answer:</p>
+    <div class="obs"><span class="tag">Research question</span>
+      <strong>How does vLLM inference behavior change when model-weight and KV-cache precision change, and which
+      scheduler, KV-cache, latency, or HBM effects explain the performance difference?</strong></div>
+    <p class="lede">Two commitments follow from that phrasing and shape everything below. First, the object of study is
+      <em>behavior over time</em>, not a single throughput number — so every arm records complete timestamped runtime
+      series (arrivals, completions, per-request TTFT and TPOT, running and waiting requests, preemptions, KV-cache
+      occupancy and capacity, and four-GPU HBM traffic) rather than only its final aggregates. Second, the question asks
+      for a <em>mechanism</em>, not a ranking: it is not enough to observe that one arm is slower, the scheduler,
+      cache-capacity, or memory-bandwidth effect that produces the difference has to be identifiable in the telemetry.</p>
+    <p class="lede">This report covers Part 1 performance mode only. Accuracy mode (GPQA Diamond, LiveCodeBench) and the
+      Part 2 PyTorch Profiler kernel study are separate and deliberately excluded — full-run profiling is never enabled
+      during Part 1, because it would perturb the very timings being measured.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span> What to observe</h2>
+    <p class="lede">Three groups of measurements, stated before the results so the reading stays honest.</p>
+
+    <div class="obs"><span class="tag">1 · End-to-end metrics</span>
+      <ul class="obs-list">
+        <li><strong>TTFT</strong> — queue wait + prefill. Does precision touch it at all under a saturating burst?</li>
+        <li><strong>TPOT</strong> — steady-state decode, where dequantization and KV reads happen every step. Do the two
+          quantization axes each move it, and do they compound?</li>
+        <li><strong>Token throughput</strong> — does the extra cache convert into work done, or only into residency?</li>
+        <li><strong>Throughput against latency</strong> — is there a trade-off at all, or does one arm dominate?
+          Plotted as Pareto charts in §5.1: throughput vs TTFT and throughput vs TPOT.</li>
+      </ul></div>
+
+    <div class="obs kv"><span class="tag">2 · KV cache and scheduler behaviour</span>
+      <ul class="obs-list">
+        <li><strong>KV utilization</strong> — how much cache each precision buys, and whether it stays pinned at 100 %
+          (cache-bound) or falls away from it (something else binds).</li>
+        <li><strong>Running requests</strong> — is the extra cache spent on batch width, and does
+          <code class="mono">max-num-seqs=256</code> become the limiter instead of the cache?</li>
+        <li><strong>Waiting requests</strong> — backlog drain rate; the slope is the real throughput signal.</li>
+        <li><strong>Preempted requests</strong> — scheduler thrash. More cache should mean fewer evictions.</li>
+      </ul>
+      The decisive pattern: <strong>capacity up, batch width up, throughput flat</strong> would mean quantization buys
+      residency rather than speed.</div>
+
+    <div class="obs todo"><span class="tag">3 · Quantization–dequantization cost</span>
+      <p class="placeholder">To be specified.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span> Experiment design <span class="unit">performance mode</span></h2>
+    <p class="lede">A four-cell single-factor-pair design. The two quantization axes — weight precision and KV-cache
+      dtype — are crossed to give four arms, and every other variable is pinned. Because both axes are binary, the
+      design isolates each one (w8kv16 moves weights only, w16kv8 moves KV only) and their combination (w8kv8), against
+      an unquantized reference (w16kv16).</p>
+
+    <h3 class="sect-sub">Precision arms <span class="unit">the only variable</span></h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Arm</th><th>Checkpoint</th><th>Effective MI250 weight path</th><th>KV-cache dtype</th><th>vLLM quantization</th></tr></thead>
+        <tbody>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s1)"></span>w16kv16</span></td><td>BF16</td><td>BF16</td><td>bfloat16</td><td>none</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s2)"></span>w8kv16</span></td><td>FP8</td><td>FP8 block-quantized W8A8 (weight + activation both 8-bit)</td><td>bfloat16</td><td>fp8</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s3)"></span>w16kv8</span></td><td>BF16</td><td>BF16</td><td>float8_e4m3fn</td><td>none</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s4)"></span>w8kv8</span></td><td>FP8</td><td>FP8 block-quantized W8A8 (weight + activation both 8-bit)</td><td>float8_e4m3fn</td><td>fp8</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note"><strong>MI250 has no pre-tuned FP8 GEMM kernel config for this model's shapes.</strong> Unlike an
+      A100 (no FP8 support at all, so <code>w8</code> would run a fixed weight-only dequant-to-BF16 path), MI250 executes
+      vLLM's genuine block-quantized FP8×FP8 (<code>fp8_w8a8</code>) kernel path for the <code>w8</code> arms — but every
+      TP worker in both FP8-weight arms logs, for <strong>5 distinct GEMM shapes</strong> (confirmed by grepping both
+      runs' server logs: <code class="mono">N=6144,K=2048</code> / <code class="mono">N=4608,K=2048</code> /
+      <code class="mono">N=2048,K=2048</code> / <code class="mono">N=2048,K=256</code> /
+      <code class="mono">N=512,K=2048</code>, 10 warning lines total per run across both TP workers):
+      <code class="mono">WARNING [fp8_utils.py:851] Using default W8A8 Block FP8 kernel config. Performance might be
+      sub-optimal! Config file not found at .../N=…,K=…,device_name=AMD_Instinct_MI250X_MI250,dtype=fp8_w8a8,
+      block_shape=[128,128].json</code>. No tuned block/tile configuration ships for this device+shape combination, so
+      vLLM falls back to a generic default. This is the single most important design caveat for reading the results:
+      the severe <code>w8</code> slowdown measured in Section 5 is very likely dominated by this <strong>missing,
+      fixable tuning artifact</strong>, not an inherent MI250 arithmetic ceiling — a materially different story from an
+      A100's genuine lack of FP8 hardware. (Separately, a MoE-routing kernel config is also missing on every arm,
+      precision-independent — see Section 4.) Names alone are not evidence; runtime server logs and Stage B validation
+      are.</div>
+
+    <h3 class="sect-sub">Workload and arrival policy</h3>
+    <ul class="setup">
+      <li><code class="mono">prompts</code> <span>1,000 longest intact PubMed test articles satisfying the context
+        constraint (<code class="mono">selection_policy=longest_prompt_tokens</code>), frozen and hash-pinned</span></li>
+      <li><code class="mono">arrivals</code> <span>the burstiest selected 1,000-request Azure window — 303.145 s,
+        ≈3.299 req/s mean, inter-arrival CV ≈ 2.182 — replayed at its recorded offsets without scaling</span></li>
+      <li><code class="mono">reasoning</code> <span>thinking enabled, budget 6,144 tokens (forces the
+        <code class="mono">&lt;/think&gt;</code> boundary and leaves ≥4,096 tokens for the answer)</span></li>
+      <li><code class="mono">output cap</code> <span>10,240 tokens</span></li>
+      <li><code class="mono">concurrency</code> <span>no client-side semaphore; <code class="mono">max-num-seqs=256</code>
+        alone governs server residency while the trace supplies arrivals</span></li>
+    </ul>
+    <p class="lede" style="margin-top:14px">Pairing the longest prompts with the burstiest arrival window is a
+      deliberate stress design: it maximizes KV-cache pressure per request and concentrates arrivals, so cache capacity
+      and scheduler admission become the binding constraints rather than raw compute. That choice is what makes the
+      precision axis legible — and, as Section 5 shows, it also drives the system deep into saturation.</p>
+
+    <h4 class="minor">The Azure arrival window <span class="unit">1,000 requests · 303.145 s · replayed unscaled</span></h4>
+    <p class="lede">The window was selected by retaining the 10 % shortest-duration candidate windows, maximizing the
+      population CV of the 999 inter-arrival times, then breaking ties by shorter duration and earlier source position.
+      This is the entire input signal: all four arms receive these exact 1,000 offsets.</p>
+    <ul class="stats" id="trace-stats"></ul>
+    <div class="controls">
+      <label>bin <select id="tr-bin">
+        <option value="1">1 s</option>
+        <option value="0.5">0.5 s</option>
+        <option value="5">5 s</option>
+      </select></label>
+    </div>
+    <div class="panelcard">
+      <div class="stack" id="trace-chart"></div>
+      <p class="cap">source: traces/processed/azure_multimodal_bursty_1000.csv ·
+        <code>ARRIVAL_OFFSET_S</code> · sha256 3b487d34…</p>
+    </div>
+    <div class="obs"><span class="tag">Why this window matters</span>
+      The mean rate is only <strong>3.30 req/s</strong>, but the arrivals are nowhere near uniform: the busiest single
+      second carries <strong>19 requests</strong> (5.8 × the mean) and the busiest 10 s carries <strong>96</strong>,
+      while four gaps exceed 5 s and the longest is 8.90 s. That is what an inter-arrival
+      <strong>CV of 2.18</strong> looks like. The cumulative curve shows the shape has two bursts rather than a steady
+      ramp: <strong>25 % of the workload lands in the first 35 s</strong>, the middle of the window is comparatively
+      quiet, and then <strong>44 % arrives in the final 60 s</strong> (22 % in the final 30 s alone, with the densest
+      10 s starting at t = 251 s). The queue is therefore being filled hardest at the exact moment the trace ends, which
+      is why the backlog in Section 5.4 peaks just after 303 s and then takes hours to drain.</div>
+
+    <h4 class="minor">Prompt and output lengths <span class="unit">the 1,000 PubMed articles as actually served</span></h4>
+    <p class="lede">Measured per request from each run's <code class="mono">raw/per_request.csv</code>, not from a
+      workload manifest — this is what the server actually saw. ISL is byte-identical across all four arms, so it is
+      reported once; OSL is generated text and therefore varies slightly with temperature-1.0 sampling.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Distribution</th><th>min</th><th>p25</th><th>p50</th><th>p75</th><th>p90</th><th>p99</th><th>max</th><th>mean</th><th>total</th></tr></thead>
+        <tbody>
+          <tr class="grouphead"><td colspan="10">Prompt length — ISL (tokens) · identical in all four arms</td></tr>
+          <tr><td>all arms</td><td>6,457</td><td>7,120</td><td>8,005</td><td>9,749</td><td>12,027</td><td>18,476</td><td>22,457</td><td>8,868.8</td><td>8,868,818</td></tr>
+          <tr class="grouphead"><td colspan="10">Output length — OSL (tokens) · thinking budget 6,144 · output cap 10,240</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s1)"></span>w16kv16</span></td><td>1,520</td><td>2,196</td><td>2,390</td><td>2,628</td><td>2,892</td><td>3,402</td><td>3,919</td><td>2,431.6</td><td>2,431,646</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s2)"></span>w8kv16</span></td><td>1,605</td><td>2,200</td><td>2,402</td><td>2,645</td><td>2,908</td><td>3,430</td><td>4,056</td><td>2,445.4</td><td>2,445,414</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s3)"></span>w16kv8</span></td><td>1,440</td><td>2,173</td><td>2,404</td><td>2,642</td><td>2,893</td><td>3,357</td><td>3,936</td><td>2,423.6</td><td>2,423,641</td></tr>
+          <tr><td><span class="arm"><span class="dot" style="background:var(--s4)"></span>w8kv8</span></td><td>1,391</td><td>2,174</td><td>2,395</td><td>2,677</td><td>2,921</td><td>3,424</td><td>4,001</td><td>2,438.1</td><td>2,438,112</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="obs kv"><span class="tag">Reading the distributions</span>
+      <ul class="obs-list">
+        <li><strong>The selection floor is visible.</strong> The shortest prompt is <strong>6,457 tokens</strong> — there
+          are no short requests at all, which is exactly what
+          <code class="mono">selection_policy=longest_prompt_tokens</code> is for. For contrast, the unfiltered
+          1,000-request PubMed workload records a median of 3,232 prompt tokens in its own manifest
+          (<code class="mono">datasets/metadata/pubmed_azure_bursty_1000.json</code>); the longest-selection workload
+          served here has a median of <strong>8,005</strong>, roughly 2.5 × larger.</li>
+        <li><strong>ISL is right-skewed but less extreme than the reference run</strong> — p50 8,005, p99 18,476, max
+          22,457: a <strong>2.8 ×</strong> spread between median and max (this frozen workload file is not
+          byte-identical to the one behind an earlier run of this report on other hardware — its own SHA-256 is
+          recorded in Section 4 — so absolute ISL figures are not directly comparable across machines; the four MI250
+          arms below all serve this exact same file). A handful of large prefills still compete with the decode batch,
+          contributing to the ITL tails in Section 5.2.</li>
+        <li><strong>OSL is tightly clustered and nearly arm-invariant</strong> — every arm sits at a median of
+          2,390–2,404 tokens with p99 ≈ 3,360–3,430. The 6,144-token thinking budget and 10,240 output cap are almost
+          never the binding constraint; the highest single-arm maximum is w8kv16's 4,056 tokens. The total-output-mean
+          spread across arms is <strong>0.9 %</strong>, far too small to explain the roughly 17 × TPOT gap measured in
+          Section 5.</li>
+        <li><strong>ISL exceeds OSL by 3.6 ×</strong> on average (8,868.8 vs 2,434.7), so this workload is prefill-heavy
+          in token count while being decode-heavy in wall-clock — the asymmetry that makes KV-cache capacity the
+          interesting variable.</li>
+      </ul></div>
+
+    <h3 class="sect-sub">Comparison SLOs <span class="unit">borrowed reference targets, not official Qwen requirements</span></h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Scenario</th><th>P99 TTFT</th><th>TPOT</th></tr></thead>
+        <tbody>
+          <tr><td>Interactive</td><td>≤ 2.0 s</td><td>≤ 15 ms</td></tr>
+          <tr><td>Server</td><td>≤ 3.0 s</td><td>≤ 80 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede" style="margin-top:14px">Both SLO evaluations read the same measured performance run; they are two
+      lenses on one workload, not two workloads. They are drawn as red guide lines on the two CDFs in Section 5.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span> Experiment setup</h2>
+
+    <h3 class="sect-sub">Fixed hardware and server configuration <span class="unit">as actually executed</span></h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Item</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>GPUs</td><td>8 × AMD Instinct MI250X/MI250 (host <code>mv-mi250-06</code>) — 4 concurrent TP=2
+            replicas, one per arm, on GPU pairs HIP 0,1 / 6,7 / 4,5 / 2,3 for w16kv16 / w8kv16 / w16kv8 / w8kv8</td></tr>
+          <tr><td>Tensor parallelism</td><td>2 (per replica)</td></tr>
+          <tr><td>Model</td><td>Qwen3.6-35B-A3B (BF16 rev <code>995ad96</code> · FP8 rev <code>95a723d</code>)</td></tr>
+          <tr><td>Weights served from</td><td><code>/dev/shm/Qwen3.6-35B-A3B</code> · <code>/home/tuan/models/Qwen3.6-35B-A3B-FP8</code></td></tr>
+          <tr><td>vLLM</td><td>0.27.0</td></tr>
+          <tr><td>Attention backend</td><td>TRITON_ATTN (all arms)</td></tr>
+          <tr><td><code>max-model-len</code></td><td>262,144</td></tr>
+          <tr><td><code>max-num-seqs</code></td><td>256</td></tr>
+          <tr><td><code>max-num-batched-tokens</code></td><td>32,768</td></tr>
+          <tr><td><code>gpu-memory-utilization</code></td><td>0.90</td></tr>
+          <tr><td>Server endpoints</td><td><code>127.0.0.1:8000</code> (w16kv16) · <code>127.0.0.1:8003</code> (w8kv16) ·
+            <code>127.0.0.1:8002</code> (w16kv8) · <code>127.0.0.1:8001</code> (w8kv8) — distinct ports, one per
+            concurrent replica</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note"><strong>Two settings differ from the guide's stated defaults</strong> and are recorded here as
+      run-of-record rather than silently normalized: <code>max-num-batched-tokens</code> is <strong>32,768</strong>
+      (guide default 8,192) and <code>max-model-len</code> is <strong>262,144</strong> (guide's stated server context
+      limit 65,536). Both are identical across all four arms, so the precision comparison remains internally valid, but
+      absolute numbers here are not comparable to runs made at the guide's defaults.</div>
+    <p class="lede" style="margin-top:16px">TRITON_ATTN is pinned across all arms — it is the ROCm-compatible attention
+      backend for this port (FLASHINFER is CUDA-only), and running one backend everywhere keeps the precision comparison
+      free of a confounding backend change. Every TP worker in every arm also logs a precision-independent
+      <code class="mono">WARNING [fused_moe.py:1161] Using default MoE config. Performance might be sub-optimal!</code>
+      for the MoE expert-routing GEMM (no tuned config exists for this device+shape either); since it appears identically
+      in all four arms it does not explain the precision differences in Section 5, but it does mean none of the four
+      arms is running at its true tuned ceiling. For the KV8 arms, vLLM 0.27 disables runtime KV-scale calculation for
+      this hybrid GDN/recurrent model and uses scale 1.0 — recorded in each manifest as
+      <code class="mono">fp8_kv_scale_policy = vllm_default_1.0_explicitly_accepted</code>. That is intended vLLM policy,
+      accepted by the study owner; no <code>--calculate-kv-scales</code> override was introduced.</p>
+
+    <h3 class="sect-sub">Frozen inputs <span class="unit">hash-pinned before every arm</span></h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Input</th><th>Rows</th><th>SHA-256</th></tr></thead>
+        <tbody>
+          <tr><td>PubMed workload JSONL</td><td>1,000</td><td>3e02405cbff4eefcab636edc0583e675cc8b4930115f4b1923068730ce9b1bad</td></tr>
+          <tr><td>Azure arrival CSV</td><td>1,000</td><td>3b487d345f3ae02d5a4dcfc8d303a060322d6fe03763af638cda2695d11977d0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede" style="margin-top:14px">Identical prompt bytes across all four arms: every run reports exactly
+      <strong>8,868,818 input tokens</strong>. Output totals differ only through sampling
+      (2.4236 M – 2.4454 M, a 0.9 % spread), so the arms are doing the same amount of work to within sampling noise. The
+      PubMed workload JSONL's hash differs from an earlier run of this report made on other hardware — this is a
+      different frozen selection of the same source dataset, not a corrupted file — so absolute ISL/input-token figures
+      here are specific to this MI250 run and not directly comparable across machines. The shared prompt-length
+      distribution is plotted in Section 5.6.</p>
+
+    <h3 class="sect-sub">Measurement stack</h3>
+    <ul class="setup">
+      <li><code class="mono">scheduler / KV</code> <span>Prometheus scrape at 5 Hz (0.2 s poll) — running, waiting,
+        preemptions, KV-cache usage; sample counts vary widely by arm because wall-clock duration does (17,589 – 41,172
+        Prometheus samples, 11,271 – 80,139 parsed engine iterations across the four arms), with zero scrape failures in
+        any of them</span></li>
+      <li><code class="mono">HBM</code> <span>an out-of-process <code>amdsmi</code> sampler
+        (<code class="mono">scripts/monitoring/rocm_hbm_sampler.py</code>) polling each replica's 2 GPUs' combined
+        memory-controller (UMC) activity at 10 Hz, scaled by theoretical peak bandwidth — <strong>this signal cannot be
+        split into read and write</strong>, unlike the A100 measurement this report format was first built against; it
+        is one combined figure, reported as such below</span></li>
+      <li><code class="mono">per-request</code> <span>TTFT, TPOT, ITL, E2E latency and token counts from
+        <code class="mono">bench.py</code> transport, appended through the unchanged parent
+        <code class="mono">record_e2e_metrics.py</code></span></li>
+      <li><code class="mono">binning</code> <span>500 ms deterministic bins in <code class="mono">plot_data.json</code>;
+        raw samples remain the source of truth</span></li>
+    </ul>
+    <p class="lede" style="margin-top:14px">The pipeline is deterministic:
+      raw request + Prometheus + HBM data → <code class="mono">analysis/build_plot_data.py</code> →
+      compact <code class="mono">plot_data.json</code> → the renderers. The charts in Section 5 read the same two
+      sources the static renderers do: per-request CDFs come from each run's
+      <code class="mono">raw/per_request.csv</code> (all 1,000 requests, no sampling), and the timeline reads each run's
+      <code class="mono">plot_data.json</code> re-binned from 500 ms to 5 s for the browser.</p>
+    <details>
+      <summary>Commands that produced the equivalent static figures</summary>
+      <pre class="cmd"><b># TPOT CDF</b>
+python analysis/plot_tpot_cdf.py \
+  results/part1/performance/20260818_070537_repro_w16kv16 \
+  results/part1/performance/20260818_070546_repro_w8kv16 \
+  results/part1/performance/20260818_070720_repro_w16kv8 \
+  results/part1/performance/20260818_070653_repro_w8kv8 \
+  --unit ms --out results/part1/performance/pubmed_1000_longest_all_precisions_tpot_cdf.png
+
+<b># TTFT CDF</b>
+python analysis/plot_ttft_over_time.py --cdf \
+  results/part1/performance/20260818_070537_repro_w16kv16 \
+  results/part1/performance/20260818_070546_repro_w8kv16 \
+  results/part1/performance/20260818_070720_repro_w16kv8 \
+  results/part1/performance/20260818_070653_repro_w8kv8 \
+  --unit ms --out results/part1/performance/pubmed_1000_longest_all_precisions_ttft_cdf.png
+
+<b># Stacked timeline</b>
+python analysis/plot_stacked_timeline.py \
+  results/part1/performance/20260818_070653_repro_w8kv8/plot_data.json \
+  results/part1/performance/20260818_070537_repro_w16kv16/plot_data.json \
+  results/part1/performance/20260818_070720_repro_w16kv8/plot_data.json \
+  results/part1/performance/20260818_070546_repro_w8kv16/plot_data.json \
+  --output-png results/part1/performance/pubmed_1000_longest_all_precisions_stacked.png \
+  --output-svg results/part1/performance/pubmed_1000_longest_all_precisions_stacked.svg \
+  --output-html results/part1/performance/pubmed_1000_longest_all_precisions_stacked.html</pre>
+    </details>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span> Results</h2>
+    <p class="lede">Every chart is drawn from the run artifacts in the browser. Hover any chart for exact values; use the
+      arm pills to isolate or compare arms — the selection is shared across all charts in this section.</p>
+    <ul class="armtoggles" id="arm-toggles"></ul>
+
+    <h3 class="sect-sub">5.1 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
+    <div class="controls">
+      <label>throughput <select id="pf-thru">
+        <option value="tot">total token (in + out)</option>
+        <option value="out">output token</option>
+        <option value="req">request</option>
+      </select></label>
+      <label>latency statistic <select id="pf-agg">
+        <option value="mean">mean</option>
+        <option value="p50">p50</option>
+        <option value="p90">p90</option>
+        <option value="p99">p99</option>
+      </select></label>
+    </div>
+    <div class="panelcard">
+      <div class="pareto-pair" id="pareto"></div>
+      <p class="cap">source: serving_metrics per arm · filled marker = Pareto-optimal · hollow = dominated
+        (another arm is both faster and higher-throughput)</p>
+    </div>
+    <div class="obs"><span class="tag">Observations</span>
+      <strong>There is no trade-off to make at all on this hardware.</strong> <code class="mono">w16kv16</code> is the
+      <em>sole</em> Pareto-optimal point in <strong>all 24 of 24</strong> throughput × latency × statistic combinations
+      — simultaneously the highest-throughput and the lowest-latency arm, every time, leaving the other three strictly
+      dominated with no exception (on the earlier A100 measurement of this same design, one combination — p50 TTFT — had
+      a marginal exception; here there is none). Quantization does not buy a different point on a frontier; it moves the
+      system down and to the right.
+      <ul class="obs-list">
+        <li><strong>vs TPOT the spread is extreme and ordered</strong> — the four arms string out over
+          <strong>46.6 → 778.4 ms mean, a 16.7 ×</strong> range, while total throughput falls only 2.3 × (3,074.6 →
+          1,314.7 tok/s). Most of the movement is horizontal: cost far out of proportion to any throughput change.
+          w16kv16 dominates at every statistic, tail included (p99 53.3 → 1,192.4 ms).</li>
+        <li><strong>vs TTFT the points do not collapse into a cluster the way they did on A100.</strong> Mean TTFT spans
+          1,723.3 s to 3,826.1 s — a <strong>122 % spread</strong>, comparable in relative size to the TPOT spread,
+          because on this hardware the two FP8-weight arms are so much slower per request that their queues drain far
+          more slowly too. TTFT here is not precision-invariant; it inherits the same ordering as TPOT.</li>
+        <li><strong>The KV-only axis is nearly free; the weight axis is not.</strong> w16kv8 (KV8 alone) sits only
+          1.8 % behind w16kv16 on total throughput and second-closest on every latency statistic — a real but modest
+          cost. w8kv16 (weights alone) loses 57 % of total throughput and pays a 15.1 × TPOT-mean penalty for the same
+          single-axis change. The two axes are not comparable in cost on MI250, unlike the roughly symmetric ≈ 1.8 ×
+          penalty each axis paid independently on A100 — see §5.4 for why (the missing tuned FP8 GEMM kernel config
+          only affects the weight axis).</li>
+      </ul></div>
+
+    <h3 class="sect-sub">5.2 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
+    <div class="controls">
+      <label>x scale <select id="tpot-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
+      <label>x range <select id="tpot-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
+    </div>
+    <div class="panelcard">
+      <div class="chartbox" id="cdf-tpot"></div>
+      <p class="cap">source: raw/per_request.csv · <code>tpot_s</code> × 1000 · red guides are the borrowed
+        interactive (15 ms) and server (80 ms) TPOT SLOs</p>
+    </div>
+    <div class="obs"><span class="tag">Observations</span>
+      The four curves separate cleanly into <strong>two clusters an order of magnitude apart, split by weight
+      precision, not by which axis changed</strong> — the opposite of the A100 grouping, where the two single-axis arms
+      landed on top of each other:
+      <ul class="obs-list">
+        <li><strong>The BF16-weight cluster is fast and tight.</strong> w16kv16: median 48.6 ms, p99 53.3 ms — a spread
+          of only <strong>4.7 ms</strong> between p50 and p99, an almost-vertical rise. w16kv8 (KV8 added) is close
+          behind: median 73.2 ms, p99 92.3 ms. Both meet or nearly meet the borrowed <strong>server SLO of ≤ 80 ms</strong>
+          at the median — w16kv16 clears it even at p99 (53.3 ms); w16kv8's p90 (79.6 ms) just clears it too, though its
+          p99 (92.3 ms) slips past.</li>
+        <li><strong>The FP8-weight cluster is roughly 10–16 × slower and far less predictable.</strong> w8kv16: median
+          733.5 ms, p99 986.9 ms. w8kv8: median 779.7 ms, p99 1,192.4 ms. Both miss the server SLO by an order of
+          magnitude regardless of statistic. The gap between the two clusters (733.5 ms vs 73.2 ms medians) is far
+          larger than the gap between either KV variant within a cluster (73.2 vs 48.6 ms, or 779.7 vs 733.5 ms) — this
+          is the same pattern as §5.1: the weight axis, not the KV axis, is what breaks decode speed here.</li>
+      </ul>
+      The ITL figures are consistent but not uniform across arms the way A100's were: median ITL is 41.8 / 433.0 / 56.6 /
+      489.5 ms (w16kv16 / w8kv16 / w16kv8 / w8kv8), while p99 ITL is 430 ms / 6,519 ms / 749 ms / 4,433 ms — notably,
+      w8kv16's p99 ITL tail is <em>longer</em> than w8kv8's despite a similar median, which lines up with §5.4:
+      w8kv16 suffers 111 preemptions across the run and w8kv8 suffers none, and a preemption reappears in the ITL trace
+      as one very long multi-second gap. Against the borrowed SLOs: the two FP8-weight arms miss the server TPOT target
+      by roughly 9–15 ×, but the two BF16-weight arms come close to or clear it — a materially different outcome from
+      the earlier A100 measurement, where every arm missed the TPOT SLO by 4 × or more.</div>
+
+    <h3 class="sect-sub">5.3 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
+    <div class="controls">
+      <label>x scale <select id="ttft-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
+      <label>x range <select id="ttft-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
+    </div>
+    <div class="panelcard">
+      <div class="chartbox" id="cdf-ttft"></div>
+      <p class="cap">source: raw/per_request.csv · <code>ttft_s</code> · red guides are the borrowed
+        interactive (2 s) and server (3 s) P99 TTFT SLOs</p>
+    </div>
+    <div class="obs kv"><span class="tag">Observations</span>
+      Read the axis first: it runs to roughly <strong>7,400 s ≈ 2.1 hours</strong>. That is not a plotting artifact.
+      1,000 requests arrive inside a 303 s window, but even the fastest arm needs 3,675 s to serve them —
+      <strong>12.1 × the arrival window</strong> — so almost every request spends most of its TTFT sitting in the
+      backlog.
+      <ul class="obs-list">
+        <li><strong>Unlike the A100 measurement, precision is clearly visible here — TTFT follows the same
+          weight-precision split as TPOT.</strong> Mean TTFT is 1,723.3 s / 1,815.9 s for the BF16-weight arms versus
+          3,826.1 s / 3,734.6 s for the FP8-weight arms — roughly <strong>double</strong>, not a 4.6 % spread. Because
+          the FP8-weight arms decode so much slower per request (§5.2), their queues also drain more slowly, so TTFT
+          inherits the same split even though TTFT itself measures queue wait, not decode speed.</li>
+        <li><strong>Within each cluster the ordering is tight</strong>: w16kv16 vs w16kv8 differ by only 5.4 % on mean
+          TTFT, and w8kv16 vs w8kv8 by only 2.5 % — consistent with §5.1's finding that the KV axis alone costs little
+          compared to the weight axis.</li>
+        <li><strong>Both FP8-weight arms show a genuine multi-hundred-second plateau</strong>, not just w8kv8: w8kv16
+          has a 928 s gap with no first token issued between roughly t = 911 s and t = 1,839 s (at CDF ≈ 0.19), and
+          w8kv8 has a 773 s gap between t = 1,355 s and t = 2,129 s (at CDF ≈ 0.26). Both align with the point where that
+          arm's running-requests line saturates against <code class="mono">max-num-seqs=256</code> in the timeline
+          below — the scheduler admits a large cohort at once and then has no free slot until that cohort's (very slow)
+          decode drains. Switch the x scale to log to see both isolated from the bulk of the distribution.</li>
+      </ul>
+      <strong>Against the borrowed SLOs, every arm still fails the P99 TTFT target by orders of magnitude</strong> — p99
+      TTFT of 3,250.7–7,340.1 s against a 2–3 s target — even though the BF16-weight arms' TPOT now clears or nearly
+      clears its own SLO (§5.2). TTFT here is dominated by this workload's 12×-oversubscribed queue, not by precision;
+      that part of the A100 finding still holds.</div>
+
+    <h3 class="sect-sub">5.4 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
+    <div class="controls">
+      <label>y scale <select id="ts-scale"><option value="shared">shared across arms</option><option value="free">per-panel fit</option></select></label>
+      <label>smoothing <select id="ts-smooth"><option value="1">none (5 s bins)</option><option value="6">30 s</option><option value="12">60 s</option></select></label>
+    </div>
+    <ul class="legend" id="ts-legend"></ul>
+    <div class="panelcard">
+      <div class="stack" id="ts-stack"></div>
+      <p class="cap">source: plot_data.json · 500 ms bins re-binned to 5 s · running-requests band spans the
+        within-bin minimum to mean, so preemption churn stays visible</p>
+    </div>
+    <div class="obs warnline"><span class="tag">Observations — this is where the mechanism shows</span>
+      <ul class="obs-list">
+        <li><strong>FP8 weights buy far more cache on MI250 than weight-only Marlin did on A100.</strong> Runtime
+          capacity goes 428,584 → 3,149,889 → 849,427 → <strong>6,202,042</strong> tokens
+          (w16kv16 / w8kv16 / w16kv8 / w8kv8) — <strong>w8kv8 holds 14.5 × the reference cache</strong>, roughly
+          <strong>4 ×</strong> the capacity multiplier the A100 measurement found (3.84 ×). MI250's genuine FP8×FP8
+          storage frees far more HBM than A100's weight-only-dequant path did, and an FP8 KV cache still separately
+          roughly doubles per-token cache cost efficiency.</li>
+        <li><strong>Whether that cache converts into batch width depends on which limiter binds.</strong> For the two
+          BF16-weight arms, effective concurrency (capacity ÷ mean ISL+OSL) is 37.9 and 75.2 — comfortably under
+          <code class="mono">max-num-seqs=256</code> — and w16kv16's observed peak running requests (38) tracks its
+          effective concurrency almost exactly, confirming the cache genuinely is the limiter there. w16kv8's peak (58)
+          falls short of its 75.2 ceiling, so the burst arrival pattern, not cache capacity, is the binding constraint
+          for that arm specifically. For the two FP8-weight arms, effective concurrency (278.4 and 548.6) <em>exceeds</em>
+          256 — both hit the scheduler cap directly, running pinned at exactly 256 for most of the trace.</li>
+        <li><strong>Total throughput does not decline smoothly with more quantization — it splits in two, matching
+          §5.1/§5.2.</strong> Total token throughput is 3,074.6 / 1,321.7 / 3,018.0 / 1,314.7 tok/s: the two
+          BF16-weight arms cluster near 3,000–3,075 tok/s, the two FP8-weight arms near 1,315–1,322 tok/s — a
+          <strong>2.3 ×</strong> gap between clusters and almost no gap within one. Wall-clock duration follows the same
+          split (3,675 s / 8,560 s / 3,742 s / 8,600 s). This is not the smooth monotonic decline the A100 measurement
+          showed across all four arms; on MI250 the KV axis alone barely moves throughput, and the weight axis alone
+          moves it by more than half.</li>
+        <li><strong>Preemptions still trend down with cache size, though not perfectly monotonically: 161 → 111 → 119 →
+          0.</strong> w8kv8 (the largest cache, 14.5 ×) suffers zero preemptions across the entire run — the cleanest
+          result in the whole report — while w8kv16 (7.35 ×) has fewer than the reference despite pairing FP8 weights
+          with an unquantized KV cache. This axis is a genuine, unambiguous win for more cache regardless of precision.</li>
+        <li><strong>KV utilization confirms which arms are cache-bound.</strong> Mean KV occupancy is 96.8 % / 87.8 % /
+          95.9 % for the three smaller-cache arms (all three do reach 100 % at some point in the run) but only
+          <strong>61.6 %</strong> for w8kv8, which never exceeds <strong>85.8 %</strong> occupancy at any point — its
+          14.5 × cache is large enough that the <code class="mono">max-num-seqs=256</code> scheduler cap binds well
+          before the cache does, so the arm cannot spend the rest of its capacity on anything.</li>
+        <li><strong>No arm is anywhere near HBM-bandwidth-bound, and — unlike A100 — utilization tracks throughput
+          directly rather than falling with quantization.</strong> Mean combined (read+write, this hardware cannot
+          separate them — see §4) bandwidth utilization is 32.1 % / 5.3 % / 23.6 % / 4.1 %, i.e. highest for the
+          fastest arms and lowest for the slowest ones, simply because a slower arm moves less data per second. The
+          ceiling on MI250 is not memory bandwidth in any arm.</li>
+      </ul>
+      <strong>Synthesis — and this inverts part of the A100 conclusion.</strong> On A100, weight and KV quantization of
+      Qwen3.6-35B-A3B were <em>capacity</em> optimizations, not <em>speed</em> optimizations, for a <em>structural</em>
+      reason: the A100 has no FP8 tensor cores at all, so weight-only Marlin dequantization is the only path available
+      and permanently pays a fixed, unavoidable cost. On MI250 the story is different in kind. <strong>KV-cache
+      quantization alone is close to free here</strong> — see §5.1/§5.2 — and, combined with genuine FP8 weight storage,
+      buys dramatically more cache (14.5 × vs A100's 3.84 ×) with a real, near-total elimination of preemptions.
+      <strong>The severe cost sits entirely on the weight axis, and — unlike A100 — the evidence points to a fixable
+      cause rather than a hardware ceiling:</strong> every FP8-weight worker logs that vLLM found no tuned block-quant
+      GEMM kernel config for this exact (device, shape) combination on MI250 and fell back to a generic default (§3).
+      MI250 does execute genuine FP8×FP8 arithmetic for these arms — it is not doing A100's forced dequant-to-BF16 path
+      — so there is no structural reason it should cost 15–17 × in TPOT rather than something much closer to the KV-only
+      axis's modest premium. Whether tuning that kernel config would close most of this gap, and whether MI250's actual
+      FP8 arithmetic ceiling then looks more like A100's "capacity, not speed" story or something else entirely, is an
+      open, testable follow-up (§5.6) — this report's data supports the caveat, not yet the answer.</div>
+
+    <h3 class="sect-sub">5.5 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Metric</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+        <tbody>
+          <tr class="grouphead"><td colspan="5">KV cache and scheduler</td></tr>
+          <tr><td>Runtime KV capacity (tokens)</td><td>428,584</td><td>3,149,889</td><td>849,427</td><td class="best">6,202,042</td></tr>
+          <tr><td>Capacity vs reference</td><td>1.00×</td><td>7.35×</td><td>1.98×</td><td class="best">14.47×</td></tr>
+          <tr><td>Effective concurrency (cap ÷ ISL+OSL)</td><td>38</td><td>278</td><td>75</td><td>549</td></tr>
+          <tr><td>Mean running requests</td><td>31</td><td>200</td><td>48</td><td>221</td></tr>
+          <tr><td>Peak running requests</td><td>38</td><td>256</td><td>58</td><td>256</td></tr>
+          <tr><td>Total preemptions</td><td>161</td><td>111</td><td>119</td><td class="best">0</td></tr>
+
+          <tr class="grouphead"><td colspan="5">Throughput</td></tr>
+          <tr><td>Benchmark duration (s)</td><td class="best">3,675.5</td><td>8,560.1</td><td>3,741.7</td><td>8,600.4</td></tr>
+          <tr><td>Output throughput (tok/s)</td><td class="best">661.6</td><td>285.7</td><td>647.7</td><td>283.5</td></tr>
+          <tr><td>Total token throughput (tok/s)</td><td class="best">3,074.6</td><td>1,321.7</td><td>3,018.0</td><td>1,314.7</td></tr>
+          <tr><td>Request throughput (req/s)</td><td class="best">0.2721</td><td>0.1168</td><td>0.2673</td><td>0.1163</td></tr>
+
+          <tr class="grouphead"><td colspan="5">TTFT — queue-dominated (s)</td></tr>
+          <tr><td>mean</td><td class="best">1,723.3</td><td>3,826.1</td><td>1,815.9</td><td>3,734.6</td></tr>
+          <tr><td>p50</td><td class="best">1,678.0</td><td>3,986.9</td><td>1,841.3</td><td>3,542.3</td></tr>
+          <tr><td>p90</td><td class="best">2,985.6</td><td>6,724.6</td><td>3,023.7</td><td>6,718.8</td></tr>
+          <tr><td>p99</td><td class="best">3,250.7</td><td>7,340.1</td><td>3,281.5</td><td>7,235.0</td></tr>
+
+          <tr class="grouphead"><td colspan="5">TPOT (ms)</td></tr>
+          <tr><td>mean</td><td class="best">46.6</td><td>701.4</td><td>73.6</td><td>778.4</td></tr>
+          <tr><td>p50</td><td class="best">48.6</td><td>733.5</td><td>73.2</td><td>779.7</td></tr>
+          <tr><td>p90</td><td class="best">50.4</td><td>818.1</td><td>79.6</td><td>966.6</td></tr>
+          <tr><td>p99</td><td class="best">53.3</td><td>986.9</td><td>92.3</td><td>1,192.4</td></tr>
+
+          <tr class="grouphead"><td colspan="5">ITL (ms)</td></tr>
+          <tr><td>p50</td><td class="best">41.8</td><td>433.0</td><td>56.6</td><td>489.5</td></tr>
+          <tr><td>p99</td><td class="best">430.2</td><td>6,519.3</td><td>749.2</td><td>4,432.8</td></tr>
+
+          <tr class="grouphead"><td colspan="5">MI250 HBM (amdsmi UMC — combined read+write, cannot be split)</td></tr>
+          <tr><td>Mean BW utilization (%)</td><td>32.1</td><td>5.3</td><td>23.6</td><td>4.1</td></tr>
+          <tr><td>Mean combined R+W (GB/s)</td><td>525.3</td><td>86.6</td><td>386.9</td><td>67.9</td></tr>
+
+          <tr class="grouphead"><td colspan="5">Work performed</td></tr>
+          <tr><td>Input tokens</td><td>8,868,818</td><td>8,868,818</td><td>8,868,818</td><td>8,868,818</td></tr>
+          <tr><td>Output tokens</td><td>2,431,646</td><td>2,445,414</td><td>2,423,641</td><td>2,438,112</td></tr>
+          <tr><td>Mean E2E latency (s)</td><td class="best">1,836.4</td><td>5,544.0</td><td>1,994.3</td><td>5,634.8</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede" style="margin-top:14px">Bold marks the best value per row. The "best" column is
+      <code class="mono">w16kv16</code> for every latency and throughput row (as on A100) and
+      <code class="mono">w8kv8</code> for every capacity and preemption row (also as on A100) — but the <em>margins</em>
+      differ sharply: MI250's capacity advantage is roughly 4 × larger (14.47 × vs 3.84 ×) and its latency penalty is
+      roughly 6 × larger (up to 16.7 × vs 2.8 × on TPOT mean) than the same comparison on A100.</p>
+
+    <h3 class="sect-sub">5.6 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
+    <div class="controls">
+      <label>distribution <select id="len-metric">
+        <option value="isl">prompt length (ISL)</option>
+        <option value="osl">output length (OSL)</option>
+      </select></label>
+    </div>
+    <div class="panelcard">
+      <div class="chartbox" id="cdf-len"></div>
+      <p class="cap">source: raw/per_request.csv · <code>prompt_len</code> / <code>output_tokens</code></p>
+    </div>
+    <div class="obs"><span class="tag">Control</span>
+      The ISL curves are <strong>exactly coincident</strong> — the four arms replay byte-identical prompts, so any single
+      curve hides the other three. That is the control that licenses attributing every difference above to precision.
+      The OSL curves separate only slightly (sampling changes generation lengths), which is the 0.9 % output-token
+      spread quoted in Section 4 — far too small to explain a 16.7 × TPOT-mean difference.</div>
+
+    <div class="note"><strong>Scope of these conclusions.</strong> They hold for this hardware (8 × AMD MI250, TP=2 per
+      replica, TRITON_ATTN), this model, and this deliberately saturating workload — long prompts, bursty arrivals,
+      <code>max-num-seqs=256</code>. Two concrete, testable follow-ups fall directly out of this run:
+      <strong>(1) the missing FP8 GEMM kernel config (§3, §5.4).</strong> Generating a tuned block/tile configuration
+      for this device+shape via vLLM's kernel autotuning benchmark, then re-running <code>w8kv16</code>/<code>w8kv8</code>,
+      would separate "MI250 FP8 weights are inherently this much slower" from "an untuned kernel made them look that
+      way" — the evidence here supports the latter but does not yet measure how much of the gap it closes.
+      <strong>(2) the scheduler cap now binds two arms, not one.</strong> Both <code>w8kv16</code> (effective
+      concurrency 278) and <code>w8kv8</code> (549) exceed <code>max-num-seqs=256</code>, so neither arm's full cache
+      advantage is testable at this setting — an unsaturated arrival rate, or a higher <code>max-num-seqs</code>, would
+      let some of that unused capacity show up as admitted load instead of being capped away. Until both follow-ups run,
+      treat the size of the FP8-weight penalty as an upper bound, not a hardware ceiling.</div>
+  </section>
+
+  <footer>
+    All values as reported by <code>bench.py</code> (<code>serving_metrics</code>) and the run manifests, for the four
+    <code>repro_&lt;precision&gt;</code> performance runs of 2026-08-18 (run IDs
+    <code>20260818_070537</code>/<code>070546</code>/<code>070653</code>/<code>070720</code>), executed concurrently as
+    four independent TP=2 replicas at Git commit <code>71788d5</code>. Every arm passed Stage A preflight and Stage B
+    runtime validation, completed 1,000 / 1,000 requests with zero failures, and was appended through the parent
+    <code>record_e2e_metrics.py</code>. KV capacity, running/waiting requests, preemptions and HBM figures are derived
+    from each run's <code>plot_data.json</code>; effective concurrency is runtime KV capacity ÷ (mean ISL 8,868.8 + mean
+    OSL 2,434.7). CDFs plot all 1,000 per-request samples per arm with no downsampling; the timeline re-bins the 500 ms
+    series to 5 s for the browser. HBM figures come from an out-of-process <code>amdsmi</code> UMC sampler and report a
+    single combined read+write signal (§4) — this is a different measurement mechanism from the Nsight Systems figures
+    an earlier A100 measurement of this same design used, so HBM numbers are not directly comparable across hardware.
+    Accuracy mode and the Part 2 PyTorch Profiler kernel study are out of scope for this report.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Per-request distributions, all 1000 samples per arm, pre-sorted ascending.
+  // ttft in seconds, tpot in milliseconds, isl/osl in tokens.
+  const CDF = __CDF__;
+
+  // Engine telemetry re-binned from the 500 ms plot_data.json series to 5 s.
+  // kv is a 0..1 fraction; hbm is percent; pre is cumulative. `runmin` is the
+  // within-bin minimum of running requests, kept so the preemption churn that
+  // averaging would erase stays visible as a band under the mean.
+  const TS = __TS__;
+
+  // The selected Azure window: 1,000 arrival offsets in seconds from the first
+  // request. This is the raw trace column, not a binned series -- binning
+  // happens at draw time so the bin size stays a control rather than a baked-in
+  // choice, and the burst structure can be inspected at several resolutions.
+  const TRACE = __TRACE__;
+
+  const SERIES = [
+    { key: "w16kv16", label: "w16kv16", desc: "BF16 weights · BF16 KV", color: "--s1" },
+    { key: "w8kv16",  label: "w8kv16",  desc: "FP8 Marlin · BF16 KV",   color: "--s2" },
+    { key: "w16kv8",  label: "w16kv8",  desc: "BF16 weights · FP8 KV",  color: "--s3" },
+    { key: "w8kv8",   label: "w8kv8",   desc: "FP8 Marlin · FP8 KV",    color: "--s4" }
+  ];
+
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const svgEl = (n, a) => {
+    const e = document.createElementNS("http://www.w3.org/2000/svg", n);
+    for (const k in a) e.setAttribute(k, a[k]);
+    return e;
+  };
+  const MONO = "ui-monospace, Menlo, monospace";
+  const fmtInt = (n) => Math.round(n).toLocaleString("en-US");
+
+  // Compact number for axis ticks: keeps 4.2M / 250k / 1.5 legible in one column.
+  function fmtCompact(v) {
+    const a = Math.abs(v);
+    if (a >= 1e6) return (v / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M";
+    if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/, "") + "k";
+    if (a >= 10) return String(Math.round(v));
+    if (a >= 1) return v.toFixed(1).replace(/\.0$/, "");
+    return String(+v.toFixed(2));
+  }
+  // Durations are held in seconds here and shown in the largest sensible unit.
+  function fmtSec(s) {
+    if (s < 90) return s.toFixed(s < 10 ? 1 : 0) + " s";
+    const m = s / 60;
+    if (m < 90) return m.toFixed(1) + " min";
+    return (m / 60).toFixed(2) + " h";
+  }
+
+  // Same "nice" axis rule as the rest of the report: ~5 ticks whatever the range.
+  function niceScale(lo, hi) {
+    if (!isFinite(lo) || !isFinite(hi) || hi <= 0) return { log: false, lo: 0, hi: 1, ticks: [0, 1] };
+    const raw = hi / 5, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = ([1, 2, 2.5, 5, 10].find((k) => k * mag >= raw) || 10) * mag;
+    const top = Math.ceil(hi / step) * step;
+    const ticks = [];
+    for (let v = 0; v <= top + step * 1e-9; v += step) ticks.push(+v.toFixed(10));
+    return { log: false, lo: 0, hi: top, ticks };
+  }
+  function logScale(lo, hi) {
+    const l0 = Math.floor(Math.log10(Math.max(lo, 1e-9))), l1 = Math.ceil(Math.log10(hi));
+    const ticks = [];
+    for (let e = l0; e <= l1; e++) ticks.push(Math.pow(10, e));
+    return { log: true, lo: Math.pow(10, l0), hi: Math.pow(10, l1), ticks };
+  }
+
+  // Rotated y-axis caption. A rotated caption is bounded by the PANEL HEIGHT,
+  // not its width, and the stack pairs long captions with short panels; since
+  // the SVGs overflow visibly, an oversized one bleeds into its neighbours
+  // instead of clipping. So shrink to fit, down to a floor of 8px.
+  function yCaption(svg, text, topY, ihT) {
+    const cy = topY + ihT / 2;
+    const fit = (ihT - 6) / (text.length * 0.6);   // monospace advance ~0.6em
+    const fs = Math.max(8, Math.min(11, fit));
+    const t = svgEl("text", { x: 14, y: cy, fill: css("--ink-2"),
+      "font-size": +fs.toFixed(1), "font-family": MONO,
+      transform: `rotate(-90 14 ${cy})`, "text-anchor": "middle" });
+    t.textContent = text;
+    svg.appendChild(t);
+  }
+
+  // Value labels beside the crosshair markers. Without these only the hovered
+  // panel reports numbers and every other panel shows a bare dot. Labels are
+  // pushed apart vertically where series converge (the dot stays at the true
+  // value; only the label moves) and flip to the left of the crosshair near the
+  // right edge so they never run past the plot. The halo is a stroke painted
+  // under the glyph, which keeps them readable on top of dense lines.
+  function placeLabels(marks, mx, items, flipAt) {
+    if (!items.length) return;
+    const flip = mx > flipAt;
+    const laid = items.map((o) => ({ y: o.y, col: o.col, text: o.text }))
+      .sort((a, b) => a.y - b.y);
+    const GAP = 11.5;
+    for (let i = 1; i < laid.length; i++)
+      if (laid[i].y - laid[i - 1].y < GAP) laid[i].y = laid[i - 1].y + GAP;
+    for (const it of laid) {
+      const t = svgEl("text", {
+        x: mx + (flip ? -7 : 7), y: it.y + 3.5,
+        "text-anchor": flip ? "end" : "start",
+        fill: it.col, "font-size": 10.5, "font-family": MONO, "font-weight": 600,
+        stroke: css("--surface-sunken"), "stroke-width": 3, "paint-order": "stroke"
+      });
+      t.textContent = it.text;
+      marks.appendChild(t);
+    }
+  }
+
+  // ---- shared arm selection -------------------------------------------------
+  const active = new Set(SERIES.map((s) => s.key));
+  const listeners = [];
+  const onChange = (fn) => { listeners.push(fn); };
+  const redrawAll = () => listeners.forEach((f) => f());
+
+  function buildToggles() {
+    const host = document.getElementById("arm-toggles");
+    for (const s of SERIES) {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("aria-pressed", "true");
+      b.innerHTML = `<span class="sw" style="background:${css(s.color)}"></span>${s.label}` +
+        `<span style="color:var(--ink-3)"> ${s.desc}</span>`;
+      b.addEventListener("click", () => {
+        if (active.has(s.key)) {
+          if (active.size === 1) return;   // never leave every chart empty
+          active.delete(s.key);
+        } else {
+          active.add(s.key);
+        }
+        b.setAttribute("aria-pressed", active.has(s.key) ? "true" : "false");
+        redrawAll();
+      });
+      li.appendChild(b);
+      host.appendChild(li);
+    }
+  }
+
+  const activeSeries = () => SERIES.filter((s) => active.has(s.key));
+
+  // ===================== CDF panels =========================================
+  // A CDF here is the empirical distribution drawn straight through the sorted
+  // per-request samples: point i sits at (value[i], (i+1)/n). No binning, so the
+  // curve is the data. Vertical crosshair reads all selected arms at one x,
+  // which is the comparison the figure exists to support.
+  const CW = 1000, CH = 420, CM = { t: 16, r: 20, b: 52, l: 62 };
+  const ciw = CW - CM.l - CM.r, cih = CH - CM.t - CM.b;
+
+  function quantile(sorted, q) {
+    if (!sorted.length) return null;
+    const i = Math.min(sorted.length - 1, Math.max(0, Math.ceil(q * sorted.length) - 1));
+    return sorted[i];
+  }
+
+  function drawCdf(hostId, field, opts) {
+    const host = document.getElementById(hostId);
+    host.innerHTML = "";
+    const arms = activeSeries();
+    const data = arms.map((s) => ({ s, v: CDF[s.key][field] })).filter((d) => d.v && d.v.length);
+    if (!data.length) { host.innerHTML = '<p class="note">No arm selected.</p>'; return; }
+
+    // Clipping the x range at a percentile keeps the bulk of the distribution
+    // readable when a long tail would otherwise compress it into the left edge.
+    const clip = opts.clip == null ? 1 : opts.clip;
+    let hi = 0, lo = Infinity;
+    for (const d of data) {
+      hi = Math.max(hi, clip >= 1 ? d.v[d.v.length - 1] : quantile(d.v, clip));
+      lo = Math.min(lo, d.v[0]);
+    }
+    // The SLO guides are a headline comparison, so the log axis is widened to
+    // keep them on-canvas rather than clipping them below the smallest sample.
+    for (const g of (opts.slo || [])) lo = Math.min(lo, g.at);
+    if (!(hi > 0)) return;
+    const useLog = opts.log && lo > 0;
+    const sx = useLog ? logScale(lo, hi) : niceScale(0, hi);
+    const sy = { lo: 0, hi: 1, ticks: [0, 0.2, 0.4, 0.6, 0.8, 1.0] };
+
+    const px = (v) => useLog
+      ? CM.l + (Math.log10(Math.max(v, sx.lo)) - Math.log10(sx.lo)) / (Math.log10(sx.hi) - Math.log10(sx.lo)) * ciw
+      : CM.l + (v - sx.lo) / (sx.hi - sx.lo) * ciw;
+    const py = (p) => CM.t + cih - (p - sy.lo) / (sy.hi - sy.lo) * cih;
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${CW} ${CH}`, role: "img",
+      "aria-label": opts.aria });
+
+    for (const t of sy.ticks) {
+      const y = py(t);
+      svg.appendChild(svgEl("line", { x1: CM.l, x2: CM.l + ciw, y1: y, y2: y,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x: CM.l - 9, y: y + 3.5, "text-anchor": "end",
+        fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+      lab.textContent = t.toFixed(1);
+      svg.appendChild(lab);
+    }
+    for (const t of sx.ticks) {
+      if (t < sx.lo || t > sx.hi) continue;
+      const x = px(t);
+      svg.appendChild(svgEl("line", { x1: x, x2: x, y1: CM.t, y2: CM.t + cih,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x, y: CM.t + cih + 18, "text-anchor": "middle",
+        fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+      lab.textContent = fmtCompact(t);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(svgEl("line", { x1: CM.l, x2: CM.l + ciw, y1: CM.t + cih, y2: CM.t + cih,
+      stroke: css("--rule"), "stroke-width": 1 }));
+
+    // SLO guides. On a saturated run these sit hard against the left axis --
+    // that position is itself the finding, so they are drawn, not hidden.
+    (opts.slo || []).forEach((g, gi) => {
+      if (g.at < sx.lo || g.at > sx.hi) return;
+      const x = px(g.at);
+      svg.appendChild(svgEl("line", { x1: x, x2: x, y1: CM.t, y2: CM.t + cih,
+        stroke: css("--slo"), "stroke-width": 1, "stroke-dasharray": "4 4", opacity: 0.75 }));
+      // On a linear axis the two SLOs can land within a pixel of each other, so
+      // labels are stacked by index instead of overprinting.
+      const lab = svgEl("text", { x: x + 4, y: CM.t + 12 + gi * 14, "text-anchor": "start",
+        fill: css("--slo"), "font-size": 10, "font-family": MONO });
+      lab.textContent = g.label;
+      svg.appendChild(lab);
+    });
+
+    const yc = svgEl("text", { x: 14, y: CM.t + cih / 2, fill: css("--ink-2"), "font-size": 11,
+      "font-family": MONO, transform: `rotate(-90 14 ${CM.t + cih / 2})`, "text-anchor": "middle" });
+    yc.textContent = "CDF";
+    svg.appendChild(yc);
+    const xc = svgEl("text", { x: CM.l + ciw / 2, y: CH - 6, "text-anchor": "middle",
+      fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+    xc.textContent = opts.xlabel + (useLog ? "  (log)" : "");
+    svg.appendChild(xc);
+
+    for (const d of data) {
+      const col = css(d.s.color);
+      const n = d.v.length;
+      let pts = "";
+      let lastX = -1e9;
+      for (let i = 0; i < n; i++) {
+        const v = d.v[i];
+        if (v > sx.hi) break;
+        const x = px(v), y = py((i + 1) / n);
+        // one point per ~0.5px is indistinguishable at render size
+        if (x - lastX < 0.5 && i !== n - 1) continue;
+        lastX = x;
+        pts += (pts ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+      }
+      if (pts) svg.appendChild(svgEl("path", { d: pts, fill: "none", stroke: col,
+        "stroke-width": 1.9, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    }
+
+    // crosshair
+    const cross = svgEl("line", { x1: 0, x2: 0, y1: CM.t, y2: CM.t + cih,
+      stroke: css("--ink-3"), "stroke-width": 1, "stroke-dasharray": "3 3", opacity: 0 });
+    svg.appendChild(cross);
+    const marks = svgEl("g", { opacity: 0 });
+    svg.appendChild(marks);
+
+    host.appendChild(svg);
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+
+    const invX = (x) => useLog
+      ? Math.pow(10, Math.log10(sx.lo) + (x - CM.l) / ciw * (Math.log10(sx.hi) - Math.log10(sx.lo)))
+      : sx.lo + (x - CM.l) / ciw * (sx.hi - sx.lo);
+    // fraction of samples <= v, by binary search on the sorted array
+    const fracAt = (arr, v) => {
+      let lo2 = 0, hi2 = arr.length;
+      while (lo2 < hi2) { const m = (lo2 + hi2) >> 1; if (arr[m] <= v) lo2 = m + 1; else hi2 = m; }
+      return lo2 / arr.length;
+    };
+
+    svg.addEventListener("pointermove", (ev) => {
+      const r = svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * CW;
+      if (mx < CM.l || mx > CM.l + ciw) { tip.style.opacity = 0; cross.setAttribute("opacity", 0); marks.setAttribute("opacity", 0); return; }
+      const v = invX(mx);
+      cross.setAttribute("x1", mx); cross.setAttribute("x2", mx); cross.setAttribute("opacity", 0.8);
+      while (marks.firstChild) marks.removeChild(marks.firstChild);
+      let rows = `<span class="k">${opts.tipLabel}</span> <span class="v">${opts.fmt(v)}</span><br>`;
+      const items = [];
+      for (const d of data) {
+        const f = fracAt(d.v, v);
+        const y = py(f);
+        marks.appendChild(svgEl("circle", { cx: mx, cy: y, r: 3.6, fill: css(d.s.color),
+          stroke: css("--surface-sunken"), "stroke-width": 1.5 }));
+        items.push({ y, col: css(d.s.color), text: (f * 100).toFixed(1) + "%" });
+        rows += `<span class="dot" style="background:${css(d.s.color)}"></span>` +
+          `<span class="v">${d.s.label}</span> <span class="k">CDF</span> ` +
+          `<span class="v">${(f * 100).toFixed(1)}%</span><br>`;
+      }
+      placeLabels(marks, mx, items, CM.l + ciw - 90);
+      marks.setAttribute("opacity", 1);
+      tip.innerHTML = rows;
+      tip.style.opacity = 1;
+      const bx = mx / CW * r.width;
+      tip.style.left = Math.min(Math.max(bx + 14, 4), r.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = "8px";
+    });
+    svg.addEventListener("pointerleave", () => {
+      tip.style.opacity = 0; cross.setAttribute("opacity", 0); marks.setAttribute("opacity", 0);
+    });
+  }
+
+  // ===================== stacked engine timeline =============================
+  // Six panels sharing one time axis and one crosshair: moving the pointer in
+  // any panel reads every panel at that instant, which is the whole point --
+  // the mechanism is a correlation across panels, not a shape within one.
+  const TW = 1000, TL = 76, TR = 20, TTOP = 10;
+
+  // `fmt` is the tooltip form (carries its unit); `lfmt` is the terser in-plot
+  // label, where four overlaid arms make repeated units pure clutter.
+  const PANELS = [
+    { id: "arr",  h: 96,  label: "arrivals / 5 s", kind: "arrivals",
+      fmt: (v) => fmtInt(v) + " req", lfmt: (v) => fmtInt(v) },
+    { id: "hbm",  h: 132, label: "HBM BW util (%)", get: (r) => r.hbm,
+      fmt: (v) => v.toFixed(1) + " %", lfmt: (v) => v.toFixed(1) },
+    { id: "kvtok", h: 150, label: "KV used (tokens)", get: (r) => r.kv.map((v) => v * r.cap),
+      fmt: (v) => fmtInt(v) + " tok", lfmt: (v) => fmtCompact(v) },
+    { id: "kv",   h: 132, label: "KV util (%)", get: (r) => r.kv.map((v) => v * 100), fixed: { hi: 100, ticks: [0, 25, 50, 75, 100] },
+      fmt: (v) => v.toFixed(1) + " %", lfmt: (v) => v.toFixed(0) },
+    { id: "run",  h: 150, label: "running requests", get: (r) => r.run, band: (r) => r.runmin,
+      fmt: (v) => v.toFixed(0) + " req", lfmt: (v) => v.toFixed(0) },
+    { id: "wait", h: 150, label: "waiting requests", get: (r) => r.wait,
+      fmt: (v) => v.toFixed(0) + " req", lfmt: (v) => v.toFixed(0) },
+    { id: "pre",  h: 168, label: "# preempted reqs (cum)", get: (r) => r.pre, showX: true,
+      fmt: (v) => fmtInt(v), lfmt: (v) => fmtInt(v) }
+  ];
+
+  // Box smoothing over `w` bins. Used only for display; the underlying series
+  // stays at its 5 s resolution and the tooltip always reports the smoothed
+  // value actually drawn, so the readout never disagrees with the line.
+  function smooth(arr, w) {
+    if (w <= 1) return arr;
+    const out = new Array(arr.length);
+    let sum = 0;
+    const half = Math.floor(w / 2);
+    for (let i = 0; i < arr.length; i++) {
+      const lo = Math.max(0, i - half), hi = Math.min(arr.length - 1, i + half);
+      sum = 0;
+      for (let j = lo; j <= hi; j++) sum += arr[j];
+      out[i] = sum / (hi - lo + 1);
+    }
+    return out;
+  }
+
+  function drawStack(opts) {
+    const host = document.getElementById("ts-stack");
+    host.innerHTML = "";
+    const arms = activeSeries().filter((s) => TS[s.key]);
+    if (!arms.length) { host.innerHTML = '<p class="note">No arm selected.</p>'; return; }
+
+    const binS = TS[arms[0].key].bin_s;
+    const sm = opts.smooth || 1;
+    // Series are resolved once per redraw: derived arrays (KV tokens, percent)
+    // and smoothing are applied here so panels and tooltip share one source.
+    const resolved = arms.map((s) => {
+      const r = TS[s.key];
+      const o = { s, col: css(s.color), cap: r.cap, n: r.kv.length, arr: r.arr };
+      for (const p of PANELS) {
+        if (p.kind === "arrivals") continue;
+        o[p.id] = smooth(p.get(r), sm);
+        if (p.band) o[p.id + "_band"] = smooth(p.band(r), sm);
+      }
+      return o;
+    });
+
+    const tmax = Math.max.apply(null, resolved.map((r) => (r.n - 1) * binS)) || 1;
+    const panels = [];
+
+    for (const P of PANELS) {
+      const ihT = P.h - TTOP - (P.showX ? 40 : 10), iwT = TW - TL - TR;
+      let sc;
+      if (P.kind === "arrivals") {
+        sc = niceScale(0, Math.max.apply(null, resolved.map((r) => Math.max.apply(null, r.arr))));
+      } else if (P.fixed) {
+        sc = { lo: 0, hi: P.fixed.hi, ticks: P.fixed.ticks };
+      } else {
+        // "shared" compares arms on one scale (the honest default); "free" lets
+        // each panel fit its own selection, useful when isolating one arm.
+        const pool = opts.scale === "free" ? resolved : SERIES.filter((s) => TS[s.key]).map((s) => {
+          const r = TS[s.key];
+          const o = { cap: r.cap };
+          o[P.id] = P.get(r);
+          if (P.band) o[P.id + "_band"] = P.band(r);
+          return o;
+        });
+        sc = niceScale(0, Math.max.apply(null, pool.map((r) => Math.max.apply(null, r[P.id]))));
+      }
+
+      const svg = svgEl("svg", { viewBox: `0 0 ${TW} ${P.h}`, role: "img",
+        "aria-label": P.label + " over time, by precision arm" });
+      const px = (t) => TL + (t / tmax) * iwT;
+      const py = (v) => TTOP + ihT - (v - sc.lo) / (sc.hi - sc.lo) * ihT;
+      const xTicks = niceScale(0, tmax).ticks.filter((t) => t <= tmax);
+
+      for (const t of sc.ticks) {
+        const y = py(t);
+        svg.appendChild(svgEl("line", { x1: TL, x2: TL + iwT, y1: y, y2: y,
+          stroke: css("--grid"), "stroke-width": 1 }));
+        const lab = svgEl("text", { x: TL - 8, y: y + 3.5, "text-anchor": "end",
+          fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+        lab.textContent = fmtCompact(t);
+        svg.appendChild(lab);
+      }
+      for (const t of xTicks) {
+        const x = px(t);
+        svg.appendChild(svgEl("line", { x1: x, x2: x, y1: TTOP, y2: TTOP + ihT,
+          stroke: css("--grid"), "stroke-width": 1 }));
+        if (P.showX) {
+          const lab = svgEl("text", { x, y: TTOP + ihT + 18, "text-anchor": "middle",
+            fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+          lab.textContent = fmtCompact(t);
+          svg.appendChild(lab);
+        }
+      }
+      svg.appendChild(svgEl("line", { x1: TL, x2: TL + iwT, y1: TTOP + ihT, y2: TTOP + ihT,
+        stroke: css("--rule"), "stroke-width": 1 }));
+
+      yCaption(svg, P.label, TTOP, ihT);
+      if (P.showX) {
+        const xc = svgEl("text", { x: TL + iwT / 2, y: P.h - 6, "text-anchor": "middle",
+          fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+        xc.textContent = "elapsed inference time (s)";
+        svg.appendChild(xc);
+      }
+
+      if (P.kind === "arrivals") {
+        // The input signal is identical in every arm, so it is drawn once, in
+        // neutral ink, rather than four times in arm colours.
+        // Arrival counts are identical across arms but each arm's array is only
+        // as long as that arm's own run, so pick the longest available copy --
+        // arm 0 is not guaranteed to be the longest-running arm.
+        const a = resolved.reduce((best, r) => r.arr.length >= best.arr.length ? r : best).arr;
+        let d = "M" + px(0).toFixed(1) + " " + py(0).toFixed(1);
+        for (let i = 0; i < a.length; i++) d += " L" + px(i * binS).toFixed(1) + " " + py(a[i]).toFixed(1);
+        d += " L" + px((a.length - 1) * binS).toFixed(1) + " " + py(0).toFixed(1) + " Z";
+        svg.appendChild(svgEl("path", { d, fill: css("--ink-3"), "fill-opacity": 0.35, stroke: "none" }));
+        svg.appendChild(svgEl("path", {
+          d: "M" + a.map((v, i) => px(i * binS).toFixed(1) + " " + py(v).toFixed(1)).join(" L"),
+          fill: "none", stroke: css("--ink-2"), "stroke-width": 1 }));
+      } else {
+        for (const r of resolved) {
+          const v = r[P.id];
+          if (P.band && r[P.id + "_band"]) {
+            const lo2 = r[P.id + "_band"];
+            let d = "M" + v.map((x, i) => px(i * binS).toFixed(1) + " " + py(x).toFixed(1)).join(" L");
+            for (let i = lo2.length - 1; i >= 0; i--) d += " L" + px(i * binS).toFixed(1) + " " + py(lo2[i]).toFixed(1);
+            d += " Z";
+            svg.appendChild(svgEl("path", { d, fill: r.col, "fill-opacity": 0.16, stroke: "none" }));
+          }
+          svg.appendChild(svgEl("path", {
+            d: "M" + v.map((x, i) => px(i * binS).toFixed(1) + " " + py(x).toFixed(1)).join(" L"),
+            fill: "none", stroke: r.col, "stroke-width": 1.5,
+            "stroke-linejoin": "round", "stroke-linecap": "round" }));
+        }
+      }
+
+      const cross = svgEl("line", { x1: 0, x2: 0, y1: TTOP, y2: TTOP + ihT,
+        stroke: css("--ink-3"), "stroke-width": 1, "stroke-dasharray": "3 3", opacity: 0 });
+      svg.appendChild(cross);
+      const marks = svgEl("g", { opacity: 0 });
+      svg.appendChild(marks);
+
+      const box = document.createElement("div");
+      box.className = "chartbox";
+      box.appendChild(svg);
+      host.appendChild(box);
+      panels.push({ P, svg, px, py, cross, marks, box, iwT });
+    }
+
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+
+    function hide() {
+      for (const p of panels) { p.cross.setAttribute("opacity", 0); p.marks.setAttribute("opacity", 0); }
+      tip.style.opacity = 0;
+    }
+
+    function move(ev, self) {
+      const r = self.svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * TW;
+      if (mx < TL || mx > TW - TR) { hide(); return; }
+      const t = (mx - TL) / self.iwT * tmax;
+      const i = Math.round(t / binS);
+      let rows = `<span class="k">t</span> <span class="v">${fmtSec(t)}</span><br>`;
+      for (const p of panels) {
+        p.cross.setAttribute("x1", mx); p.cross.setAttribute("x2", mx);
+        p.cross.setAttribute("opacity", 0.8);
+        while (p.marks.firstChild) p.marks.removeChild(p.marks.firstChild);
+        const items = [];
+        if (p.P.kind === "arrivals") {
+          // Arrival counts are identical across arms but each arm's array is only
+        // as long as that arm's own run, so pick the longest available copy --
+        // arm 0 is not guaranteed to be the longest-running arm.
+        const a = resolved.reduce((best, r) => r.arr.length >= best.arr.length ? r : best).arr;
+          if (i < a.length) items.push({ y: p.py(a[i]), col: css("--ink-2"), text: p.P.lfmt(a[i]) });
+        } else {
+          for (const rr of resolved) {
+            const v = rr[p.P.id];
+            if (i >= v.length) continue;
+            items.push({ y: p.py(v[i]), col: rr.col, text: p.P.lfmt(v[i]) });
+          }
+        }
+        for (const it of items)
+          p.marks.appendChild(svgEl("circle", { cx: mx, cy: it.y, r: 3.2, fill: it.col,
+            stroke: css("--surface-sunken"), "stroke-width": 1.5 }));
+        placeLabels(p.marks, mx, items, TW - TR - 110);
+        p.marks.setAttribute("opacity", 1);
+      }
+      // tooltip reports the hovered panel only; the crosshair carries the rest
+      const P = self.P;
+      rows += `<span class="k">${P.label}</span><br>`;
+      if (P.kind === "arrivals") {
+        // Arrival counts are identical across arms but each arm's array is only
+        // as long as that arm's own run, so pick the longest available copy --
+        // arm 0 is not guaranteed to be the longest-running arm.
+        const a = resolved.reduce((best, r) => r.arr.length >= best.arr.length ? r : best).arr;
+        rows += `<span class="dot" style="background:${css("--ink-2")}"></span>` +
+          `<span class="v">${i < a.length ? P.fmt(a[i]) : "--"}</span><br>`;
+      } else {
+        for (const rr of resolved) {
+          const v = rr[P.id];
+          rows += `<span class="dot" style="background:${rr.col}"></span>` +
+            `<span class="v">${rr.s.label}</span> ` +
+            `<span class="v">${i < v.length ? P.fmt(v[i]) : "--"}</span><br>`;
+        }
+      }
+      tip.innerHTML = rows;
+      tip.style.opacity = 1;
+      const hostRect = host.getBoundingClientRect();
+      const boxRect = self.box.getBoundingClientRect();
+      const bx = mx / TW * r.width;
+      tip.style.left = Math.min(Math.max(bx + 14, 4), hostRect.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = Math.max(boxRect.top - hostRect.top + 8, 4) + "px";
+    }
+
+    for (const p of panels) {
+      p.svg.addEventListener("pointermove", (ev) => move(ev, p));
+      p.svg.addEventListener("pointerleave", hide);
+    }
+
+    // legend
+    const leg = document.getElementById("ts-legend");
+    leg.innerHTML = "";
+    for (const s of activeSeries()) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="swatch" style="background:${css(s.color)}"></span>` +
+        `<code>${s.label}</code><span>${s.desc}</span>`;
+      leg.appendChild(li);
+    }
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="swatch" style="background:${css("--ink-2")}"></span>` +
+      `<code>arrivals</code><span>Azure trace — identical in every arm</span>`;
+    leg.appendChild(li);
+  }
+
+  // ===================== throughput-vs-latency Pareto =======================
+  // Aggregate serving_metrics per arm: one measured configuration each (MNS 256),
+  // so each arm is a single point rather than a swept trajectory. Throughput in
+  // tok/s (req/s for `req`); latency statistics in ms for TPOT, seconds for TTFT.
+  const PARETO = {
+    w16kv16: { tot: 3074.6, out: 661.6, req: 0.2721,
+      ttft: { mean: 1723.3, p50: 1678.0, p90: 2985.6, p99: 3250.7 },
+      tpot: { mean: 46.6, p50: 48.6, p90: 50.4, p99: 53.3 } },
+    w8kv16: { tot: 1321.7, out: 285.7, req: 0.1168,
+      ttft: { mean: 3826.1, p50: 3986.9, p90: 6724.6, p99: 7340.1 },
+      tpot: { mean: 701.4, p50: 733.5, p90: 818.1, p99: 986.9 } },
+    w16kv8: { tot: 3018.0, out: 647.7, req: 0.2673,
+      ttft: { mean: 1815.9, p50: 1841.3, p90: 3023.7, p99: 3281.5 },
+      tpot: { mean: 73.6, p50: 73.2, p90: 79.6, p99: 92.3 } },
+    w8kv8: { tot: 1314.7, out: 283.5, req: 0.1163,
+      ttft: { mean: 3734.6, p50: 3542.3, p90: 6718.8, p99: 7235.0 },
+      tpot: { mean: 778.4, p50: 779.7, p90: 966.6, p99: 1192.4 } }
+  };
+  const THRU = {
+    tot: { label: "total token throughput", unit: "tok/s" },
+    out: { label: "output token throughput", unit: "tok/s" },
+    req: { label: "request throughput", unit: "req/s" }
+  };
+  const LAT = {
+    tpot: { label: "TPOT", unit: "ms", fmt: (v) => v.toFixed(0) + " ms" },
+    ttft: { label: "TTFT", unit: "s", fmt: (v) => fmtSec(v) }
+  };
+
+  const PW = 480, PH = 380, PM = { t: 18, r: 22, b: 50, l: 66 };
+  const piw = PW - PM.l - PM.r, pih = PH - PM.t - PM.b;
+
+  // Minimise x (latency), maximise y (throughput): a point is dominated if any
+  // other point is at least as good on both and strictly better on one.
+  function paretoFront(pts) {
+    return pts.map((p) => !pts.some((q) =>
+      q !== p && q.x <= p.x && q.y >= p.y && (q.x < p.x || q.y > p.y)));
+  }
+
+  // Pad a range so markers never sit on the axis; a degenerate range still
+  // renders (all four arms equal would otherwise divide by zero).
+  function padScale(lo, hi) {
+    if (!(hi > lo)) { const c = hi || 1; return { lo: c * 0.95, hi: c * 1.05 }; }
+    const pad = (hi - lo) * 0.16;
+    return { lo: lo - pad, hi: hi + pad };
+  }
+
+  // Takes the container element rather than an id: the cells are built and
+  // appended by renderPareto, so a document lookup would be a needless round
+  // trip through the DOM for a node already in hand.
+  function drawPareto(host, latKey, thruKey, agg) {
+    host.innerHTML = "";
+    const arms = activeSeries().filter((s) => PARETO[s.key]);
+    if (!arms.length) { host.innerHTML = '<p class="note">No arm selected.</p>'; return; }
+    const pts = arms.map((s) => ({ s, x: PARETO[s.key][latKey][agg], y: PARETO[s.key][thruKey] }));
+    const front = paretoFront(pts);
+
+    const sx = padScale(Math.min.apply(null, pts.map((p) => p.x)), Math.max.apply(null, pts.map((p) => p.x)));
+    const sy = padScale(Math.min.apply(null, pts.map((p) => p.y)), Math.max.apply(null, pts.map((p) => p.y)));
+    const px = (v) => PM.l + (v - sx.lo) / (sx.hi - sx.lo) * piw;
+    const py = (v) => PM.t + pih - (v - sy.lo) / (sy.hi - sy.lo) * pih;
+    const ticks = (s) => {
+      const out = [];
+      for (let i = 0; i <= 4; i++) out.push(s.lo + (s.hi - s.lo) * i / 4);
+      return out;
+    };
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${PW} ${PH}`, role: "img",
+      "aria-label": `${THRU[thruKey].label} against ${agg} ${LAT[latKey].label} for each precision arm` });
+
+    for (const t of ticks(sy)) {
+      const y = py(t);
+      svg.appendChild(svgEl("line", { x1: PM.l, x2: PM.l + piw, y1: y, y2: y,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x: PM.l - 9, y: y + 3.5, "text-anchor": "end",
+        fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+      lab.textContent = thruKey === "req" ? t.toFixed(3) : fmtCompact(t);
+      svg.appendChild(lab);
+    }
+    for (const t of ticks(sx)) {
+      const x = px(t);
+      svg.appendChild(svgEl("line", { x1: x, x2: x, y1: PM.t, y2: PM.t + pih,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x, y: PM.t + pih + 17, "text-anchor": "middle",
+        fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+      lab.textContent = latKey === "ttft" ? fmtCompact(t) : fmtCompact(t);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(svgEl("line", { x1: PM.l, x2: PM.l + piw, y1: PM.t + pih, y2: PM.t + pih,
+      stroke: css("--rule"), "stroke-width": 1 }));
+
+    const yc = svgEl("text", { x: 14, y: PM.t + pih / 2, fill: css("--ink-2"), "font-size": 10.5,
+      "font-family": MONO, transform: `rotate(-90 14 ${PM.t + pih / 2})`, "text-anchor": "middle" });
+    yc.textContent = THRU[thruKey].unit;
+    svg.appendChild(yc);
+    const xc = svgEl("text", { x: PM.l + piw / 2, y: PH - 6, "text-anchor": "middle",
+      fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+    xc.textContent = `${agg} ${LAT[latKey].label} (${LAT[latKey].unit})`;
+    svg.appendChild(xc);
+
+    // "better" direction, drawn once in the corner it points to
+    const arrow = svgEl("text", { x: PM.l + 6, y: PM.t + 12, "text-anchor": "start",
+      fill: css("--ink-3"), "font-size": 10, "font-family": MONO });
+    arrow.textContent = "↖ better";
+    svg.appendChild(arrow);
+
+    const hit = [];
+    pts.forEach((p, i) => {
+      const x = px(p.x), y = py(p.y), col = css(p.s.color);
+      svg.appendChild(svgEl("circle", { cx: x, cy: y, r: 7,
+        fill: front[i] ? col : css("--surface-sunken"),
+        stroke: col, "stroke-width": 2.2 }));
+      const lab = svgEl("text", { x: x + 12, y: y + 4, "text-anchor": "start",
+        fill: css("--ink-2"), "font-size": 11, "font-family": MONO });
+      lab.textContent = p.s.label;
+      svg.appendChild(lab);
+      hit.push({ x, y, p, col, front: front[i] });
+    });
+
+    host.appendChild(svg);
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+
+    svg.addEventListener("pointermove", (ev) => {
+      const r = svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * PW, my = (ev.clientY - r.top) / r.height * PH;
+      let best = null, bd = 1e9;
+      for (const h of hit) { const d = (h.x - mx) ** 2 + (h.y - my) ** 2; if (d < bd) { bd = d; best = h; } }
+      if (!best || bd > 1600) { tip.style.opacity = 0; return; }
+      tip.innerHTML =
+        `<span class="dot" style="background:${best.col}"></span><span class="v">${best.p.s.label}</span>` +
+        (best.front ? ' <span class="k">· Pareto-optimal</span>' : ' <span class="k">· dominated</span>') + "<br>" +
+        `<span class="k">${agg} ${LAT[latKey].label}</span> <span class="v">${LAT[latKey].fmt(best.p.x)}</span><br>` +
+        `<span class="k">${THRU[thruKey].label}</span> ` +
+        `<span class="v">${thruKey === "req" ? best.p.y.toFixed(4) : fmtInt(best.p.y)} ${THRU[thruKey].unit}</span>`;
+      tip.style.opacity = 1;
+      const bx = best.x / PW * r.width, by = best.y / PH * r.height;
+      tip.style.left = Math.min(Math.max(bx + 14, 4), r.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = Math.max(by - tip.offsetHeight - 10, 4) + "px";
+    });
+    svg.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
+  }
+
+  function renderPareto() {
+    const thru = document.getElementById("pf-thru").value;
+    const agg = document.getElementById("pf-agg").value;
+    const host = document.getElementById("pareto");
+    host.innerHTML = "";
+    for (const [latKey, title] of [["ttft", "throughput vs TTFT"], ["tpot", "throughput vs TPOT"]]) {
+      const cell = document.createElement("div");
+      const h = document.createElement("h4");
+      h.textContent = title;
+      cell.appendChild(h);
+      const box = document.createElement("div");
+      box.className = "chartbox";
+      cell.appendChild(box);
+      host.appendChild(cell);
+      drawPareto(box, latKey, thru, agg);
+    }
+  }
+
+  // ===================== Azure arrival window ===============================
+  // Two panels on the 303 s trace clock: instantaneous rate (what the scheduler
+  // is hit with) over cumulative arrivals (how much of the workload has landed).
+  // The pair is what shows burstiness -- a spiky top panel under a convex
+  // bottom one is a workload that arrives late and all at once.
+  function drawTrace(binS) {
+    const host = document.getElementById("trace-chart");
+    host.innerHTML = "";
+    const off = TRACE.off, dur = TRACE.dur, n = off.length;
+
+    const nb = Math.ceil(dur / binS) + 1;
+    const counts = new Array(nb).fill(0);
+    for (const t of off) counts[Math.min(nb - 1, Math.floor(t / binS))]++;
+    const rate = counts.map((c) => c / binS);          // requests per second
+    const cum = [];
+    let acc = 0;
+    for (const c of counts) { acc += c; cum.push(acc); }
+
+    const specs = [
+      { id: "rate", h: 150, label: "arrivals / s", series: rate, area: true,
+        fmt: (v) => v.toFixed(1) + " req/s", lfmt: (v) => v.toFixed(1) },
+      { id: "cum", h: 168, label: "cumulative arrivals", series: cum, showX: true,
+        fmt: (v) => fmtInt(v) + " of " + fmtInt(n), lfmt: (v) => fmtInt(v) }
+    ];
+    const panels = [];
+    for (const S of specs) {
+      const iwT = TW - TL - TR, ihT = S.h - TTOP - (S.showX ? 40 : 10);
+      const sc = niceScale(0, Math.max.apply(null, S.series));
+      const svg = svgEl("svg", { viewBox: `0 0 ${TW} ${S.h}`, role: "img",
+        "aria-label": S.label + " over the 303 second Azure arrival window" });
+      const px = (t) => TL + (t / dur) * iwT;
+      const py = (v) => TTOP + ihT - (v - sc.lo) / (sc.hi - sc.lo) * ihT;
+
+      for (const t of sc.ticks) {
+        const y = py(t);
+        svg.appendChild(svgEl("line", { x1: TL, x2: TL + iwT, y1: y, y2: y,
+          stroke: css("--grid"), "stroke-width": 1 }));
+        const lab = svgEl("text", { x: TL - 8, y: y + 3.5, "text-anchor": "end",
+          fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+        lab.textContent = fmtCompact(t);
+        svg.appendChild(lab);
+      }
+      for (const t of niceScale(0, dur).ticks.filter((t) => t <= dur)) {
+        const x = px(t);
+        svg.appendChild(svgEl("line", { x1: x, x2: x, y1: TTOP, y2: TTOP + ihT,
+          stroke: css("--grid"), "stroke-width": 1 }));
+        if (S.showX) {
+          const lab = svgEl("text", { x, y: TTOP + ihT + 18, "text-anchor": "middle",
+            fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+          lab.textContent = fmtCompact(t);
+          svg.appendChild(lab);
+        }
+      }
+      svg.appendChild(svgEl("line", { x1: TL, x2: TL + iwT, y1: TTOP + ihT, y2: TTOP + ihT,
+        stroke: css("--rule"), "stroke-width": 1 }));
+      yCaption(svg, S.label, TTOP, ihT);
+      if (S.showX) {
+        const xc = svgEl("text", { x: TL + iwT / 2, y: S.h - 6, "text-anchor": "middle",
+          fill: css("--ink-3"), "font-size": 11, "font-family": MONO });
+        xc.textContent = "arrival offset (s)";
+        svg.appendChild(xc);
+      }
+
+      const pts = S.series.map((v, i) => px(Math.min(i * binS, dur)).toFixed(1) + " " + py(v).toFixed(1));
+      if (S.area) {
+        svg.appendChild(svgEl("path", {
+          d: "M" + px(0).toFixed(1) + " " + py(0).toFixed(1) + " L" + pts.join(" L") +
+             " L" + px(dur).toFixed(1) + " " + py(0).toFixed(1) + " Z",
+          fill: css("--s1"), "fill-opacity": 0.18, stroke: "none" }));
+      }
+      svg.appendChild(svgEl("path", { d: "M" + pts.join(" L"), fill: "none", stroke: css("--s1"),
+        "stroke-width": 1.6, "stroke-linejoin": "round" }));
+
+      const cross = svgEl("line", { x1: 0, x2: 0, y1: TTOP, y2: TTOP + ihT,
+        stroke: css("--ink-3"), "stroke-width": 1, "stroke-dasharray": "3 3", opacity: 0 });
+      svg.appendChild(cross);
+      const marks = svgEl("g", { opacity: 0 });
+      svg.appendChild(marks);
+
+      const box = document.createElement("div");
+      box.className = "chartbox";
+      box.appendChild(svg);
+      host.appendChild(box);
+      panels.push({ S, svg, px, py, cross, marks, box, iwT });
+    }
+
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+    const hide = () => {
+      for (const p of panels) { p.cross.setAttribute("opacity", 0); p.marks.setAttribute("opacity", 0); }
+      tip.style.opacity = 0;
+    };
+    function move(ev, self) {
+      const r = self.svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * TW;
+      if (mx < TL || mx > TW - TR) { hide(); return; }
+      const t = (mx - TL) / self.iwT * dur;
+      const i = Math.min(nb - 1, Math.max(0, Math.floor(t / binS)));
+      let rows = `<span class="k">t</span> <span class="v">${t.toFixed(1)} s</span><br>`;
+      for (const p of panels) {
+        p.cross.setAttribute("x1", mx); p.cross.setAttribute("x2", mx);
+        p.cross.setAttribute("opacity", 0.8);
+        while (p.marks.firstChild) p.marks.removeChild(p.marks.firstChild);
+        const y = p.py(p.S.series[i]);
+        p.marks.appendChild(svgEl("circle", { cx: mx, cy: y, r: 3.4,
+          fill: css("--s1"), stroke: css("--surface-sunken"), "stroke-width": 1.5 }));
+        placeLabels(p.marks, mx, [{ y, col: css("--s1"), text: p.S.lfmt(p.S.series[i]) }],
+          TW - TR - 110);
+        p.marks.setAttribute("opacity", 1);
+        rows += `<span class="k">${p.S.label}</span> <span class="v">${p.S.fmt(p.S.series[i])}</span><br>`;
+      }
+      tip.innerHTML = rows;
+      tip.style.opacity = 1;
+      const hostRect = host.getBoundingClientRect();
+      const bx = mx / TW * r.width;
+      tip.style.left = Math.min(Math.max(bx + 14, 4), hostRect.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = "8px";
+    }
+    for (const p of panels) {
+      p.svg.addEventListener("pointermove", (ev) => move(ev, p));
+      p.svg.addEventListener("pointerleave", hide);
+    }
+  }
+
+  // Trace summary computed from the offsets themselves, so the chips can never
+  // drift from the series drawn above them.
+  function traceStats() {
+    const off = TRACE.off, dur = TRACE.dur, n = off.length;
+    const inter = [];
+    for (let i = 1; i < n; i++) inter.push(off[i] - off[i - 1]);
+    const mean = inter.reduce((a, b) => a + b, 0) / inter.length;
+    const varp = inter.reduce((a, b) => a + (b - mean) * (b - mean), 0) / inter.length;
+    const cv = Math.sqrt(varp) / mean;
+    // widest count in any window of `w` seconds, by a forward scan
+    const busiest = (w) => {
+      let best = 0, j = 0;
+      for (let i = 0; i < n; i++) {
+        if (j < i) j = i;
+        while (j < n && off[j] <= off[i] + w) j++;
+        if (j - i > best) best = j - i;
+      }
+      return best;
+    };
+    return [
+      ["requests", fmtInt(n)],
+      ["duration", dur.toFixed(1) + " s"],
+      ["mean rate", (n / dur).toFixed(2) + " req/s"],
+      ["inter-arrival CV", cv.toFixed(2)],
+      ["busiest 1 s", fmtInt(busiest(1)) + " req"],
+      ["busiest 10 s", fmtInt(busiest(10)) + " req"],
+      ["longest gap", Math.max.apply(null, inter).toFixed(2) + " s"]
+    ];
+  }
+
+  function renderTraceStats() {
+    const host = document.getElementById("trace-stats");
+    host.innerHTML = "";
+    for (const [k, v] of traceStats()) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="v">${v}</span><span class="k">${k}</span>`;
+      host.appendChild(li);
+    }
+  }
+
+  // ===================== wiring =============================================
+  const el = (id) => document.getElementById(id);
+
+  function renderTpot() {
+    drawCdf("cdf-tpot", "tpot", {
+      log: el("tpot-scale").value === "log",
+      clip: +el("tpot-clip").value,
+      xlabel: "TPOT (ms)", tipLabel: "TPOT",
+      fmt: (v) => v.toFixed(0) + " ms",
+      aria: "CDF of per-request TPOT in milliseconds for each precision arm",
+      slo: [{ at: 15, label: "15 ms" }, { at: 80, label: "80 ms" }]
+    });
+  }
+  function renderTtft() {
+    drawCdf("cdf-ttft", "ttft", {
+      log: el("ttft-scale").value === "log",
+      clip: +el("ttft-clip").value,
+      xlabel: "TTFT (s)", tipLabel: "TTFT",
+      fmt: fmtSec,
+      aria: "CDF of per-request time to first token in seconds for each precision arm",
+      slo: [{ at: 2, label: "2 s" }, { at: 3, label: "3 s" }]
+    });
+  }
+  function renderLen() {
+    const m = el("len-metric").value;
+    drawCdf("cdf-len", m, {
+      log: false, clip: 1,
+      xlabel: m === "isl" ? "prompt length (tokens)" : "output length (tokens)",
+      tipLabel: m === "isl" ? "ISL" : "OSL",
+      fmt: (v) => fmtInt(v) + " tok",
+      aria: "CDF of " + (m === "isl" ? "prompt" : "output") + " length per precision arm"
+    });
+  }
+  function renderStack() {
+    drawStack({ scale: el("ts-scale").value, smooth: +el("ts-smooth").value });
+  }
+
+  const renderTrace = () => drawTrace(+el("tr-bin").value);
+
+  buildToggles();
+  el("tr-bin").addEventListener("change", renderTrace);
+  ["pf-thru", "pf-agg"].forEach((i) => el(i).addEventListener("change", renderPareto));
+  ["tpot-scale", "tpot-clip"].forEach((i) => el(i).addEventListener("change", renderTpot));
+  ["ttft-scale", "ttft-clip"].forEach((i) => el(i).addEventListener("change", renderTtft));
+  ["ts-scale", "ts-smooth"].forEach((i) => el(i).addEventListener("change", renderStack));
+  el("len-metric").addEventListener("change", renderLen);
+  // The trace is arm-independent (identical input for all four), so it is not
+  // registered with the arm-toggle listeners -- only with the theme redraw.
+  onChange(renderPareto); onChange(renderTpot); onChange(renderTtft);
+  onChange(renderLen); onChange(renderStack);
+  listeners.push(renderTrace);
+
+  renderTraceStats(); renderTrace();
+  renderPareto(); renderTpot(); renderTtft(); renderLen(); renderStack();
+
+  // Theme changes swap every CSS token, and the charts hold resolved colours,
+  // so redraw when the OS theme or an explicit stamp flips.
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onTheme = () => redrawAll();
+  if (mq.addEventListener) mq.addEventListener("change", onTheme);
+  new MutationObserver(onTheme).observe(document.documentElement, {
+    attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>

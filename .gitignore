@@ -4,12 +4,14 @@
 # data reviewable. Never allow a blanket `git add .` to capture raw benchmark
 # output, model weights, caches, or profiler databases.
 
-# High-volume run data (usually symlinks to RIVF26_BULK_ROOT).
-results/**/raw/
-results/**/raw
+# High-volume run data (usually symlinks to RIVF26_BULK_ROOT). Excludes raw/'s
+# *contents* (not the directory itself) so the negation below for
+# per_request.csv can re-include it -- git cannot re-include a file whose
+# parent directory is itself excluded, only a file excluded via a content
+# wildcard.
+results/**/raw/*
 results/**/logs/
 results/**/logs
-results/part2/**/raw/
 logs/
 profiler/
 manifests/**/snapshots/
@@ -80,4 +82,5 @@ datasets/**/*.parquet
 !results/**/rouge_summary.json
 !results/**/plot_data.json
 !results/**/hbm_metadata.json
+!results/**/raw/per_request.csv
 !e2e_metrics_record.csv

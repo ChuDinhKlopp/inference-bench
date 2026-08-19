@@ -1,0 +1,13 @@
+{
+  "schema_version": "rivf26.livecodebench_performance.v1",
+  "status": "PASS",
+  "run_id": "20260818_174721_performance_livecodebench_v6_w16kv8_mns128",
+  "precision": "w16kv8",
+  "dataset": "livecodebench",
+  "release": "v6",
+  "requests": 1055,
+  "max_num_seqs": 128,
+  "max_gen_toks": 32768,
+  "arrival_mode": "azure",
+  "trace": "/home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1055.csv"
+}

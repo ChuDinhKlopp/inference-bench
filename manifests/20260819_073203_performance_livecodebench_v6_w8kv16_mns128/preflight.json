@@ -1,0 +1,499 @@
+{
+  "schema_version": "rivf26.preflight.v1",
+  "stage": "A",
+  "status": "FAIL",
+  "timestamp_epoch_s": 1787124732.648469,
+  "timestamp_iso": "2026-08-19T07:32:12.648469+00:00",
+  "run": {
+    "run_id": "20260819_073203_performance_livecodebench_v6_w8kv16_mns128",
+    "mode": "performance",
+    "precision": "w8kv16",
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 8192,
+    "estimated_output_gib": 10.0,
+    "safety_reserve_gib": 10.0
+  },
+  "git_commit": "98c4ed52446cd57988e339165e516b6beb6290b0",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+    "local_path": "/home/tuan/models/Qwen3.6-35B-A3B-FP8",
+    "size_bytes": 37493037109,
+    "weight_files": [
+      {
+        "name": "layers-0.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-1.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-10.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-11.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-12.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-13.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-14.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-15.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-16.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-17.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-18.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-19.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-2.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-20.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-21.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-22.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-23.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-24.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-25.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-26.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-27.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-28.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-29.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-3.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-30.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-31.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-32.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-33.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-34.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-35.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-36.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-37.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-38.safetensors",
+        "size_bytes": 843715168
+      },
+      {
+        "name": "layers-39.safetensors",
+        "size_bytes": 837094000
+      },
+      {
+        "name": "layers-4.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-5.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-6.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-7.safetensors",
+        "size_bytes": 837092440
+      },
+      {
+        "name": "layers-8.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "layers-9.safetensors",
+        "size_bytes": 843713608
+      },
+      {
+        "name": "mtp.safetensors",
+        "size_bytes": 853860608
+      },
+      {
+        "name": "outside.safetensors",
+        "size_bytes": 2927422112
+      }
+    ]
+  },
+  "resources": {
+    "result_filesystem": {
+      "path": "/home/tuan/rivf26-bulk",
+      "bytes_total": 469825110016,
+      "bytes_free": 24673714176,
+      "inodes_total": 29204480,
+      "inodes_free": 27529870,
+      "mount": "/home/tuan /dev/sda2[/home/tuan] ext4",
+      "filesystem_type": "ext4"
+    },
+    "dev_shm": {
+      "path": "/dev/shm",
+      "bytes_total": 270420238336,
+      "bytes_free": 41515352064,
+      "inodes_total": 66020566,
+      "inodes_free": 66015581
+    },
+    "host": {
+      "memory_total_bytes": 540840480768,
+      "memory_available_bytes": 184590000128,
+      "swap_total_bytes": 8589930496,
+      "swap_free_bytes": 4014866432
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 57454,
+        "memory_free_mib": 8066,
+        "utilization_gpu_percent": 100,
+        "temperature_c": 51,
+        "power_w": 292.0
+      },
+      {
+        "index": 1,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 57454,
+        "memory_free_mib": 8066,
+        "utilization_gpu_percent": 100,
+        "temperature_c": 52,
+        "power_w": 0.0
+      },
+      {
+        "index": 2,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 56139,
+        "memory_free_mib": 9381,
+        "utilization_gpu_percent": 11,
+        "temperature_c": 37,
+        "power_w": 119.0
+      },
+      {
+        "index": 3,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 56138,
+        "memory_free_mib": 9382,
+        "utilization_gpu_percent": 11,
+        "temperature_c": 41,
+        "power_w": 0.0
+      },
+      {
+        "index": 4,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 57454,
+        "memory_free_mib": 8066,
+        "utilization_gpu_percent": 100,
+        "temperature_c": 45,
+        "power_w": 291.0
+      },
+      {
+        "index": 5,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 57454,
+        "memory_free_mib": 8066,
+        "utilization_gpu_percent": 100,
+        "temperature_c": 47,
+        "power_w": 0.0
+      },
+      {
+        "index": 6,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 13,
+        "memory_free_mib": 65507,
+        "utilization_gpu_percent": 6,
+        "temperature_c": 29,
+        "power_w": 120.0
+      },
+      {
+        "index": 7,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 13,
+        "memory_free_mib": 65507,
+        "utilization_gpu_percent": 6,
+        "temperature_c": 34,
+        "power_w": 0.0
+      }
+    ],
+    "gpu_processes": [
+      "gpu=0 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=0 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=0 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=0 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=0 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=0 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=0 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=0 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=0 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=0 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=0 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=0 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=1 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=1 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=1 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=1 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=1 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=1 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=1 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=1 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=1 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=1 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=1 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=1 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=2 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=2 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=2 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=2 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=2 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=2 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=2 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=2 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=2 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=2 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=2 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=2 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=3 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=3 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=3 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=3 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=3 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=3 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=3 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=3 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=3 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=3 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=3 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=3 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=4 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=4 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=4 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=4 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=4 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=4 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=4 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=4 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=4 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=4 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=4 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=4 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=5 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=5 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=5 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=5 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=5 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=5 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=5 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=5 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=5 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=5 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=5 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=5 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=6 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=6 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=6 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=6 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=6 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=6 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=6 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=6 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=6 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=6 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=6 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=6 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}",
+      "gpu=7 {'name': 'N/A', 'pid': 385220, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 104}",
+      "gpu=7 {'name': 'N/A', 'pid': 386752, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=7 {'name': 'N/A', 'pid': 387520, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 216}",
+      "gpu=7 {'name': 'N/A', 'pid': 387521, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 160}",
+      "gpu=7 {'name': 'N/A', 'pid': 1418198, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 208}",
+      "gpu=7 {'name': 'N/A', 'pid': 1418442, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 220}",
+      "gpu=7 {'name': 'N/A', 'pid': 1420538, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 8}",
+      "gpu=7 {'name': 'N/A', 'pid': 1420759, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 0}",
+      "gpu=7 {'name': 'N/A', 'pid': 1421790, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 2160}",
+      "gpu=7 {'name': 'N/A', 'pid': 1421791, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1580}",
+      "gpu=7 {'name': 'N/A', 'pid': 1421830, 'mem': 59908882432, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 59908882432}, 'cu_occupancy': 13, 'evicted_time': 1896}",
+      "gpu=7 {'name': 'N/A', 'pid': 1421831, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1804}"
+    ]
+  },
+  "checks": [
+    {
+      "name": "git_worktree",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "98c4ed52446cd57988e339165e516b6beb6290b0"
+    },
+    {
+      "name": "result_filesystem_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=23.0 GiB; required=20.0 GiB"
+    },
+    {
+      "name": "result_filesystem_inodes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_fraction=0.943"
+    },
+    {
+      "name": "host_ram",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=171.9 GiB; minimum=150.0 GiB"
+    },
+    {
+      "name": "swap_usage",
+      "result": "PASS",
+      "mandatory": false,
+      "detail": "used_fraction=0.533; host available RAM is the mandatory pressure gate"
+    },
+    {
+      "name": "dev_shm_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=38.7 GiB; minimum=32.0 GiB"
+    },
+    {
+      "name": "local_model",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "path=/home/tuan/models/Qwen3.6-35B-A3B-FP8; safetensors=42; missing=[]"
+    },
+    {
+      "name": "gpu_inventory",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "found=[(0, 'AMD Instinct MI250X/MI250'), (1, 'AMD Instinct MI250X/MI250'), (2, 'AMD Instinct MI250X/MI250'), (3, 'AMD Instinct MI250X/MI250'), (4, 'AMD Instinct MI250X/MI250'), (5, 'AMD Instinct MI250X/MI250'), (6, 'AMD Instinct MI250X/MI250'), (7, 'AMD Instinct MI250X/MI250')]; stderr="
+    },
+    {
+      "name": "gpu_hbm_before_server",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "expected_replica_size=2; free_gpu_count=2; free_mib=[(0, 8066), (1, 8066), (2, 9381), (3, 9382), (4, 8066), (5, 8066), (6, 65507), (7, 65507)]"
+    },
+    {
+      "name": "gpu_processes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "expected_replica_size=2; process_free_gpu_count=8; busy=none"
+    },
+    {
+      "name": "stale_vllm_servers",
+      "result": "FAIL",
+      "mandatory": true,
+      "detail": "[{\"pid\": 4118244, \"uid\": \"1001\", \"command\": \"/home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /home/tuan/models/Qwen3.6-35B-A3B-FP8 --tokenizer /home/tuan/models/Qwen3.6-35B-A3B-FP8 --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8003 --tensor-parallel-size 2 --max-model-len 262144 --max-num-seqs 128 --gpu-memory-utilization 0.90 --kv-cache-dtype bfloat16 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config {\\\"reasoning_start_str\\\":\\\"<think>\\\",\\\"reasoning_end_str\\\":\\\"</think>\\\"} --enable-logging-iteration-details --quantization fp8 --max-num-batched-tokens 8192\"}]"
+    },
+    {
+      "name": "other_benchmark_clients",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "[{\"pid\": 4125094, \"uid\": \"1001\", \"command\": \"/home/tuan/repos/vllm/.venv/bin/python /home/tuan/repos/inference-bench/bench.py --dataset livecodebench --lcb-release-version release_v6 --num-prompts 1055 --lcb-max-gen-toks 32768 --model Qwen3.6-35B-A3B --tokenizer /home/tuan/models/Qwen3.6-35B-A3B-FP8 --base-url http://127.0.0.1:8003 --max-concurrency 128 --temperature 0 --seed 42 --timeout 86400 --enable-thinking --azure-trace-csv /home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1055.csv --arrival-scale 1 --skip-evaluation --server-log-file /home/tuan/rivf26-bulk/results/part1/performance/20260818_174717_performance_livecodebench_v6_w8kv16_mns128/logs/server.log --server-metrics-poll-interval 0.2 --iteration-metrics-prefix /home/tuan/rivf26-bulk/results/part1/performance/20260818_174717_performance_livecodebench_v6_w8kv16_mns128/raw/bench_results --save-generations /home/tuan/rivf26-bulk/results/part1/performance/20260818_174717_performance_livecodebench_v6_w8kv16_mns128/raw/generations.json --output /home/tuan/rivf26-bulk/results/part1/performance/20260818_174717_performance_livecodebench_v6_w8kv16_mns128/raw/bench_results.json\"}, {\"pid\": 4125236, \"uid\": \"1001\", \"command\": \"/home/tuan/repos/vllm/.venv/bin/python /home/tuan/repos/inference-bench/bench.py --dataset livecodebench --lcb-release-version release_v6 --num-prompts 1055 --lcb-max-gen-toks 32768 --model Qwen3.6-35B-A3B --tokenizer /home/tuan/models/Qwen3.6-35B-A3B-FP8 --base-url http://127.0.0.1:8001 --max-concurrency 128 --temperature 0 --seed 42 --timeout 86400 --enable-thinking --azure-trace-csv /home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1055.csv --arrival-scale 1 --skip-evaluation --server-log-file /home/tuan/rivf26-bulk/results/part1/performance/20260818_174719_performance_livecodebench_v6_w8kv8_mns128/logs/server.log --server-metrics-poll-interval 0.2 --iteration-metrics-prefix /home/tuan/rivf26-bulk/results/part1/performance/20260818_174719_performance_livecodebench_v6_w8kv8_mns128/raw/bench_results --save-generations /home/tuan/rivf26-bulk/results/part1/performance/20260818_174719_performance_livecodebench_v6_w8kv8_mns128/raw/generations.json --output /home/tuan/rivf26-bulk/results/part1/performance/20260818_174719_performance_livecodebench_v6_w8kv8_mns128/raw/bench_results.json\"}]"
+    },
+    {
+      "name": "server_port",
+      "result": "FAIL",
+      "mandatory": true,
+      "detail": "127.0.0.1:8003"
+    },
+    {
+      "name": "vllm_runtime",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "WARNING 08-19 07:32:05 [rocm.py:123] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.\n2.13.0+rocm7.2\n0.27.0"
+    },
+    {
+      "name": "vllm_compiled_extension_api",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "WARNING 08-19 07:32:09 [rocm.py:123] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.\n_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()\n(topk_weights: torch.Tensor, topk_ids: torch.Tensor, token_expert_indices: torch.Tensor, gating_output: torch.Tensor, renormalize: bool = False, e_score_correction_bias: torch.Tensor | None = None, is_padding: torch.Tensor | None = None) -> None"
+    },
+    {
+      "name": "hbm_sampler",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "amdsmi=available"
+    }
+  ],
+  "mandatory_failures": [
+    "stale_vllm_servers",
+    "server_port"
+  ]
+}
