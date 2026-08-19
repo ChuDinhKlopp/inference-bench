@@ -473,7 +473,7 @@
     <p class="lede" style="margin-top:14px">Identical prompt bytes across all four arms: every run reports exactly
       <strong>9,412,446 input tokens</strong>. Output totals differ only through sampling
       (2.430 M – 2.452 M, a 0.9 % spread), so the arms are doing the same amount of work to within sampling noise. The
-      shared prompt-length distribution is plotted in Section 5.6.</p>
+      shared prompt-length distribution is plotted in Section 5.7.</p>
 
     <h3 class="sect-sub">Measurement stack</h3>
     <ul class="setup">
@@ -673,7 +673,9 @@ python analysis/plot_stacked_timeline.py \
       dequantization on every GEMM without any arithmetic return, and the machine is nowhere near bandwidth-bound, so
       <code class="mono">kv8</code>'s lighter memory traffic has no ceiling to lift.</div>
 
-    <h3 class="sect-sub">5.5 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
+    __BATCH_SECTION__
+
+    <h3 class="sect-sub">5.6 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Metric</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
@@ -724,7 +726,7 @@ python analysis/plot_stacked_timeline.py \
       <code class="mono">w16kv16</code> for every latency and throughput row and <code class="mono">w8kv8</code> for
       every capacity and stability row — the trade-off is that clean.</p>
 
-    <h3 class="sect-sub">5.6 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
+    <h3 class="sect-sub">5.7 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
     <div class="controls">
       <label>distribution <select id="len-metric">
         <option value="isl">prompt length (ISL)</option>

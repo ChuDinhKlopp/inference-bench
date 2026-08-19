@@ -473,7 +473,7 @@
     <p class="lede" style="margin-top:14px">Identical prompt bytes across all four arms: every run reports exactly
       <strong>9,412,446 input tokens</strong>. Output totals differ only through sampling
       (2.430 M – 2.452 M, a 0.9 % spread), so the arms are doing the same amount of work to within sampling noise. The
-      shared prompt-length distribution is plotted in Section 5.6.</p>
+      shared prompt-length distribution is plotted in Section 5.7.</p>
 
     <h3 class="sect-sub">Measurement stack</h3>
     <ul class="setup">
@@ -673,7 +673,33 @@ python analysis/plot_stacked_timeline.py \
       dequantization on every GEMM without any arithmetic return, and the machine is nowhere near bandwidth-bound, so
       <code class="mono">kv8</code>'s lighter memory traffic has no ceiling to lift.</div>
 
-    <h3 class="sect-sub">5.5 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
+    <h3 class="sect-sub">5.5 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
+    <p class="lede">Each row is one vLLM engine iteration. Following <code class="mono">recap.md</code>, full prefill means
+      <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
+      <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
+      verifies whether quantization completes them in fewer engine steps by carrying a larger decode batch.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>engine step type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>full prefill</td><td>3</td><td>3</td><td>3</td><td>3</td></tr>
+<tr><td>mixed</td><td>844</td><td>760</td><td>782</td><td>781</td></tr>
+<tr><td>full decode</td><td>31,839</td><td>20,254</td><td>19,662</td><td>13,949</td></tr></tbody>
+    </table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>full prefill — context requests</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td></tr>
+<tr><td>mixed — context requests</td><td>1.2 / 1.0 / 1.0 / 2.0</td><td>1.4 / 1.0 / 1.0 / 2.0</td><td>1.4 / 1.0 / 1.0 / 2.0</td><td>1.4 / 1.0 / 1.0 / 3.0</td></tr>
+<tr><td>mixed — decode requests</td><td>88.6 / 80.0 / 95.0 / 108.0</td><td>148.8 / 135.0 / 162.0 / 186.0</td><td>150.2 / 140.0 / 164.0 / 182.0</td><td>230.8 / 254.0 / 255.0 / 255.0</td></tr>
+<tr><td>full decode — decode requests</td><td>74.0 / 57.0 / 86.0 / 108.0</td><td>115.6 / 79.0 / 137.0 / 182.0</td><td>118.2 / 87.0 / 139.0 / 182.0</td><td>162.0 / 8.0 / 218.0 / 256.0</td></tr></tbody>
+    </table></div>
+    <div class="obs kv"><span class="tag">Step-count interpretation</span>
+      Total engine iterations are <strong>32,686 / 21,017 / 20,447 / 14,733</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
+      iterations are <strong>31,839 / 20,254 / 19,662 / 13,949</strong>. Relative to w16kv16, the pure-decode step-count factors are
+      <strong>1.00× / 1.57× / 1.62× / 2.28×</strong>. Thus the KV8 arms do process substantially fewer decode steps, but that advantage must
+      be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
+      from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
+    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>
+
+    <h3 class="sect-sub">5.6 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Metric</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
@@ -724,7 +750,7 @@ python analysis/plot_stacked_timeline.py \
       <code class="mono">w16kv16</code> for every latency and throughput row and <code class="mono">w8kv8</code> for
       every capacity and stability row — the trade-off is that clean.</p>
 
-    <h3 class="sect-sub">5.6 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
+    <h3 class="sect-sub">5.7 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
     <div class="controls">
       <label>distribution <select id="len-metric">
         <option value="isl">prompt length (ISL)</option>

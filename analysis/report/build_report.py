@@ -31,6 +31,7 @@ import argparse
 import csv
 import json
 import pathlib
+import re
 import sys
 
 PRECISIONS = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
@@ -143,6 +144,124 @@ def serving_metrics(run_dir):
 
 
 # --------------------------------------------------------------------------
+# engine batch-type accounting
+# --------------------------------------------------------------------------
+ITERATION_RE = re.compile(
+    r"Iteration\((?P<iteration>\d+)\): "
+    r"(?P<context_requests>\d+) context requests, "
+    r"(?P<context_tokens>\d+) context tokens, "
+    r"(?P<generation_requests>\d+) generation requests, "
+    r"(?P<generation_tokens>\d+) generation tokens, "
+    r"iteration elapsed time: (?P<elapsed_ms>[0-9.]+) ms"
+)
+
+
+def percentile(values, q):
+    values = sorted(values)
+    if not values:
+        return 0.0
+    return values[min(len(values) - 1, int((len(values) - 1) * q))]
+
+
+def extract_batch_stats(run_dir):
+    """Classify vLLM Iteration log lines using the recap.md definition."""
+    log = run_dir / "logs" / "server.log"
+    if not log.exists():
+        sys.exit(f"{run_dir.name}: missing server log: {log}")
+    rows = []
+    with log.open(errors="replace") as f:
+        for line in f:
+            match = ITERATION_RE.search(line)
+            if match:
+                row = {k: float(v) for k, v in match.groupdict().items()}
+                rows.append(row)
+    if not rows:
+        sys.exit(f"{run_dir.name}: no vLLM Iteration(...) lines found in {log}")
+
+    groups = {
+        "full_prefill": [r for r in rows if r["context_requests"] > 0 and r["generation_requests"] == 0],
+        "mixed": [r for r in rows if r["context_requests"] > 0 and r["generation_requests"] > 0],
+        "full_decode": [r for r in rows if r["context_requests"] == 0 and r["generation_requests"] > 0],
+    }
+
+    def request_stats(group, field):
+        values = [r[field] for r in group]
+        return {
+            "avg": sum(values) / len(values) if values else 0.0,
+            "p25": percentile(values, 0.25),
+            "p50": percentile(values, 0.50),
+            "p90": percentile(values, 0.90),
+        }
+
+    return {
+        "iterations": len(rows),
+        "groups": {name: len(group) for name, group in groups.items()},
+        "elapsed_ms": {name: sum(r["elapsed_ms"] for r in group) for name, group in groups.items()},
+        "batch": {
+            "full_prefill_context": request_stats(groups["full_prefill"], "context_requests"),
+            "mixed_context": request_stats(groups["mixed"], "context_requests"),
+            "mixed_generation": request_stats(groups["mixed"], "generation_requests"),
+            "full_decode_generation": request_stats(groups["full_decode"], "generation_requests"),
+        },
+        "log": str(log),
+    }
+
+
+def fmt(value, digits=1):
+    return f"{value:,.{digits}f}"
+
+
+def batch_section(batch):
+    """Render a report section from server-log-derived batch statistics."""
+    order = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
+    labels = {"full_prefill": "full prefill", "mixed": "mixed", "full_decode": "full decode"}
+    rows = []
+    for key in ("full_prefill", "mixed", "full_decode"):
+        rows.append("<tr><td>{}</td>{}</tr>".format(
+            labels[key], "".join(f"<td>{batch[p]['groups'][key]:,}</td>" for p in order)))
+    batch_rows = "\n".join(rows)
+    def stat_row(label, key):
+        return "<tr><td>{}</td>{}</tr>".format(
+            label, "".join(
+                "<td>{} / {} / {} / {}</td>".format(
+                    fmt(batch[p]["batch"][key]["avg"]),
+                    fmt(batch[p]["batch"][key]["p25"]),
+                    fmt(batch[p]["batch"][key]["p50"]),
+                    fmt(batch[p]["batch"][key]["p90"]),
+                ) for p in order))
+    stat_rows = "\n".join([
+        stat_row("full prefill — context requests", "full_prefill_context"),
+        stat_row("mixed — context requests", "mixed_context"),
+        stat_row("mixed — decode requests", "mixed_generation"),
+        stat_row("full decode — decode requests", "full_decode_generation"),
+    ])
+    steps = " / ".join(f"{batch[p]['iterations']:,}" for p in order)
+    decode_steps = " / ".join(f"{batch[p]['groups']['full_decode']:,}" for p in order)
+    ref = batch["w16kv16"]["groups"]["full_decode"]
+    ratios = " / ".join(f"{ref / batch[p]['groups']['full_decode']:.2f}×" for p in order)
+    return f'''<h3 class="sect-sub">5.5 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
+    <p class="lede">Each row is one vLLM engine iteration. Following <code class="mono">recap.md</code>, full prefill means
+      <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
+      <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
+      verifies whether quantization completes them in fewer engine steps by carrying a larger decode batch.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>engine step type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{batch_rows}</tbody>
+    </table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{stat_rows}</tbody>
+    </table></div>
+    <div class="obs kv"><span class="tag">Step-count interpretation</span>
+      Total engine iterations are <strong>{steps}</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
+      iterations are <strong>{decode_steps}</strong>. Relative to w16kv16, the pure-decode step-count factors are
+      <strong>{ratios}</strong>. Thus the KV8 arms do process substantially fewer decode steps, but that advantage must
+      be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
+      from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
+    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>'''
+
+
+# --------------------------------------------------------------------------
 # the hand-written-constant audit
 # --------------------------------------------------------------------------
 def check_pareto(template, runs):
@@ -229,6 +348,7 @@ def main():
 
     cdf = {p: extract_cdf(d) for p, d in runs.items()}
     ts = {p: extract_ts(d) for p, d in runs.items()}
+    batch = {p: extract_batch_stats(d) for p, d in runs.items()}
     trace = extract_trace(args.trace)
 
     print("\nextracted")
@@ -259,6 +379,9 @@ def main():
         if token not in html:
             sys.exit(f"template is missing the {token} placeholder")
         html = html.replace(token, dumps(payload))
+    if "__BATCH_SECTION__" not in html:
+        sys.exit("template is missing the __BATCH_SECTION__ placeholder")
+    html = html.replace("__BATCH_SECTION__", batch_section(batch))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html)
@@ -266,7 +389,7 @@ def main():
 
     if args.emit_json:
         args.emit_json.mkdir(parents=True, exist_ok=True)
-        for name, payload in (("cdf", cdf), ("ts", ts), ("trace", trace)):
+        for name, payload in (("cdf", cdf), ("ts", ts), ("trace", trace), ("batch", batch)):
             (args.emit_json / f"{name}.json").write_text(dumps(payload))
         print(f"wrote cdf/ts/trace JSON to {args.emit_json}")
     return 0
