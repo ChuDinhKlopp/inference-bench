@@ -44,6 +44,11 @@ export RIVF26_TORCH_PROFILER_WARMUP_ITERS="${RIVF26_TORCH_PROFILER_WARMUP_ITERS:
 export RIVF26_TORCH_PROFILER_MAX_ITERS="${RIVF26_TORCH_PROFILER_MAX_ITERS:-250}"
 export RIVF26_TORCH_PROFILER_WITH_STACK="${RIVF26_TORCH_PROFILER_WITH_STACK:-0}"
 export RIVF26_TORCH_PROFILER_DIR="${RIVF26_TORCH_PROFILER_DIR:-$bulk_run_dir/raw/torch_profiler}"
+profiler_start_delay=${RIVF26_PROFILER_START_DELAY_SECONDS:-0}
+if [[ ! "$profiler_start_delay" =~ ^[0-9]+$ ]]; then
+  echo "RIVF26_PROFILER_START_DELAY_SECONDS must be a non-negative integer" >&2
+  exit 2
+fi
 
 server_launcher="$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh"
 tokenizer_path=${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B}
@@ -64,6 +69,10 @@ for _ in {1..900}; do
   sleep 1
 done
 
+if (( profiler_start_delay > 0 )); then
+  echo "Waiting ${profiler_start_delay}s before starting Torch Profiler"
+  sleep "$profiler_start_delay"
+fi
 echo "Starting Torch Profiler via /start_profile"
 curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >/dev/null
 
