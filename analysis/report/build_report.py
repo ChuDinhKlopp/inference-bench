@@ -221,15 +221,25 @@ def fmt(value, digits=1):
     return f"{value:,.{digits}f}"
 
 
+def latency_table(batch):
+    """Mean engine iteration latency per type; sits at the end of the Pareto section."""
+    order = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
+    rows = "".join(
+        "<tr><td>{}</td>{}</tr>".format(label, "".join(
+            f"<td>{fmt(batch[p]['latency'][key]['avg'])} ms</td>" for p in order))
+        for label, key in (("all iterations", "all"), ("pure prefill", "full_prefill"),
+                           ("mixed", "mixed"), ("pure decode", "full_decode")))
+    return f'''<h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></div>
+    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>'''
+
+
 def batch_section(batch):
     """Render a report section from server-log-derived batch statistics."""
     order = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
-    labels = {"full_prefill": "full prefill", "mixed": "mixed", "full_decode": "full decode"}
-    rows = []
-    for key in ("full_prefill", "mixed", "full_decode"):
-        rows.append("<tr><td>{}</td>{}</tr>".format(
-            labels[key], "".join(f"<td>{batch[p]['groups'][key]:,}</td>" for p in order)))
-    batch_rows = "\n".join(rows)
     def stat_row(label, key):
         return "<tr><td>{}</td>{}</tr>".format(
             label, "".join(
@@ -239,67 +249,54 @@ def batch_section(batch):
                     fmt(batch[p]["batch"][key]["p50"]),
                     fmt(batch[p]["batch"][key]["p90"]),
                 ) for p in order))
+
     stat_rows = "\n".join([
-        stat_row("full prefill — context requests", "full_prefill_context"),
-        stat_row("mixed — context requests", "mixed_context"),
-        stat_row("mixed — decode requests", "mixed_generation"),
-        stat_row("full decode — decode requests", "full_decode_generation"),
+        stat_row("full prefill \u2014 context requests", "full_prefill_context"),
+        stat_row("mixed \u2014 context requests", "mixed_context"),
+        stat_row("mixed \u2014 decode requests", "mixed_generation"),
+        stat_row("full decode \u2014 decode requests", "full_decode_generation"),
     ])
-    latency_rows = "\n".join(
-        "<tr><td>{}</td>{}</tr>".format(
-            labels[key], "".join(
-                "<td>{} / {} / {} / {}</td>".format(
-                    fmt(batch[p]["latency"][key]["avg"]),
-                    fmt(batch[p]["latency"][key]["p25"]),
-                    fmt(batch[p]["latency"][key]["p50"]),
-                    fmt(batch[p]["latency"][key]["p90"]),
-                ) for p in order))
-        for key in ("full_prefill", "mixed", "full_decode")
-    )
+    lat_tbl = latency_table(batch)
+    lat_rows = "\n".join([
+        "<tr><td>{}</td>{}</tr>".format(label, "".join(
+            "<td>{} / {} / {} / {}</td>".format(
+                fmt(batch[p]["latency"][key]["avg"]), fmt(batch[p]["latency"][key]["p25"]),
+                fmt(batch[p]["latency"][key]["p50"]), fmt(batch[p]["latency"][key]["p90"]),
+            ) for p in order))
+        for label, key in (("full prefill", "full_prefill"), ("mixed", "mixed"),
+                           ("full decode", "full_decode"))
+    ])
     steps = " / ".join(f"{batch[p]['iterations']:,}" for p in order)
     decode_steps = " / ".join(f"{batch[p]['groups']['full_decode']:,}" for p in order)
     ref = batch["w16kv16"]["groups"]["full_decode"]
-    ratios = " / ".join(f"{ref / batch[p]['groups']['full_decode']:.2f}×" for p in order)
+    ratios = " / ".join(f"{ref / batch[p]['groups']['full_decode']:.2f}\u00d7" for p in order)
     return f'''<h3 class="sect-sub">5.1 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
     <p class="lede">Each row is one vLLM engine iteration. Following <code class="mono">recap.md</code>, full prefill means
       <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
       <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
       verifies whether quantization completes them in fewer engine steps by carrying a larger decode batch.</p>
-    <div class="tablewrap"><table>
-      <thead><tr><th>engine step type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
-      <tbody>{batch_rows}</tbody>
-    </table></div>
+    <div class="panelcard">
+      <ul class="legend" id="steptype-legend"></ul>
+      <div class="chartbox" id="batch-steps"></div>
+      <p class="cap">log scale \u2014 the three step types span four orders of magnitude
+        (full prefill is 3 steps in every arm)</p>
+    </div>
     <div class="tablewrap"><table>
       <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
       <tbody>{stat_rows}</tbody>
     </table></div>
     <div class="tablewrap"><table>
       <thead><tr><th>iteration elapsed time (ms; avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
-      <tbody>{latency_rows}</tbody>
+      <tbody>{lat_rows}</tbody>
     </table></div>
+    {lat_tbl}
     <div class="obs kv"><span class="tag">Step-count interpretation</span>
       Total engine iterations are <strong>{steps}</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
       iterations are <strong>{decode_steps}</strong>. Relative to w16kv16, the pure-decode step-count factors are
       <strong>{ratios}</strong>. Thus the KV8 arms do process substantially fewer decode steps, but that advantage must
       be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
       from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
-    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>
-    {iteration_latency_section(batch)}'''
-
-
-def iteration_latency_section(batch):
-    order = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
-    labels = {"all": "all iterations", "full_prefill": "pure prefill", "mixed": "mixed", "full_decode": "pure decode"}
-    rows = []
-    for key in ("all", "full_prefill", "mixed", "full_decode"):
-        rows.append("<tr><td>{}</td>{}</tr>".format(
-            labels[key], "".join(f"<td>{fmt(batch[p]['latency'][key]['avg'])} ms</td>" for p in order)))
-    return f'''<h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
-    <div class="tablewrap"><table>
-      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
-      <tbody>{''.join(rows)}</tbody>
-    </table></div>
-    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>'''
+    <p class="cap">source: server.log \u00b7 vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>'''
 
 
 # --------------------------------------------------------------------------
@@ -416,7 +413,9 @@ def main():
 
     dumps = lambda o: json.dumps(o, separators=(",", ":"))
     html = template
-    for token, payload in (("__CDF__", cdf), ("__TS__", ts), ("__TRACE__", trace)):
+    batch_data = {p: {k: v for k, v in b.items() if k != "log"} for p, b in batch.items()}
+    for token, payload in (("__CDF__", cdf), ("__TS__", ts), ("__TRACE__", trace),
+                           ("__BATCH__", batch_data)):
         if token not in html:
             sys.exit(f"template is missing the {token} placeholder")
         html = html.replace(token, dumps(payload))

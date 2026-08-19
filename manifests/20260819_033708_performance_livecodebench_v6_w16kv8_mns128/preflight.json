@@ -1,0 +1,310 @@
+{
+  "schema_version": "rivf26.preflight.v1",
+  "stage": "A",
+  "status": "FAIL",
+  "timestamp_epoch_s": 1787110637.862079,
+  "timestamp_iso": "2026-08-19T03:37:17.862079+00:00",
+  "run": {
+    "run_id": "20260819_033708_performance_livecodebench_v6_w16kv8_mns128",
+    "mode": "performance",
+    "precision": "w16kv8",
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 8192,
+    "estimated_output_gib": 80.0,
+    "safety_reserve_gib": 50.0
+  },
+  "git_commit": "c6332967c3e9a7912ae5b46e1a09ae72732d5caa",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B",
+    "size_bytes": 71926872555,
+    "weight_files": [
+      {
+        "name": "model-00001-of-00026.safetensors",
+        "size_bytes": 3996199712
+      },
+      {
+        "name": "model-00002-of-00026.safetensors",
+        "size_bytes": 1284907696
+      },
+      {
+        "name": "model-00003-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00004-of-00026.safetensors",
+        "size_bytes": 3370808712
+      },
+      {
+        "name": "model-00005-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00006-of-00026.safetensors",
+        "size_bytes": 3959424904
+      },
+      {
+        "name": "model-00007-of-00026.safetensors",
+        "size_bytes": 1096788232
+      },
+      {
+        "name": "model-00008-of-00026.safetensors",
+        "size_bytes": 3946842008
+      },
+      {
+        "name": "model-00009-of-00026.safetensors",
+        "size_bytes": 1096460848
+      },
+      {
+        "name": "model-00010-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00011-of-00026.safetensors",
+        "size_bytes": 1096460752
+      },
+      {
+        "name": "model-00012-of-00026.safetensors",
+        "size_bytes": 3409971080
+      },
+      {
+        "name": "model-00013-of-00026.safetensors",
+        "size_bytes": 1633331664
+      },
+      {
+        "name": "model-00014-of-00026.safetensors",
+        "size_bytes": 3422553872
+      },
+      {
+        "name": "model-00015-of-00026.safetensors",
+        "size_bytes": 1633659224
+      },
+      {
+        "name": "model-00016-of-00026.safetensors",
+        "size_bytes": 3946842136
+      },
+      {
+        "name": "model-00017-of-00026.safetensors",
+        "size_bytes": 1096460608
+      },
+      {
+        "name": "model-00018-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00019-of-00026.safetensors",
+        "size_bytes": 1096460808
+      },
+      {
+        "name": "model-00020-of-00026.safetensors",
+        "size_bytes": 3409971072
+      },
+      {
+        "name": "model-00021-of-00026.safetensors",
+        "size_bytes": 1633331744
+      },
+      {
+        "name": "model-00022-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00023-of-00026.safetensors",
+        "size_bytes": 3357898392
+      },
+      {
+        "name": "model-00024-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00025-of-00026.safetensors",
+        "size_bytes": 3832888256
+      },
+      {
+        "name": "model-00026-of-00026.safetensors",
+        "size_bytes": 2231416848
+      }
+    ]
+  },
+  "resources": {
+    "result_filesystem": {
+      "path": "/run/user/1009/ducct/rivf26",
+      "bytes_total": 162323963904,
+      "bytes_free": 141780697088,
+      "inodes_total": 198149371,
+      "inodes_free": 198146523,
+      "mount": "/run/user/1009 tmpfs  tmpfs",
+      "filesystem_type": "tmpfs"
+    },
+    "dev_shm": {
+      "path": "/dev/shm",
+      "bytes_total": 811619823616,
+      "bytes_free": 50085842944,
+      "inodes_total": 198149371,
+      "inodes_free": 198142315
+    },
+    "host": {
+      "memory_total_bytes": 1623239651328,
+      "memory_available_bytes": 526145499136,
+      "swap_total_bytes": 8589930496,
+      "swap_free_bytes": 0
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 16351,
+        "memory_free_mib": 24091,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 34,
+        "power_w": 35.46
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 16351,
+        "memory_free_mib": 24091,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 42,
+        "power_w": 62.58
+      },
+      {
+        "index": 2,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 16351,
+        "memory_free_mib": 24091,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 41,
+        "power_w": 63.41
+      },
+      {
+        "index": 3,
+        "name": "NVIDIA A100-PCIE-40GB",
+        "memory_total_mib": 40960,
+        "memory_used_mib": 16351,
+        "memory_free_mib": 24091,
+        "utilization_gpu_percent": 0,
+        "temperature_c": 41,
+        "power_w": 63.66
+      }
+    ],
+    "gpu_processes": [
+      "GPU-3d7a4073-6883-8404-2a2c-649e3f357fdb, 4124850, VLLM::Worker_TP0, 16342",
+      "GPU-bd1cf778-820d-19f4-ae21-ad5f5c1d98de, 4124851, VLLM::Worker_TP1, 16342",
+      "GPU-809db201-769b-b5c0-87bf-aab23077a820, 4124852, VLLM::Worker_TP2, 16342",
+      "GPU-2e9ce60f-2229-3abf-7e10-d6000b4d8524, 4124853, VLLM::Worker_TP3, 16342"
+    ]
+  },
+  "checks": [
+    {
+      "name": "git_worktree",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "c6332967c3e9a7912ae5b46e1a09ae72732d5caa"
+    },
+    {
+      "name": "result_filesystem_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=132.0 GiB; required=130.0 GiB"
+    },
+    {
+      "name": "result_filesystem_inodes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_fraction=1.000"
+    },
+    {
+      "name": "host_ram",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=490.0 GiB; minimum=256.0 GiB"
+    },
+    {
+      "name": "swap_usage",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "used_fraction=1.000; host available RAM is the mandatory pressure gate"
+    },
+    {
+      "name": "tmpfs_host_ram_after_estimated_output",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=490.0 GiB; required host floor + output/reserve=386.0 GiB"
+    },
+    {
+      "name": "dev_shm_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=46.6 GiB; minimum=32.0 GiB"
+    },
+    {
+      "name": "local_model",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "path=/dev/shm/Qwen3.6-35B-A3B; safetensors=26; missing=[]"
+    },
+    {
+      "name": "gpu_inventory",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "found=[(0, 'NVIDIA A100-PCIE-40GB'), (1, 'NVIDIA A100-PCIE-40GB'), (2, 'NVIDIA A100-PCIE-40GB'), (3, 'NVIDIA A100-PCIE-40GB')]; stderr="
+    },
+    {
+      "name": "gpu_hbm_before_server",
+      "result": "FAIL",
+      "mandatory": true,
+      "detail": "free_mib=[(0, 24091), (1, 24091), (2, 24091), (3, 24091)]"
+    },
+    {
+      "name": "gpu_processes",
+      "result": "FAIL",
+      "mandatory": true,
+      "detail": "GPU-3d7a4073-6883-8404-2a2c-649e3f357fdb, 4124850, VLLM::Worker_TP0, 16342; GPU-bd1cf778-820d-19f4-ae21-ad5f5c1d98de, 4124851, VLLM::Worker_TP1, 16342; GPU-809db201-769b-b5c0-87bf-aab23077a820, 4124852, VLLM::Worker_TP2, 16342; GPU-2e9ce60f-2229-3abf-7e10-d6000b4d8524, 4124853, VLLM::Worker_TP3, 16342"
+    },
+    {
+      "name": "stale_vllm_servers",
+      "result": "FAIL",
+      "mandatory": true,
+      "detail": "[{\"pid\": 4124062, \"uid\": \"1009\", \"command\": \"/home/ducct/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B-FP8 --tokenizer /dev/shm/Qwen3.6-35B-A3B-FP8 --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8000 --tensor-parallel-size 4 --max-model-len 262144 --max-num-seqs 128 --gpu-memory-utilization 0.90 --kv-cache-dtype bfloat16 --attention-backend FLASHINFER --reasoning-parser qwen3 --reasoning-config {\\\"reasoning_start_str\\\":\\\"<think>\\\",\\\"reasoning_end_str\\\":\\\"</think>\\\"} --enable-logging-iteration-details --quantization fp8 --max-num-batched-tokens 8192\"}]"
+    },
+    {
+      "name": "other_benchmark_clients",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "[{\"pid\": 3992676, \"uid\": \"1004\", \"command\": \"/home/hieupm/repos/base/.venv/bin/python /home/hieupm/repos/base/scripts/bench.py --server-log-file /home/hieupm/repos/base/scripts/logs/server_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.log --server-metrics-poll-interval 0.2 --dataset livecodebench --model /dev/shm/gemma-4-26B-A4B-it-FP8-dynamic --base-url http://localhost:8006 --max-concurrency 128 --temperature 0.0 --timeout 7200 --arrival-scale 200 --output /home/hieupm/repos/base/scripts/logs/bench_gemma-4-26B-A4B-it-FP8-dynamic_fp8_20260727_093159.json --num-prompts 1055 --azure-trace-csv /home/hieupm/repos/base/scripts/busiest_AzureLMMInferenceTrace_multimodal.csv --lcb-release-version release_latest --lcb-max-gen-toks 8192 --lcb-num-process-evaluate 12 --lcb-eval-timeout 6\"}]"
+    },
+    {
+      "name": "server_port",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "127.0.0.1:8000"
+    },
+    {
+      "name": "vllm_runtime",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "2.13.0+cu130\n0.27.0"
+    },
+    {
+      "name": "vllm_compiled_extension_api",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()\n(topk_weights: torch.Tensor, topk_ids: torch.Tensor, token_expert_indices: torch.Tensor, gating_output: torch.Tensor, renormalize: bool = False, e_score_correction_bias: torch.Tensor | None = None, is_padding: torch.Tensor | None = None) -> None"
+    },
+    {
+      "name": "hbm_sampler",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "/usr/local/bin/nsys"
+    }
+  ],
+  "mandatory_failures": [
+    "gpu_hbm_before_server",
+    "gpu_processes",
+    "stale_vllm_servers"
+  ]
+}

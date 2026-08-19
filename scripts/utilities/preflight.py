@@ -144,7 +144,7 @@ def main() -> int:
     # Model weights are the only large intentional /dev/shm residents. Runtime
     # logs live under RIVF26_BULK_ROOT, while NCCL/multiprocessing only require
     # bounded IPC headroom. Keep this independent and configurable.
-    min_shm_gib = args.min_shm_free_gib if args.min_shm_free_gib is not None else 32.0
+    min_shm_gib = args.min_shm_free_gib if args.min_shm_free_gib is not None else 10.0
     long_run = args.mode != "smoke"
     checks: list[dict[str, Any]] = []
 

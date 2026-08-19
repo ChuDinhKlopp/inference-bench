@@ -535,12 +535,12 @@ python analysis/plot_stacked_timeline.py \
       <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
       <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
       verifies whether quantization completes them in fewer engine steps by carrying a larger decode batch.</p>
-    <div class="tablewrap"><table>
-      <thead><tr><th>engine step type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
-      <tbody><tr><td>full prefill</td><td>3</td><td>3</td><td>3</td><td>3</td></tr>
-<tr><td>mixed</td><td>844</td><td>760</td><td>782</td><td>781</td></tr>
-<tr><td>full decode</td><td>31,839</td><td>20,254</td><td>19,662</td><td>13,949</td></tr></tbody>
-    </table></div>
+    <div class="panelcard">
+      <ul class="legend" id="steptype-legend"></ul>
+      <div class="chartbox" id="batch-steps"></div>
+      <p class="cap">log scale — the three step types span four orders of magnitude
+        (full prefill is 3 steps in every arm)</p>
+    </div>
     <div class="tablewrap"><table>
       <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
       <tbody><tr><td>full prefill — context requests</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td></tr>
@@ -554,6 +554,12 @@ python analysis/plot_stacked_timeline.py \
 <tr><td>mixed</td><td>7,397.4 / 4,373.4 / 5,749.6 / 12,247.0</td><td>8,882.8 / 5,145.0 / 6,526.4 / 15,717.5</td><td>8,485.5 / 5,025.4 / 6,209.4 / 15,443.2</td><td>8,697.8 / 5,269.1 / 5,774.2 / 22,559.7</td></tr>
 <tr><td>full decode</td><td>95.8 / 79.2 / 91.2 / 109.4</td><td>139.0 / 92.9 / 135.9 / 173.8</td><td>149.4 / 93.4 / 145.9 / 217.3</td><td>246.3 / 24.1 / 324.3 / 347.9</td></tr></tbody>
     </table></div>
+    <h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>all iterations</td><td>285.6 ms</td><td>457.2 ms</td><td>470.2 ms</td><td>697.2 ms</td></tr><tr><td>pure prefill</td><td>12,906.2 ms</td><td>14,184.5 ms</td><td>13,670.3 ms</td><td>14,328.3 ms</td></tr><tr><td>mixed</td><td>7,397.4 ms</td><td>8,882.8 ms</td><td>8,485.5 ms</td><td>8,697.8 ms</td></tr><tr><td>pure decode</td><td>95.8 ms</td><td>139.0 ms</td><td>149.4 ms</td><td>246.3 ms</td></tr></tbody>
+    </table></div>
+    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>
     <div class="obs kv"><span class="tag">Step-count interpretation</span>
       Total engine iterations are <strong>32,686 / 21,017 / 20,447 / 14,733</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
       iterations are <strong>31,839 / 20,254 / 19,662 / 13,949</strong>. Relative to w16kv16, the pure-decode step-count factors are
@@ -561,12 +567,6 @@ python analysis/plot_stacked_timeline.py \
       be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
       from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
     <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>
-    <h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
-    <div class="tablewrap"><table>
-      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
-      <tbody><tr><td>all iterations</td><td>285.6 ms</td><td>457.2 ms</td><td>470.2 ms</td><td>697.2 ms</td></tr><tr><td>pure prefill</td><td>12,906.2 ms</td><td>14,184.5 ms</td><td>13,670.3 ms</td><td>14,328.3 ms</td></tr><tr><td>mixed</td><td>7,397.4 ms</td><td>8,882.8 ms</td><td>8,485.5 ms</td><td>8,697.8 ms</td></tr><tr><td>pure decode</td><td>95.8 ms</td><td>139.0 ms</td><td>149.4 ms</td><td>246.3 ms</td></tr></tbody>
-    </table></div>
-    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>
 
     <h3 class="sect-sub">5.2 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
     <div class="controls">
@@ -820,6 +820,9 @@ python analysis/plot_stacked_timeline.py \
   // happens at draw time so the bin size stays a control rather than a baked-in
   // choice, and the burst structure can be inspected at several resolutions.
   const TRACE = {"off":[0.0,0.103,0.251,0.485,0.735,0.751,0.987,1.342,1.499,1.499,1.542,1.738,1.983,1.999,2.09,2.288,2.292,2.607,2.732,2.733,2.749,2.749,2.789,3.09,3.235,3.537,3.539,3.57,3.751,4.112,4.124,4.731,4.789,5.126,5.252,5.252,5.634,5.788,5.789,5.861,5.988,6.044,6.291,6.483,6.502,7.482,7.502,7.538,7.587,7.605,7.783,7.986,8.28,8.484,8.813,9.291,9.539,9.54,9.591,9.732,9.856,9.907,10.091,10.297,10.374,10.54,11.539,11.593,11.795,11.854,12.038,12.092,12.484,12.532,12.629,13.034,13.046,13.289,13.407,13.485,13.539,13.69,14.0,14.044,14.191,14.286,14.286,14.346,14.372,14.603,14.657,14.758,14.785,15.092,15.103,15.233,15.372,15.657,16.036,16.104,16.194,16.285,16.286,16.355,16.603,17.093,17.19,17.407,17.535,18.16,18.355,18.373,18.381,18.439,18.533,18.689,19.034,19.062,19.132,19.193,19.439,19.485,19.531,19.607,19.629,20.287,20.389,20.408,20.694,20.855,20.855,20.882,21.236,21.784,21.854,22.592,22.782,22.785,22.785,22.793,23.188,23.189,23.251,23.287,23.355,23.381,23.531,23.531,24.036,24.289,24.34,24.34,24.543,24.543,24.622,24.658,24.733,24.809,24.872,25.03,25.059,25.193,25.384,25.536,25.545,25.603,26.0,26.354,26.438,26.537,26.603,26.815,26.855,26.984,27.123,27.289,27.355,27.373,27.603,27.738,27.844,27.908,28.108,28.108,28.624,28.855,28.856,28.872,28.873,29.003,29.003,29.103,29.103,29.538,29.546,29.603,29.605,29.737,29.792,29.862,29.986,30.004,30.037,30.037,30.253,30.488,30.53,30.569,30.605,30.859,31.359,31.589,31.589,31.782,32.03,32.093,32.108,32.374,32.489,32.54,32.608,32.752,32.82,32.836,32.836,32.857,33.106,33.535,33.567,33.593,33.856,33.857,33.857,34.04,34.359,34.49,34.594,34.627,34.733,34.781,34.847,34.986,35.003,35.03,35.085,35.235,35.236,35.281,35.347,35.385,35.53,35.631,37.131,37.236,37.31,37.378,37.629,38.752,39.004,39.037,39.131,39.536,39.595,39.982,40.136,40.627,40.781,40.786,40.786,41.03,41.531,41.784,41.844,42.035,42.038,42.129,42.238,42.285,42.317,42.486,42.627,42.78,43.38,43.488,43.489,43.515,43.877,44.532,44.749,44.749,44.785,44.91,44.985,45.41,45.486,45.786,45.999,46.0,46.0,46.164,46.165,46.486,46.499,46.736,46.752,46.836,46.928,47.0,47.0,47.035,47.035,47.235,47.253,47.253,48.235,48.288,48.344,48.489,48.749,48.792,49.484,49.531,49.541,50.0,50.236,50.255,50.503,50.503,50.66,51.031,51.16,51.16,51.254,51.408,52.798,52.798,52.837,52.908,53.296,53.795,53.908,54.046,54.547,54.658,54.797,54.91,55.192,55.26,55.296,55.689,56.046,56.046,56.166,56.297,56.298,56.437,56.535,58.006,58.049,59.165,59.909,60.162,60.283,62.437,62.937,63.032,63.264,63.283,63.535,63.845,64.164,65.19,65.687,66.439,66.69,66.939,66.989,67.284,67.687,68.084,68.189,68.857,69.003,69.188,69.536,69.938,70.111,71.002,71.299,71.311,71.338,71.338,73.598,73.856,74.034,74.937,75.835,76.697,77.035,78.503,79.942,80.786,80.837,82.591,82.787,83.086,83.587,84.293,85.284,85.839,85.856,85.893,86.394,87.785,89.537,91.198,91.762,91.785,93.865,95.014,95.358,97.047,102.659,104.533,108.383,109.348,109.638,112.84,113.298,113.637,113.84,113.885,114.064,115.043,115.136,124.039,124.741,125.096,125.118,125.124,128.739,131.784,132.313,132.798,135.285,136.16,139.388,139.787,140.357,140.57,141.366,143.042,145.395,145.436,149.874,150.855,150.887,151.873,155.137,155.161,155.346,155.742,156.53,156.567,157.614,157.732,165.347,165.984,169.386,169.447,171.5,174.253,174.841,178.694,179.107,181.372,184.548,184.785,185.126,185.79,186.037,186.586,187.017,189.285,189.686,192.037,195.642,195.855,197.062,198.312,199.909,205.231,208.062,209.607,210.784,211.126,211.555,212.696,214.234,215.087,216.063,217.697,218.662,221.041,221.103,221.193,222.538,222.691,223.358,224.236,225.24,226.847,227.385,228.357,229.28,229.739,229.812,229.857,230.486,231.087,231.236,231.236,231.285,231.603,231.659,232.03,233.043,233.124,233.233,233.353,233.49,233.834,233.835,233.987,234.595,235.356,236.108,236.316,237.886,238.607,238.835,238.835,239.084,239.192,239.484,240.16,240.938,241.105,241.158,241.338,241.628,242.059,242.191,242.408,242.408,242.482,242.482,242.737,242.737,243.377,243.408,243.627,243.983,244.091,244.13,244.344,244.377,244.548,244.586,244.595,244.595,245.104,245.485,245.627,245.811,245.877,245.878,245.945,246.311,246.311,246.336,246.337,247.085,247.313,247.563,247.628,247.785,248.003,248.092,248.145,248.562,248.812,249.378,249.624,249.732,249.793,250.623,250.739,250.883,251.357,251.378,251.491,251.508,251.74,251.793,251.986,252.129,252.133,252.239,252.348,252.403,252.594,253.24,253.241,253.658,253.787,253.853,254.093,254.282,254.311,254.345,254.403,254.489,255.134,255.285,255.383,255.536,255.563,255.587,255.74,255.877,255.877,255.883,256.001,256.293,256.337,256.342,256.613,256.633,256.647,256.757,256.809,256.809,256.84,256.897,256.937,256.985,257.035,257.062,257.133,257.484,257.84,257.896,257.896,257.949,258.115,258.132,258.297,258.31,258.537,258.55,258.688,258.84,259.236,259.237,259.26,259.298,259.361,259.377,259.377,259.411,259.545,259.659,259.697,259.731,259.84,259.948,259.949,260.103,260.129,260.136,260.195,260.338,260.448,260.488,260.514,260.537,260.553,260.569,260.57,260.637,260.784,260.794,260.902,261.315,261.377,261.488,261.624,261.863,261.878,262.009,262.105,262.536,262.564,262.665,262.796,262.986,263.194,263.758,263.793,264.099,264.297,264.609,265.035,265.035,265.758,265.793,265.884,265.885,266.087,266.167,266.258,266.346,266.446,266.575,266.601,266.844,267.036,267.135,267.38,267.537,267.548,267.632,267.66,268.044,268.061,268.134,268.34,268.562,268.637,268.812,268.812,268.986,269.339,269.384,269.39,269.587,269.814,269.937,270.012,270.036,270.037,270.059,270.264,270.284,270.563,270.636,270.811,270.897,270.988,271.26,271.344,271.356,271.384,271.563,271.596,271.633,271.633,271.636,271.753,271.794,271.812,271.839,271.91,272.314,272.637,272.638,272.736,272.786,272.818,272.879,273.286,273.384,273.59,274.143,274.486,274.536,274.563,274.645,274.837,274.886,274.916,274.937,275.046,275.089,275.133,275.133,275.232,275.298,275.358,275.547,275.629,275.81,275.874,276.128,276.162,276.386,276.535,276.55,276.55,276.566,276.647,276.647,276.815,276.839,277.066,277.388,277.484,277.503,277.503,277.878,277.887,277.985,278.003,278.003,278.065,278.237,278.347,278.546,278.637,278.858,278.883,279.09,279.135,279.138,279.295,279.343,279.394,279.798,279.875,279.986,280.063,280.234,280.589,280.589,280.637,280.752,280.84,281.064,281.366,281.637,281.733,281.881,281.883,282.134,282.138,282.736,282.813,282.879,282.889,283.089,283.094,283.285,283.386,283.598,283.604,283.759,283.838,283.864,283.985,284.035,284.193,284.585,284.891,284.893,285.131,285.362,285.363,285.388,285.388,285.486,285.591,285.628,285.879,286.14,286.14,286.249,286.388,286.615,286.863,287.084,287.132,287.284,287.338,287.834,287.884,287.892,287.985,288.134,288.191,288.346,288.749,289.104,289.237,289.288,289.312,289.339,289.441,289.885,290.14,290.141,290.375,290.589,290.595,290.837,290.837,291.086,291.135,291.136,291.385,291.595,291.61,291.843,292.0,292.037,292.252,292.253,292.385,292.688,292.787,293.232,293.534,293.688,293.783,293.815,293.936,294.035,294.035,294.315,294.402,294.499,294.584,294.734,294.785,294.835,294.938,295.084,295.233,295.379,295.395,295.688,295.939,296.064,296.108,296.314,296.492,296.493,296.514,296.605,296.751,296.885,297.287,297.346,297.536,297.545,297.735,297.792,298.0,298.249,298.348,298.865,299.01,299.045,299.295,299.316,299.54,299.565,299.734,300.615,300.751,300.784,300.864,300.885,301.13,301.296,301.367,301.883,302.106,302.13,302.134,302.286,302.297,302.606,302.627,302.639,302.753,302.816,302.816,303.135,303.145],"dur":303.145};
+
+  // Engine step counts by type, from the server log's Iteration(...) lines.
+  const BATCH = {"w16kv16":{"iterations":32686,"groups":{"full_prefill":3,"mixed":844,"full_decode":31839},"elapsed_ms":{"full_prefill":38718.52,"mixed":6243422.37,"full_decode":3051559.6},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.2286729857819905,"p25":1.0,"p50":1.0,"p90":2.0},"mixed_generation":{"avg":88.56279620853081,"p25":80.0,"p50":95.0,"p90":108.0},"full_decode_generation":{"avg":74.04579289550551,"p25":57.0,"p50":86.0,"p90":108.0}},"latency":{"all":{"avg":285.556522364315,"p25":80.6,"p50":91.43,"p90":110.02},"full_prefill":{"avg":12906.173333333332,"p25":3983.59,"p50":11521.06,"p90":11521.06},"mixed":{"avg":7397.419869668247,"p25":4373.37,"p50":5749.61,"p90":12247.01},"full_decode":{"avg":95.8434498570935,"p25":79.23,"p50":91.16,"p90":109.37}}},"w8kv16":{"iterations":21017,"groups":{"full_prefill":3,"mixed":760,"full_decode":20254},"elapsed_ms":{"full_prefill":42553.6,"mixed":6750952.47,"full_decode":2814731.19},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.3960526315789474,"p25":1.0,"p50":1.0,"p90":2.0},"mixed_generation":{"avg":148.83684210526314,"p25":135.0,"p50":162.0,"p90":186.0},"full_decode_generation":{"avg":115.60625061716205,"p25":79.0,"p50":137.0,"p90":182.0}},"latency":{"all":{"avg":457.1650216491412,"p25":93.28,"p50":139.83,"p90":176.85},"full_prefill":{"avg":14184.533333333333,"p25":4877.32,"p50":15330.53,"p90":15330.53},"mixed":{"avg":8882.832197368421,"p25":5145.03,"p50":6526.45,"p90":15717.54},"full_decode":{"avg":138.971619926928,"p25":92.93,"p50":135.92,"p90":173.82}}},"w16kv8":{"iterations":20447,"groups":{"full_prefill":3,"mixed":782,"full_decode":19662},"elapsed_ms":{"full_prefill":41010.97,"mixed":6635656.42,"full_decode":2938266.42},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.3580562659846547,"p25":1.0,"p50":1.0,"p90":2.0},"mixed_generation":{"avg":150.19437340153453,"p25":140.0,"p50":164.0,"p90":182.0},"full_decode_generation":{"avg":118.16768385718645,"p25":87.0,"p50":139.0,"p90":182.0}},"latency":{"all":{"avg":470.2368958771458,"p25":93.84,"p50":148.78,"p90":233.58},"full_prefill":{"avg":13670.323333333334,"p25":5208.02,"p50":13072.97,"p90":13072.97},"mixed":{"avg":8485.494143222506,"p25":5025.35,"p50":6209.37,"p90":15443.16},"full_decode":{"avg":149.4388373512359,"p25":93.41,"p50":145.94,"p90":217.31}}},"w8kv8":{"iterations":14733,"groups":{"full_prefill":3,"mixed":781,"full_decode":13949},"elapsed_ms":{"full_prefill":42984.94,"mixed":6793010.71,"full_decode":3435158.12},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.4174135723431498,"p25":1.0,"p50":1.0,"p90":3.0},"mixed_generation":{"avg":230.809218950064,"p25":254.0,"p50":255.0,"p90":255.0},"full_decode_generation":{"avg":161.9749802853251,"p25":8.0,"p50":218.0,"p90":256.0}},"latency":{"all":{"avg":697.1529064005973,"p25":33.68,"p50":333.82,"p90":371.61},"full_prefill":{"avg":14328.313333333334,"p25":4643.53,"p50":15285.16,"p90":15285.16},"mixed":{"avg":8697.837016645326,"p25":5269.15,"p50":5774.17,"p90":22559.72},"full_decode":{"avg":246.2655473510646,"p25":24.08,"p50":324.32,"p90":347.93}}}};
 
   const SERIES = [
     { key: "w16kv16", label: "w16kv16", desc: "BF16 weights · BF16 KV", color: "--s1" },
@@ -1513,6 +1516,109 @@ python analysis/plot_stacked_timeline.py \
     }
   }
 
+  // ===================== engine step-type bars ===============================
+  // Grouped vertical bars: one x tick per precision arm, three bars per tick for
+  // the step types. Colour encodes step type here (arm identity is on the axis),
+  // so the chart carries its own legend. The y axis is log: full prefill is 3
+  // steps against ~32,000 full-decode steps, and a linear axis would erase two
+  // of the three series.
+  const STEP_TYPES = [
+    { key: "full_prefill", label: "full prefill", color: "--s1" },
+    { key: "mixed",        label: "mixed",        color: "--s2" },
+    { key: "full_decode",  label: "full decode",  color: "--s3" }
+  ];
+
+  function drawStepTypes() {
+    const host = document.getElementById("batch-steps");
+    host.innerHTML = "";
+    const arms = activeSeries().filter((s) => BATCH[s.key]);
+    if (!arms.length) { host.innerHTML = '<p class="note">No arm selected.</p>'; return; }
+
+    const W = 1000, H = 380, M = { t: 18, r: 20, b: 56, l: 68 };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    let hi = 0;
+    for (const s of arms) for (const g of STEP_TYPES) hi = Math.max(hi, BATCH[s.key].groups[g.key]);
+    const sc = logScale(1, hi);
+    const py = (v) => M.t + ih - (Math.log10(Math.max(v, 1)) - Math.log10(sc.lo)) /
+      (Math.log10(sc.hi) - Math.log10(sc.lo)) * ih;
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Engine step counts by type for each precision arm, log scale" });
+
+    for (const tk of sc.ticks) {
+      const y = py(tk);
+      svg.appendChild(svgEl("line", { x1: M.l, x2: M.l + iw, y1: y, y2: y,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x: M.l - 9, y: y + 3.5, "text-anchor": "end",
+        fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+      lab.textContent = fmtCompact(tk);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(svgEl("line", { x1: M.l, x2: M.l + iw, y1: M.t + ih, y2: M.t + ih,
+      stroke: css("--rule"), "stroke-width": 1 }));
+    const yc = svgEl("text", { x: 16, y: M.t + ih / 2, fill: css("--ink-2"), "font-size": 11,
+      "font-family": MONO, transform: `rotate(-90 16 ${M.t + ih / 2})`, "text-anchor": "middle" });
+    yc.textContent = "engine steps (log)";
+    svg.appendChild(yc);
+
+    const gw = iw / arms.length, bw = Math.min(48, gw * 0.66 / STEP_TYPES.length);
+    const hit = [];
+    arms.forEach((s, ai) => {
+      const cx = M.l + gw * (ai + 0.5);
+      STEP_TYPES.forEach((g, gi) => {
+        const v = BATCH[s.key].groups[g.key];
+        const x = cx + (gi - (STEP_TYPES.length - 1) / 2) * bw - bw / 2;
+        const y = py(v), h0 = M.t + ih - y;
+        svg.appendChild(svgEl("rect", { x, y, width: bw - 3, height: Math.max(h0, 1),
+          fill: css(g.color), rx: 2 }));
+        const lab = svgEl("text", { x: x + (bw - 3) / 2, y: y - 5, "text-anchor": "middle",
+          fill: css("--ink-2"), "font-size": 9.5, "font-family": MONO });
+        lab.textContent = fmtInt(v);
+        svg.appendChild(lab);
+        hit.push({ x: x + (bw - 3) / 2, y, s, g, v, col: css(g.color) });
+      });
+      const al = svgEl("text", { x: cx, y: M.t + ih + 20, "text-anchor": "middle",
+        fill: css("--ink"), "font-size": 12, "font-weight": 600, "font-family": MONO });
+      al.textContent = s.label;
+      svg.appendChild(al);
+    });
+    const xc = svgEl("text", { x: M.l + iw / 2, y: H - 8, "text-anchor": "middle",
+      fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+    xc.textContent = "precision arm";
+    svg.appendChild(xc);
+
+    host.appendChild(svg);
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+    svg.addEventListener("pointermove", (ev) => {
+      const r = svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * W, my = (ev.clientY - r.top) / r.height * H;
+      let best = null, bd = 1e9;
+      for (const c of hit) { const d = (c.x - mx) ** 2 + Math.max(0, c.y - my) ** 2; if (d < bd) { bd = d; best = c; } }
+      if (!best || Math.abs(best.x - mx) > bw) { tip.style.opacity = 0; return; }
+      const b = BATCH[best.s.key];
+      tip.innerHTML = `<span class="dot" style="background:${best.col}"></span>` +
+        `<span class="v">${best.s.label}</span> <span class="k">${best.g.label}</span><br>` +
+        `<span class="k">steps</span> <span class="v">${fmtInt(best.v)}</span> ` +
+        `<span class="k">of</span> ${fmtInt(b.iterations)} ` +
+        `<span class="k">(${(100 * best.v / b.iterations).toFixed(1)}%)</span>`;
+      tip.style.opacity = 1;
+      const bx = best.x / W * r.width, by = best.y / H * r.height;
+      tip.style.left = Math.min(Math.max(bx - tip.offsetWidth / 2, 4), r.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = Math.max(by - tip.offsetHeight - 12, 4) + "px";
+    });
+    svg.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
+
+    const leg = document.getElementById("steptype-legend");
+    leg.innerHTML = "";
+    for (const g of STEP_TYPES) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="swatch" style="background:${css(g.color)}"></span><code>${g.label}</code>`;
+      leg.appendChild(li);
+    }
+  }
+
   // ===================== Azure arrival window ===============================
   // Two panels on the 303 s trace clock: instantaneous rate (what the scheduler
   // is hit with) over cumulative arrivals (how much of the workload has landed).
@@ -1730,7 +1836,9 @@ python analysis/plot_stacked_timeline.py \
   onChange(renderLen); onChange(renderStack);
   listeners.push(renderTrace);
 
+  onChange(drawStepTypes);
   renderTraceStats(); renderTrace();
+  drawStepTypes();
   renderPareto(); renderTpot(); renderTtft(); renderLen(); renderStack();
 
   // Theme changes swap every CSS token, and the charts hold resolved colours,

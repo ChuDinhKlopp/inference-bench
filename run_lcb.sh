@@ -9,8 +9,9 @@ export RIVF26_LCB_PERFORMANCE_THINKING_TOKEN_BUDGET=24576
 export RIVF26_LCB_PERFORMANCE_MAX_GEN_TOKS=32768
 export RIVF26_PLOT_BIN_SECONDS=0.5
 
-RIVF26_RUN_ID="$(date -u +%Y%m%d_%H%M%S)_performance_livecodebench_v6_w16kv16_mns128" \
-./scripts/performance/run_trace_azure_livecodebench_Qwen3.6-35B-A3B_w16kv16.sh
+# DONE
+# RIVF26_RUN_ID="$(date -u +%Y%m%d_%H%M%S)_performance_livecodebench_v6_w16kv16_mns128" \
+# ./scripts/performance/run_trace_azure_livecodebench_Qwen3.6-35B-A3B_w16kv16.sh
 
 RIVF26_RUN_ID="$(date -u +%Y%m%d_%H%M%S)_performance_livecodebench_v6_w8kv8_mns128" \
 ./scripts/performance/run_trace_azure_livecodebench_Qwen3.6-35B-A3B_w8kv8.sh
