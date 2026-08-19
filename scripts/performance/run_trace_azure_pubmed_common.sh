@@ -268,22 +268,27 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark output directory: $run_dir"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark dataset: ccdv/pubmed-summarization"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark arrival mode: azure"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark requests: $request_count"
+started_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
+set +e
 if [[ "$profiler_enabled" == "1" || "$profiler_enabled" == "2" ]]; then
-  # ignore_frontend=true makes the worker profiler start only through the
-  # vLLM profiling API.  Without this request, profiler-config is accepted but
-  # no Torch trace is ever started.
+  # Start the workload first. The optional delay is a warm-up interval under
+  # real load, not an idle wait after server readiness.
+  BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
+    > "$client_log" 2>&1 &
+  client_pid=$!
   if (( profiler_start_delay > 0 )); then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting ${profiler_start_delay}s before starting Torch Profiler"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Workload started (pid=$client_pid); waiting ${profiler_start_delay}s before starting Torch Profiler"
     sleep "$profiler_start_delay"
   fi
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Torch Profiler via /start_profile"
-  curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >/dev/null
+  curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >> "$client_log" 2>&1 || true
+  wait "$client_pid"
+  client_rc=$?
+else
+  BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
+    2>&1 | tee "$client_log"
+  client_rc=${PIPESTATUS[0]}
 fi
-started_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
-set +e
-BENCH_ARRIVAL_RATE=azure "$rivf26_root/scripts/monitoring/capture_hbm.sh" "$hbm_prefix" "${client_cmd[@]}" \
-  2>&1 | tee "$client_log"
-client_rc=${PIPESTATUS[0]}
 set -e
 ended_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
 if (( client_rc != 0 )); then
