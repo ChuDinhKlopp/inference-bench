@@ -56,12 +56,13 @@ m, d = spec["models"][mk], spec["kv_dtypes"][kk]
 allowed = d.get("models")
 if allowed is not None and mk not in allowed:
     sys.exit(f"{kk} is not supported for {mk} (see spec notes); refusing to run")
-print(m["path_default"], d["backend"], d["cli"], spec["common"]["max_model_len"])
+print(m["path_default"], d["backend"], d["cli"], spec["common"]["max_model_len"],
+      m.get("reasoning_parser") or "-")
 PY
 ); then
   exit 1
 fi
-read -r model_path backend kv_cli spec_mml <<<"$resolved"
+read -r model_path backend kv_cli spec_mml reasoning_parser <<<"$resolved"
 
 num_requests=${RIVF26_LCB_PERFORMANCE_REQUESTS:-1055}
 [[ "$num_requests" == 1055 ]] || { echo "LiveCodeBench performance requires 1055 requests" >&2; exit 2; }
@@ -130,6 +131,8 @@ done
 # a confound. Fail closed before spending hours of GPU time.
 "$RIVF26_VENV_BIN/python" "$script_dir/validate_runtime.py" \
   --server-log "$server_log" --expect-backend "$backend" --expect-kv-dtype "$kv_cli" \
+  --expect-reasoning-parser "$reasoning_parser" \
+  --expect-workers "$(python3 -c 'import json;print(json.load(open("'"$spec"'"))["common"]["tensor_parallel_size"])')" \
   --out "$run_dir/runtime_validation.json" || {
   echo "runtime validation FAILED -- refusing to measure $arm" >&2; exit 2; }
 
