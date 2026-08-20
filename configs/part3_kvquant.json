@@ -12,7 +12,8 @@
       "TRITON_ATTN is pinned for every primary arm. It is the only backend that validates for bfloat16, fp8 AND int4_per_token_head across all three models on SM80, SM90 and gfx90a, including GPT-OSS attention sinks. Pinning it removes the kernel confound: under default selection the backend changes with kv-cache-dtype (A100: bf16 -> FLASH_ATTN, fp8 -> FLASHINFER, turboquant -> TURBOQUANT).",
       "Model WEIGHT precision is held at each checkpoint's native format and never swept. Only kv-cache-dtype varies. GPT-OSS-120B ships MXFP4 and cannot run BF16 weights on 4x40GB, so weight format differs BETWEEN models but is constant WITHIN a model. Cross-model comparison is therefore about attention architecture, not about weights.",
       "max_model_len 49152 covers prefill_heavy (32768+256) and decode_heavy (1024+16384) with headroom, identically for every arm.",
-      "The decode-heavy regime uses LiveCodeBench under the Azure bursty trace, matching the existing scripts/performance/run_trace_azure_livecodebench_* contract. Synthetic fixed-length prompts were rejected: the natural length distribution is part of what the study observes."
+      "The decode-heavy regime uses LiveCodeBench under the Azure bursty trace, matching the existing scripts/performance/run_trace_azure_livecodebench_* contract. Synthetic fixed-length prompts were rejected: the natural length distribution is part of what the study observes.",
+      "Every arm runs with --reasoning-parser. bench.py sends thinking_token_budget only when --enable-thinking is set, and vLLM can only honour it with a reasoning parser configured -- without one the server returns 200 with empty content and zero decode iterations. Qwen uses 'qwen3' with explicit <think>/</think> delimiters; GPT-OSS uses 'openai_gptoss' (harmony channels, no delimiter config)."
     ]
   },
   "models": {
@@ -28,7 +29,9 @@
       "has_sink": false,
       "has_sliding_window": false,
       "weight_format": "bfloat16",
-      "quantization": null
+      "quantization": null,
+      "reasoning_parser": "qwen3",
+      "reasoning_config": "{\"reasoning_start_str\":\"<think>\",\"reasoning_end_str\":\"</think>\"}"
     },
     "gptoss_120b": {
       "label": "GPT-OSS-120B",
@@ -44,7 +47,9 @@
       "has_sliding_window": true,
       "weight_format": "mxfp4",
       "quantization": "mxfp4",
-      "notes": "Sinks make TRITON_ATTN the only viable backend on SM80/gfx90a regardless of kv dtype; there is no second kernel to cross-check against."
+      "notes": "Sinks make TRITON_ATTN the only viable backend on SM80/gfx90a regardless of kv dtype; there is no second kernel to cross-check against.",
+      "reasoning_parser": "openai_gptoss",
+      "reasoning_config": null
     },
     "qwen3_30b": {
       "label": "Qwen3-30B-A3B-Thinking-2507",
@@ -58,7 +63,9 @@
       "has_sink": false,
       "has_sliding_window": false,
       "weight_format": "bfloat16",
-      "quantization": null
+      "quantization": null,
+      "reasoning_parser": "qwen3",
+      "reasoning_config": "{\"reasoning_start_str\":\"<think>\",\"reasoning_end_str\":\"</think>\"}"
     }
   },
   "kv_dtypes": {

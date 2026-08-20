@@ -38,12 +38,13 @@ if allowed is not None and mk not in allowed:
     sys.exit(f"{kk} is not supported for {mk} (see spec notes); refusing to launch")
 print(m["path_default"], m["quantization"] or "-", d["backend"], d["cli"],
       c["tensor_parallel_size"], c["max_num_batched_tokens"],
-      c["gpu_memory_utilization"], c["max_model_len"])
+      c["gpu_memory_utilization"], c["max_model_len"],
+      m.get("reasoning_parser") or "-", m.get("reasoning_config") or "-")
 PY
 ); then
   exit 1
 fi
-read -r model_path quantization backend kv_cli tp mbt gmu mml <<<"$resolved"
+read -r model_path quantization backend kv_cli tp mbt gmu mml reasoning_parser reasoning_config <<<"$resolved"
 
 max_num_seqs=${RIVF26_MAX_NUM_SEQS:-128}
 max_model_len=${RIVF26_MAX_MODEL_LEN:-$mml}
@@ -71,6 +72,8 @@ cmd=(
   --enable-logging-iteration-details
 )
 [[ $quantization != "-" ]] && cmd+=(--quantization "$quantization")
+[[ $reasoning_parser != "-" ]] && cmd+=(--reasoning-parser "$reasoning_parser")
+[[ $reasoning_config != "-" ]] && cmd+=(--reasoning-config "$reasoning_config")
 
 printf '%q ' "${cmd[@]}"; echo
 if [[ ${RIVF26_DRY_RUN:-0} == 1 ]]; then
