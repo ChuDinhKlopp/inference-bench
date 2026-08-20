@@ -31,6 +31,7 @@ import argparse
 import csv
 import json
 import pathlib
+import re
 import sys
 
 PRECISIONS = ["w16kv16", "w8kv16", "w16kv8", "w8kv8"]
@@ -143,6 +144,162 @@ def serving_metrics(run_dir):
 
 
 # --------------------------------------------------------------------------
+# engine batch-type accounting
+# --------------------------------------------------------------------------
+ITERATION_RE = re.compile(
+    r"Iteration\((?P<iteration>\d+)\): "
+    r"(?P<context_requests>\d+) context requests, "
+    r"(?P<context_tokens>\d+) context tokens, "
+    r"(?P<generation_requests>\d+) generation requests, "
+    r"(?P<generation_tokens>\d+) generation tokens, "
+    r"iteration elapsed time: (?P<elapsed_ms>[0-9.]+) ms"
+)
+
+
+def percentile(values, q):
+    values = sorted(values)
+    if not values:
+        return 0.0
+    return values[min(len(values) - 1, int((len(values) - 1) * q))]
+
+
+def extract_batch_stats(run_dir):
+    """Classify vLLM Iteration log lines by prefill/mixed/decode composition."""
+    log = run_dir / "logs" / "server.log"
+    if not log.exists():
+        sys.exit(f"{run_dir.name}: missing server log: {log}")
+    rows = []
+    with log.open(errors="replace") as f:
+        for line in f:
+            match = ITERATION_RE.search(line)
+            if match:
+                row = {k: float(v) for k, v in match.groupdict().items()}
+                rows.append(row)
+    if not rows:
+        sys.exit(f"{run_dir.name}: no vLLM Iteration(...) lines found in {log}")
+
+    groups = {
+        "full_prefill": [r for r in rows if r["context_requests"] > 0 and r["generation_requests"] == 0],
+        "mixed": [r for r in rows if r["context_requests"] > 0 and r["generation_requests"] > 0],
+        "full_decode": [r for r in rows if r["context_requests"] == 0 and r["generation_requests"] > 0],
+    }
+
+    def request_stats(group, field):
+        values = [r[field] for r in group]
+        return {
+            "avg": sum(values) / len(values) if values else 0.0,
+            "p25": percentile(values, 0.25),
+            "p50": percentile(values, 0.50),
+            "p90": percentile(values, 0.90),
+        }
+
+    def latency_stats(group):
+        values = [r["elapsed_ms"] for r in group]
+        return {
+            "avg": sum(values) / len(values) if values else 0.0,
+            "p25": percentile(values, 0.25),
+            "p50": percentile(values, 0.50),
+            "p90": percentile(values, 0.90),
+        }
+
+    return {
+        "iterations": len(rows),
+        "groups": {name: len(group) for name, group in groups.items()},
+        "elapsed_ms": {name: sum(r["elapsed_ms"] for r in group) for name, group in groups.items()},
+        "batch": {
+            "full_prefill_context": request_stats(groups["full_prefill"], "context_requests"),
+            "mixed_context": request_stats(groups["mixed"], "context_requests"),
+            "mixed_generation": request_stats(groups["mixed"], "generation_requests"),
+            "full_decode_generation": request_stats(groups["full_decode"], "generation_requests"),
+        },
+        "latency": {"all": latency_stats(rows), **{name: latency_stats(group) for name, group in groups.items()}},
+        "log": str(log),
+    }
+
+
+def fmt(value, digits=1):
+    return f"{value:,.{digits}f}"
+
+
+def latency_table(batch):
+    """Mean engine iteration latency per type; sits at the end of the batch section."""
+    order = PRECISIONS
+    rows = "".join(
+        "<tr><td>{}</td>{}</tr>".format(label, "".join(
+            f"<td>{fmt(batch[p]['latency'][key]['avg'])} ms</td>" for p in order))
+        for label, key in (("all iterations", "all"), ("pure prefill", "full_prefill"),
+                           ("mixed", "mixed"), ("pure decode", "full_decode")))
+    return f'''<h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></div>
+    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>'''
+
+
+def batch_section(batch):
+    """Render a report section from server-log-derived batch statistics."""
+    order = PRECISIONS
+    def stat_row(label, key):
+        return "<tr><td>{}</td>{}</tr>".format(
+            label, "".join(
+                "<td>{} / {} / {} / {}</td>".format(
+                    fmt(batch[p]["batch"][key]["avg"]),
+                    fmt(batch[p]["batch"][key]["p25"]),
+                    fmt(batch[p]["batch"][key]["p50"]),
+                    fmt(batch[p]["batch"][key]["p90"]),
+                ) for p in order))
+
+    stat_rows = "\n".join([
+        stat_row("full prefill — context requests", "full_prefill_context"),
+        stat_row("mixed — context requests", "mixed_context"),
+        stat_row("mixed — decode requests", "mixed_generation"),
+        stat_row("full decode — decode requests", "full_decode_generation"),
+    ])
+    lat_tbl = latency_table(batch)
+    lat_rows = "\n".join([
+        "<tr><td>{}</td>{}</tr>".format(label, "".join(
+            "<td>{} / {} / {} / {}</td>".format(
+                fmt(batch[p]["latency"][key]["avg"]), fmt(batch[p]["latency"][key]["p25"]),
+                fmt(batch[p]["latency"][key]["p50"]), fmt(batch[p]["latency"][key]["p90"]),
+            ) for p in order))
+        for label, key in (("full prefill", "full_prefill"), ("mixed", "mixed"),
+                           ("full decode", "full_decode"))
+    ])
+    steps = " / ".join(f"{batch[p]['iterations']:,}" for p in order)
+    decode_steps = " / ".join(f"{batch[p]['groups']['full_decode']:,}" for p in order)
+    ref = batch["w16kv16"]["groups"]["full_decode"]
+    ratios = " / ".join(f"{ref / batch[p]['groups']['full_decode']:.2f}×" for p in order)
+    return f'''<h3 class="sect-sub">5.1 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
+    <p class="lede">Each row is one vLLM engine iteration. Full prefill means
+      <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
+      <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
+      verifies whether quantization completes them in fewer engine steps by carrying a larger decode batch.</p>
+    <div class="panelcard">
+      <ul class="legend" id="steptype-legend"></ul>
+      <div class="chartbox" id="batch-steps"></div>
+      <p class="cap">log scale — the three step types span several orders of magnitude
+        (full prefill is a handful of steps in every arm)</p>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{stat_rows}</tbody>
+    </table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration elapsed time (ms; avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody>{lat_rows}</tbody>
+    </table></div>
+    {lat_tbl}
+    <div class="obs kv"><span class="tag">Step-count interpretation</span>
+      Total engine iterations are <strong>{steps}</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
+      iterations are <strong>{decode_steps}</strong>. Relative to w16kv16, the pure-decode step-count factors are
+      <strong>{ratios}</strong>. Thus the KV8 arms do process substantially fewer decode steps, but that advantage must
+      be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
+      from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
+    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>'''
+
+
+# --------------------------------------------------------------------------
 # the hand-written-constant audit
 # --------------------------------------------------------------------------
 def check_pareto(template, runs):
@@ -230,6 +387,7 @@ def main():
     cdf = {p: extract_cdf(d) for p, d in runs.items()}
     ts = {p: extract_ts(d) for p, d in runs.items()}
     trace = extract_trace(args.trace)
+    batch = {p: extract_batch_stats(d) for p, d in runs.items()}
 
     print("\nextracted")
     for p in PRECISIONS:
@@ -237,6 +395,11 @@ def main():
               f"{len(ts[p]['kv']):>5} bins @ {ts[p]['bin_s']:g}s   "
               f"cap {ts[p]['cap']:>9,} tok")
     print(f"  trace    {len(trace['off']):>5} arrivals   {trace['dur']:.1f}s window")
+    for p in PRECISIONS:
+        print(f"  {p:<8} {batch[p]['iterations']:>7,} engine steps   "
+              f"{batch[p]['groups']['full_prefill']:>4,} prefill / "
+              f"{batch[p]['groups']['mixed']:>5,} mixed / "
+              f"{batch[p]['groups']['full_decode']:>6,} decode")
 
     template = args.template.read_text()
 
@@ -253,12 +416,19 @@ def main():
             return 1
         print("\npareto constants: match measured runs")
 
+    batch_data = {p: {k: v for k, v in b.items() if k != "log"} for p, b in batch.items()}
+
     dumps = lambda o: json.dumps(o, separators=(",", ":"))
     html = template
-    for token, payload in (("__CDF__", cdf), ("__TS__", ts), ("__TRACE__", trace)):
+    for token, payload in (("__CDF__", cdf), ("__TS__", ts), ("__TRACE__", trace),
+                           ("__BATCH__", batch_data)):
         if token not in html:
             sys.exit(f"template is missing the {token} placeholder")
         html = html.replace(token, dumps(payload))
+
+    if "__BATCH_SECTION__" not in html:
+        sys.exit("template is missing the __BATCH_SECTION__ placeholder")
+    html = html.replace("__BATCH_SECTION__", batch_section(batch))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html)
@@ -266,9 +436,9 @@ def main():
 
     if args.emit_json:
         args.emit_json.mkdir(parents=True, exist_ok=True)
-        for name, payload in (("cdf", cdf), ("ts", ts), ("trace", trace)):
+        for name, payload in (("cdf", cdf), ("ts", ts), ("trace", trace), ("batch", batch_data)):
             (args.emit_json / f"{name}.json").write_text(dumps(payload))
-        print(f"wrote cdf/ts/trace JSON to {args.emit_json}")
+        print(f"wrote cdf/ts/trace/batch JSON to {args.emit_json}")
     return 0
 
 

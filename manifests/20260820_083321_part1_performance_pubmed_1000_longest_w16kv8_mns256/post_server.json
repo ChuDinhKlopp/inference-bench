@@ -1,0 +1,91 @@
+{
+  "schema_version": "rivf26.post_server.v1",
+  "stage": "B",
+  "status": "PASS",
+  "timestamp_epoch_s": 1787214960.104801,
+  "timestamp_iso": "2026-08-20T08:36:00.104801+00:00",
+  "run_id": "20260820_083321_part1_performance_pubmed_1000_longest_w16kv8_mns256",
+  "precision": "gpt-oss-120b_w16kv8",
+  "max_num_batched_tokens": 32768,
+  "checks": [
+    {
+      "name": "server_health",
+      "result": "PASS",
+      "detail": "status=200; error="
+    },
+    {
+      "name": "prometheus_metrics",
+      "result": "PASS",
+      "detail": "resolved={'requests_running': 'vllm:num_requests_running', 'requests_waiting': 'vllm:num_requests_waiting', 'kv_cache_usage': 'vllm:kv_cache_usage_perc'}; missing=[]; error="
+    },
+    {
+      "name": "max_num_batched_tokens_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=32768; evidence=['--max-num-batched-tokens 32768']"
+    },
+    {
+      "name": "kv_dtype_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=fp8; evidence=['kv-cache-dtype fp8', \"kv_cache_dtype': 'fp8\", 'kv_cache_dtype=fp8', 'cache-dtype fp8', \"cache_dtype': 'fp8\"]"
+    },
+    {
+      "name": "attention_backend_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=TRITON_ATTN; evidence=['RIVF26 server command: /home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /home/tuan/models/gpt-oss-120b/gpt-oss-120b --tokenizer /home/tuan/models/gpt-oss-120b/gpt-oss-120b --served-model-name gpt-oss-120b --host 127.0.0.1 --port 8001 --tensor-parallel-size 2 --max-model-len 131072 --max-num-seqs 256 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --attention-backend TRITON_ATTN --reasoning-parser openai_gptoss --enable-logging-iteration-details --max-num-batched-token', \"(APIServer pid=111544) INFO 08-20 08:33:38 [api_utils.py:273] non-default args: {'model_tag': '/home/tuan/models/gpt-oss-120b/gpt-oss-120b', 'host': '127.0.0.1', 'port': 8001, 'model': '/home/tuan/models/gpt-oss-120b/gpt-oss-120b', 'tokenizer': '/home/tuan/models/gpt-oss-120b/gpt-oss-120b', 'max_model_len': 131072, 'served_model_name': ['gpt-oss-120b'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'openai_gptoss', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dty\", '(Worker_TP0 pid=112541) INFO 08-20 08:34:03 [rocm.py:606] Using TRITON_ATTN backend (selected via --attention-backend).']"
+    },
+    {
+      "name": "reasoning_parser_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=openai_gptoss; evidence=[\"(APIServer pid=111544) INFO 08-20 08:33:38 [api_utils.py:273] non-default args: {'model_tag': '/home/tuan/models/gpt-oss-120b/gpt-oss-120b', 'host': '127.0.0.1', 'port': 8001, 'model': '/home/tuan/models/gpt-oss-120b/gpt-oss-120b', 'tokenizer': '/home/tuan/models/gpt-oss-120b/gpt-oss-120b', 'max_model_len': 131072, 'served_model_name': ['gpt-oss-120b'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'openai_gptoss', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'enable_logging_iteration_details': True, 'max_num_batched_tokens': 32768, 'max_num_seqs': 256}\", \"(EngineCore pid=112101) INFO 08-20 08:33:50 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/home/tuan/models/gpt-oss-120b/gpt-oss-120b', speculative_config=None, tokenizer='/home/tuan/models/gpt-oss-120b/gpt-oss-120b', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=131072, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=gpt_oss_mxfp4, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=fp8, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='openai_gptoss', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=Observab\"]"
+    },
+    {
+      "name": "weight_format_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=mxfp4; evidence=[\"(EngineCore pid=112101) INFO 08-20 08:33:50 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/home/tuan/models/gpt-oss-120b/gpt-oss-120b', speculative_config=None, tokenizer='/home/tuan/models/gpt-oss-120b/gpt-oss-120b', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=131072, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel\", \"(Worker_TP0 pid=112541) INFO 08-20 08:34:03 [mxfp4.py:524] Using 'TRITON' Mxfp4 MoE backend.\", '(Worker_TP0 pid=112541) INFO 08-20 08:34:21 [mxfp4.py:1730] Using MoEPrepareAndFinalizeNoDPEPMonolithic', '(Worker_TP0 pid=112541) INFO 08-20 08:34:21 [mxfp4.py:1731] Using OAITritonMxfp4ExpertsMonolithic']"
+    },
+    {
+      "name": "kv_capacity_runtime_evidence",
+      "result": "PASS",
+      "detail": "evidence=['GPU KV cache size: 1,034,484 tokens', 'Available KV cache memory: 13.33 GiB']"
+    },
+    {
+      "name": "tp2_hbm_after_load",
+      "result": "PASS",
+      "detail": "expected_replica_size=2; qualifying_busy_gpus=[{'index': 0, 'used_mib': 53324, 'free_mib': 12196}, {'index': 1, 'used_mib': 53324, 'free_mib': 12196}, {'index': 2, 'used_mib': 53324, 'free_mib': 12196}, {'index': 3, 'used_mib': 53324, 'free_mib': 12196}]; all_busy_gpus=[{'index': 0, 'used_mib': 53324, 'free_mib': 12196}, {'index': 1, 'used_mib': 53324, 'free_mib': 12196}, {'index': 2, 'used_mib': 53324, 'free_mib': 12196}, {'index': 3, 'used_mib': 53324, 'free_mib': 12196}]; idle_gpus=[{'index': 4, 'used_mib': 12, 'free_mib': 65508}, {'index': 5, 'used_mib': 12, 'free_mib': 65508}, {'index': 6, 'used_mib': 12, 'free_mib': 65508}, {'index': 7, 'used_mib': 12, 'free_mib': 65508}]; stderr="
+    },
+    {
+      "name": "monitor_processes",
+      "result": "PASS",
+      "detail": "configured=[114838]; dead=[]"
+    },
+    {
+      "name": "output_writable_and_headroom",
+      "result": "PASS",
+      "detail": "path=/home/tuan/rivf26-bulk; writable=True; free=55.1 GiB"
+    },
+    {
+      "name": "max_num_batched_tokens_preflight_consistency",
+      "result": "PASS",
+      "detail": "expected=32768; preflight=32768"
+    },
+    {
+      "name": "model_path_identity",
+      "result": "PASS",
+      "detail": "path=/home/tuan/models/gpt-oss-120b/gpt-oss-120b"
+    }
+  ],
+  "failures": [],
+  "warnings": [
+    {
+      "name": "fp8_kv_scale_accuracy_risk",
+      "blocking": false,
+      "detail": "vLLM default FP8 KV/Q/prob scale 1.0 was explicitly accepted for this study.",
+      "evidence": [
+        "(APIServer pid=111544) INFO 08-20 08:33:39 [cache.py:296] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor"
+      ]
+    }
+  ],
+  "blocking_warnings": [],
+  "fp8_kv_scale_policy": "vllm_default_1.0_explicitly_accepted",
+  "long_run_eligible": true
+}

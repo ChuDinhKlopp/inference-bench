@@ -183,7 +183,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--mode", choices=("smoke", "accuracy", "performance"), required=True)
-    parser.add_argument("--precision", choices=("w16kv16", "w8kv16", "w8kv8", "w16kv8"), required=True)
+    parser.add_argument(
+        "--precision",
+        choices=("w16kv16", "w8kv16", "w8kv8", "w16kv8", "gpt-oss-120b_w16kv16", "gpt-oss-120b_w16kv8"),
+        required=True,
+    )
     parser.add_argument("--max-num-seqs", type=int, required=True)
     parser.add_argument("--max-num-batched-tokens", type=int, default=8192)
     parser.add_argument("--estimated-output-gib", type=float, default=80.0)
@@ -206,7 +210,7 @@ def main() -> int:
     # Model weights are the only large intentional /dev/shm residents. Runtime
     # logs live under RIVF26_BULK_ROOT, while NCCL/multiprocessing only require
     # bounded IPC headroom. Keep this independent and configurable.
-    min_shm_gib = args.min_shm_free_gib if args.min_shm_free_gib is not None else 32.0
+    min_shm_gib = args.min_shm_free_gib if args.min_shm_free_gib is not None else 5.0
     long_run = args.mode != "smoke"
     checks: list[dict[str, Any]] = []
 

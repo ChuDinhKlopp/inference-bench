@@ -30,7 +30,11 @@ def alive(pid: int) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
-    parser.add_argument("--precision", choices=("w16kv16", "w8kv16", "w8kv8", "w16kv8"), required=True)
+    parser.add_argument(
+        "--precision",
+        choices=("w16kv16", "w8kv16", "w8kv8", "w16kv8", "gpt-oss-120b_w16kv16", "gpt-oss-120b_w16kv8"),
+        required=True,
+    )
     parser.add_argument("--server-log", type=Path, required=True)
     parser.add_argument("--preflight", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -149,20 +153,25 @@ def main() -> int:
     backend_evidence = [line[:500] for line in log_text.splitlines() if "triton_attn" in line.lower() and "backend" in line.lower()]
     check("attention_backend_runtime_evidence", bool(backend_evidence), f"expected=TRITON_ATTN; evidence={backend_evidence[:5]}")
 
+    is_gptoss = args.precision.startswith("gpt-oss-120b")
+    expected_reasoning_parser = "openai_gptoss" if is_gptoss else "qwen3"
     reasoning_evidence = [
         line[:1000]
         for line in log_text.splitlines()
-        if "reasoning_parser" in line and "qwen3" in line.lower()
+        if "reasoning_parser" in line and expected_reasoning_parser.lower() in line.lower()
     ]
     check(
         "reasoning_parser_runtime_evidence",
         bool(reasoning_evidence),
-        f"expected=qwen3; evidence={reasoning_evidence[:5]}",
+        f"expected={expected_reasoning_parser}; evidence={reasoning_evidence[:5]}",
     )
 
     expects_fp8_weights = args.precision.startswith("w8")
     quant_evidence = [line[:500] for line in log_text.splitlines() if "quant" in line.lower() and "fp8" in line.lower()]
-    if expects_fp8_weights:
+    if is_gptoss:
+        mxfp4_evidence = [line[:500] for line in log_text.splitlines() if "mxfp4" in line.lower()]
+        check("weight_format_runtime_evidence", bool(mxfp4_evidence), f"expected=mxfp4; evidence={mxfp4_evidence[:5]}")
+    elif expects_fp8_weights:
         check("weight_format_runtime_evidence", bool(quant_evidence), f"expected=fp8; evidence={quant_evidence[:5]}")
     else:
         model_evidence = [line[:500] for line in log_text.splitlines() if "Qwen3.6-35B-A3B" in line and "FP8" not in line]
@@ -237,7 +246,10 @@ def main() -> int:
         f"expected={args.max_num_batched_tokens}; preflight={preflight_batched_tokens}",
     )
     model_path = Path(preflight["model"]["local_path"])
-    expected_model = "Qwen3.6-35B-A3B-FP8" if expects_fp8_weights else "Qwen3.6-35B-A3B"
+    if is_gptoss:
+        expected_model = "gpt-oss-120b"
+    else:
+        expected_model = "Qwen3.6-35B-A3B-FP8" if expects_fp8_weights else "Qwen3.6-35B-A3B"
     check("model_path_identity", model_path.name == expected_model, f"path={model_path}")
 
     failures = [item["name"] for item in checks if item["result"] == "FAIL"]

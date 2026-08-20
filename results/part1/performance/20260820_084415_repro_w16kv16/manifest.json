@@ -1,0 +1,249 @@
+{
+  "schema_version": "rivf26.run_manifest.v1",
+  "status": "PASS",
+  "created_epoch_s": 1787219369.163392,
+  "created_iso": "2026-08-20T09:49:29.163392+00:00",
+  "run_id": "20260820_084415_repro_w16kv16",
+  "mode": "performance",
+  "dataset": "ccdv/pubmed-summarization",
+  "precision": "w16kv16",
+  "max_num_seqs": 384,
+  "max_num_batched_tokens": 32768,
+  "max_gen_toks": 10240,
+  "reasoning_effort": "low",
+  "enable_thinking": true,
+  "thinking_token_budget": 6144,
+  "arrival_mode": "azure",
+  "git_commit": "a882dd83a4675b6b0b74b8fd56f510640da9b97a",
+  "started_epoch_s": 1787215658.4947329,
+  "ended_epoch_s": 1787219365.6841762,
+  "preflight_status": "PASS",
+  "post_server_status": "PASS",
+  "thinking_budget_probe": {
+    "schema_version": "rivf26.thinking_budget_probe.v1",
+    "status": "PASS",
+    "timestamp_iso": "2026-08-20T08:47:37.374855+00:00",
+    "request_id": "pubmed-test-01455",
+    "prompt_tokens": 6457,
+    "max_completion_tokens": 6656,
+    "enable_thinking": true,
+    "thinking_token_budget": 6144,
+    "measured_reasoning_tokens": 1761,
+    "answer_chars": 2812,
+    "answer_nonempty": true,
+    "finish_reason": "stop",
+    "usage": {
+      "prompt_tokens": 6457,
+      "total_tokens": 8794,
+      "completion_tokens": 2337,
+      "prompt_tokens_details": null
+    }
+  },
+  "fp8_kv_scale_policy": "not_applicable",
+  "model": {
+    "logical_id": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "local_path": "/dev/shm/Qwen3.6-35B-A3B",
+    "size_bytes": 71926880710,
+    "weight_files": [
+      {
+        "name": "model-00001-of-00026.safetensors",
+        "size_bytes": 3996199712
+      },
+      {
+        "name": "model-00002-of-00026.safetensors",
+        "size_bytes": 1284907696
+      },
+      {
+        "name": "model-00003-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00004-of-00026.safetensors",
+        "size_bytes": 3370808712
+      },
+      {
+        "name": "model-00005-of-00026.safetensors",
+        "size_bytes": 3357898360
+      },
+      {
+        "name": "model-00006-of-00026.safetensors",
+        "size_bytes": 3959424904
+      },
+      {
+        "name": "model-00007-of-00026.safetensors",
+        "size_bytes": 1096788232
+      },
+      {
+        "name": "model-00008-of-00026.safetensors",
+        "size_bytes": 3946842008
+      },
+      {
+        "name": "model-00009-of-00026.safetensors",
+        "size_bytes": 1096460848
+      },
+      {
+        "name": "model-00010-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00011-of-00026.safetensors",
+        "size_bytes": 1096460752
+      },
+      {
+        "name": "model-00012-of-00026.safetensors",
+        "size_bytes": 3409971080
+      },
+      {
+        "name": "model-00013-of-00026.safetensors",
+        "size_bytes": 1633331664
+      },
+      {
+        "name": "model-00014-of-00026.safetensors",
+        "size_bytes": 3422553872
+      },
+      {
+        "name": "model-00015-of-00026.safetensors",
+        "size_bytes": 1633659224
+      },
+      {
+        "name": "model-00016-of-00026.safetensors",
+        "size_bytes": 3946842136
+      },
+      {
+        "name": "model-00017-of-00026.safetensors",
+        "size_bytes": 1096460608
+      },
+      {
+        "name": "model-00018-of-00026.safetensors",
+        "size_bytes": 3946841992
+      },
+      {
+        "name": "model-00019-of-00026.safetensors",
+        "size_bytes": 1096460808
+      },
+      {
+        "name": "model-00020-of-00026.safetensors",
+        "size_bytes": 3409971072
+      },
+      {
+        "name": "model-00021-of-00026.safetensors",
+        "size_bytes": 1633331744
+      },
+      {
+        "name": "model-00022-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00023-of-00026.safetensors",
+        "size_bytes": 3357898392
+      },
+      {
+        "name": "model-00024-of-00026.safetensors",
+        "size_bytes": 3370808752
+      },
+      {
+        "name": "model-00025-of-00026.safetensors",
+        "size_bytes": 3832888256
+      },
+      {
+        "name": "model-00026-of-00026.safetensors",
+        "size_bytes": 2231416848
+      }
+    ]
+  },
+  "inputs": {
+    "workload": "/home/tuan/repos/inference-bench/rivf26/datasets/processed/pubmed_azure_bursty_1000_longest.jsonl",
+    "workload_sha256": "3e02405cbff4eefcab636edc0583e675cc8b4930115f4b1923068730ce9b1bad",
+    "trace_csv": "/home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv",
+    "trace_csv_sha256": "3b487d345f3ae02d5a4dcfc8d303a060322d6fe03763af638cda2695d11977d0",
+    "trace_rows": 1000
+  },
+  "commands": {
+    "server": "/home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B --tokenizer /dev/shm/Qwen3.6-35B-A3B --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8010 --tensor-parallel-size 2 --max-model-len 262144 --max-num-seqs 384 --gpu-memory-utilization 0.90 --kv-cache-dtype bfloat16 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\{\\\"reasoning_start_str\\\":\\\"\\<think\\>\\\"\\,\\\"reasoning_end_str\\\":\\\"\\</think\\>\\\"\\} --enable-logging-iteration-details --max-num-batched-tokens 32768",
+    "client": "BENCH_ARRIVAL_RATE=azure /home/tuan/repos/vllm/.venv/bin/python /home/tuan/repos/inference-bench/rivf26/scripts/performance/run_pubmed_trace.py --workload /home/tuan/repos/inference-bench/rivf26/datasets/processed/pubmed_azure_bursty_1000_longest.jsonl --trace-csv /home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv --output-dir /home/tuan/repos/inference-bench/rivf26/results/part1/performance/20260820_084415_repro_w16kv16 --base-url http://127.0.0.1:8010 --model Qwen3.6-35B-A3B --server-log-file /home/tuan/rivf26-bulk/results/part1/performance/20260820_084415_repro_w16kv16/logs/server.log --server-metrics-poll-interval 0.2 --max-num-batched-tokens 32768 --thinking-token-budget 6144 --expected-requests 1000 --timeout 86400"
+  },
+  "bulk_run_dir": "/home/tuan/rivf26-bulk/results/part1/performance/20260820_084415_repro_w16kv16",
+  "artifacts": [
+    {
+      "relative_path": "logs/client.log",
+      "size_bytes": 61522,
+      "modified_epoch_s": 1787219361.7384217
+    },
+    {
+      "relative_path": "logs/hbm_sampler.log",
+      "size_bytes": 118,
+      "modified_epoch_s": 1787219366.9184551
+    },
+    {
+      "relative_path": "logs/resource_guard.log",
+      "size_bytes": 0,
+      "modified_epoch_s": 1787215615.7945774
+    },
+    {
+      "relative_path": "logs/server.log",
+      "size_bytes": 20616326,
+      "modified_epoch_s": 1787219366.0424495
+    },
+    {
+      "relative_path": "logs/server_command.txt",
+      "size_bytes": 547,
+      "modified_epoch_s": 1787215464.1216648
+    },
+    {
+      "relative_path": "raw/hbm.csv",
+      "size_bytes": 16316620,
+      "modified_epoch_s": 1787219366.8184545
+    },
+    {
+      "relative_path": "raw/hbm_sampler.pid",
+      "size_bytes": 7,
+      "modified_epoch_s": 1787215464.1216648
+    },
+    {
+      "relative_path": "raw/iteration_metrics.iteration_metrics.csv",
+      "size_bytes": 44904718,
+      "modified_epoch_s": 1787219361.5864205
+    },
+    {
+      "relative_path": "raw/iteration_metrics.iteration_metrics.jsonl",
+      "size_bytes": 128329189,
+      "modified_epoch_s": 1787219360.218412
+    },
+    {
+      "relative_path": "raw/iteration_metrics.prometheus_samples.jsonl",
+      "size_bytes": 24403741,
+      "modified_epoch_s": 1787219358.9504037
+    },
+    {
+      "relative_path": "raw/per_request.csv",
+      "size_bytes": 91213,
+      "modified_epoch_s": 1787219361.7424216
+    },
+    {
+      "relative_path": "raw/resource_guard.csv",
+      "size_bytes": 11686,
+      "modified_epoch_s": 1787219335.8622544
+    },
+    {
+      "relative_path": "raw/responses.jsonl",
+      "size_bytes": 52232991,
+      "modified_epoch_s": 1787219363.170431
+    }
+  ],
+  "log_growth": {
+    "bytes_written": 286968678,
+    "elapsed_s": 3707.1894433498383,
+    "requests": 1000,
+    "successful_requests": 1000,
+    "generated_tokens": 2423921,
+    "gib_per_hour": 0.25953285733217446,
+    "mib_per_request": 0.2736746578216553,
+    "bytes_per_generated_token": 118.39027674581804
+  },
+  "e2e_metrics": {
+    "csv": "/home/tuan/repos/inference-bench/rivf26/e2e_metrics_record.csv",
+    "record_input": "/home/tuan/repos/inference-bench/rivf26/results/part1/performance/20260820_084415_repro_w16kv16/20260820_084415_repro_w16kv16_e2e_record_input.json",
+    "record_script": "/home/tuan/repos/inference-bench/record_e2e_metrics.py"
+  }
+}

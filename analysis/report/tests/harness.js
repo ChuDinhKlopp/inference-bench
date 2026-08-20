@@ -31,7 +31,7 @@ function mkNode(tag, ns) {
 }
 
 const byId = {};
-for (const id of ["arm-toggles", "cdf-tpot", "cdf-ttft", "cdf-len", "ts-stack", "ts-legend", "trace-stats", "trace-chart", "pareto"]) {
+for (const id of ["arm-toggles", "cdf-tpot", "cdf-ttft", "cdf-len", "ts-stack", "ts-legend", "trace-stats", "trace-chart", "pareto", "batch-steps", "steptype-legend"]) {
   byId[id] = mkNode("div");
 }
 function sel(id, value) {
@@ -138,6 +138,17 @@ check("stack panels labelling every dot", labelled, 7);
 const runMarks = marksOf(stackSvgs[4]);
 console.log("   running-requests labels:",
   runMarks.children.filter(isText).map((t) => t.textContent).join(" "));
+
+// ---- 5.1 engine step-type bars (table 1 only; table 2 stays a table) ----
+check("step-type svg", countDeep(byId["batch-steps"], isSvg), 1);
+check("step-type bars (4 arms x 3 types)",
+  countDeep(byId["batch-steps"], (n) => n.tag === "rect"), 12);
+check("step-type legend entries", byId["steptype-legend"].children.length, 3);
+const stSvg = byId["batch-steps"].children.find(isSvg);
+stSvg.listeners.pointermove.forEach((f) => f({ clientX: 150, clientY: 300 }));
+const stTip = byId["batch-steps"].children.find((c) => c.tag === "div");
+checkMin("step-type tooltip populated", stTip.innerHTML.length, 20);
+console.log("   tooltip:", stTip.innerHTML.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 80));
 
 console.log(fail ? `\n${fail} CHECK(S) FAILED` : "\nALL CHECKS PASSED");
 process.exit(fail ? 1 : 0);

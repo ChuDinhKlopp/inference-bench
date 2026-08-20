@@ -1,0 +1,121 @@
+{
+  "model": "Qwen3.6-35B-A3B",
+  "dataset": "ccdv/pubmed-summarization",
+  "num_prompts": 1000,
+  "num_requests": 1000,
+  "isl_stats": {
+    "avg": 8868.82,
+    "p25": 7120.0,
+    "p50": 8005.0,
+    "p90": 12026.5
+  },
+  "osl_stats": {
+    "avg": 1.0,
+    "p25": 1.0,
+    "p50": 1.0,
+    "p90": 1.0
+  },
+  "arrival_source": "azure_trace",
+  "azure_trace_csv": "/home/tuan/repos/inference-bench/rivf26/traces/processed/azure_multimodal_bursty_1000.csv",
+  "max_concurrency": null,
+  "benchmark_duration_s": 303.15577133744955,
+  "serving_metrics": {
+    "completed": 1000,
+    "failed": 0,
+    "total_input": 8868818,
+    "total_output": 1000,
+    "request_throughput": 3.298634215631928,
+    "request_goodput": 0.0,
+    "output_throughput": 3.298634215631928,
+    "total_token_throughput": 29258.285141227956,
+    "mean_ttft_ms": 0.0,
+    "median_ttft_ms": 0.0,
+    "std_ttft_ms": 0.0,
+    "percentiles_ttft_ms": [
+      [
+        50.0,
+        0.0
+      ],
+      [
+        90.0,
+        0.0
+      ],
+      [
+        95.0,
+        0.0
+      ],
+      [
+        99.0,
+        0.0
+      ]
+    ],
+    "mean_tpot_ms": 0.0,
+    "median_tpot_ms": 0.0,
+    "std_tpot_ms": 0.0,
+    "percentiles_tpot_ms": [
+      [
+        50.0,
+        0.0
+      ],
+      [
+        90.0,
+        0.0
+      ],
+      [
+        95.0,
+        0.0
+      ],
+      [
+        99.0,
+        0.0
+      ]
+    ],
+    "mean_itl_ms": 0.0,
+    "median_itl_ms": 0.0,
+    "std_itl_ms": 0.0,
+    "percentiles_itl_ms": [
+      [
+        50.0,
+        0.0
+      ],
+      [
+        90.0,
+        0.0
+      ],
+      [
+        95.0,
+        0.0
+      ],
+      [
+        99.0,
+        0.0
+      ]
+    ],
+    "mean_e2el_ms": 16.869146404787898,
+    "median_e2el_ms": 11.904308572411537,
+    "std_e2el_ms": 12.163211776382747,
+    "percentiles_e2el_ms": [
+      [
+        50.0,
+        11.904308572411537
+      ],
+      [
+        90.0,
+        29.131962545216084
+      ],
+      [
+        95.0,
+        41.01723749190568
+      ],
+      [
+        99.0,
+        58.66205869242549
+      ]
+    ],
+    "max_output_tokens_per_s": 16.0,
+    "max_concurrent_requests": 16,
+    "rtfx": 0.0
+  },
+  "num_preempted": 0,
+  "evaluation_metrics": null
+}

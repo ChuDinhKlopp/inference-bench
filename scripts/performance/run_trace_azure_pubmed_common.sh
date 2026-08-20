@@ -1,15 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-precision=${1:?precision is required}
-shift
+model=${1:?model is required}
+precision=${2:?precision is required}
+shift 2
+case "$model" in
+  Qwen3.6-35B-A3B|gpt-oss-120b) ;;
+  *) echo "unsupported model: $model" >&2; exit 2 ;;
+esac
 case "$precision" in
   w16kv16|w8kv16|w8kv8|w16kv8) ;;
   *) echo "unsupported precision: $precision" >&2; exit 2 ;;
 esac
+if [[ "$model" == "gpt-oss-120b" && "$precision" != "w16kv16" && "$precision" != "w16kv8" ]]; then
+  echo "gpt-oss-120b only supports w16kv16/w16kv8 -- see scripts/servers/run_server_common.sh" >&2
+  exit 2
+fi
 if (( $# )); then
   echo "this matrix harness accepts configuration through audited RIVF26_* variables, not passthrough arguments" >&2
   exit 2
+fi
+served_model_name=$model
+# preflight.py/post_server_validate.py/build_plot_data.py key their
+# precision-config lookups and series labels by a single string; namespace
+# gpt-oss-120b's so it never collides with Qwen's own w16kv16/w16kv8 entries.
+if [[ "$model" == "gpt-oss-120b" ]]; then
+  full_precision="gpt-oss-120b_${precision}"
+else
+  full_precision=$precision
 fi
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -38,7 +56,7 @@ workload_suffix=
 if [[ "$request_count" == 2000 ]]; then
   workload_suffix=_longest
 fi
-run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${request_count}_${precision}_mns${max_num_seqs}}
+run_id=${RIVF26_RUN_ID:-$(date -u +%Y%m%d_%H%M%S)_performance_pubmed_${request_count}_${full_precision}_mns${max_num_seqs}}
 workload=${RIVF26_PUBMED_WORKLOAD:-$RIVF26_BULK_ROOT/datasets/processed/pubmed_azure_bursty_${request_count}${workload_suffix}.jsonl}
 trace_csv=${RIVF26_AZURE_TRACE_CSV:-$rivf26_root/traces/processed/azure_multimodal_bursty_${request_count}.csv}
 smoke_gate=${RIVF26_SMOKE_MATRIX:-$rivf26_root/manifests/smoke_matrix_mbt16384_20260816.json}
@@ -53,7 +71,7 @@ client_log=$bulk_run_dir/logs/client.log
 resource_guard_log=$bulk_run_dir/logs/resource_guard.log
 resource_guard_csv=$bulk_run_dir/raw/resource_guard.csv
 hbm_csv=$bulk_run_dir/raw/hbm.csv
-server_launcher=$rivf26_root/scripts/servers/run_server_Qwen3.6-35B-A3B_${precision}.sh
+server_launcher=$rivf26_root/scripts/servers/run_server_${model}_${precision}.sh
 
 validate_cmd=(
   "$RIVF26_VENV_BIN/python" "$script_dir/run_pubmed_trace.py"
@@ -69,7 +87,7 @@ preflight_cmd=(
   "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/preflight.py"
   --run-id "$run_id"
   --mode performance
-  --precision "$precision"
+  --precision "$full_precision"
   --max-num-seqs "$max_num_seqs"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
   --estimated-output-gib "${RIVF26_ESTIMATED_OUTPUT_GIB:-80}"
@@ -83,7 +101,7 @@ client_cmd=(
   --trace-csv "$trace_csv"
   --output-dir "$run_dir"
   --base-url "http://127.0.0.1:$port"
-  --model Qwen3.6-35B-A3B
+  --model "$served_model_name"
   --server-log-file "$server_log"
   --server-metrics-poll-interval "${RIVF26_SERVER_METRICS_POLL_INTERVAL:-0.2}"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
@@ -94,7 +112,7 @@ client_cmd=(
 post_cmd=(
   "$RIVF26_VENV_BIN/python" "$rivf26_root/scripts/utilities/post_server_validate.py"
   --run-id "$run_id"
-  --precision "$precision"
+  --precision "$full_precision"
   --server-log "$server_log"
   --preflight "$preflight"
   --output "$post_server"
@@ -103,6 +121,12 @@ post_cmd=(
 )
 if [[ "$precision" == *kv8 ]]; then
   post_cmd+=(--accept-fp8-kv-scale-one)
+fi
+profiler_enabled=${RIVF26_ENABLE_TORCH_PROFILER:-${ENABLE_TORCH_PROFILER:-0}}
+profiler_start_delay=${RIVF26_PROFILER_START_DELAY_SECONDS:-0}
+if [[ ! "$profiler_start_delay" =~ ^[0-9]+$ ]]; then
+  echo "RIVF26_PROFILER_START_DELAY_SECONDS must be a non-negative integer" >&2
+  exit 2
 fi
 
 print_command() {
@@ -134,7 +158,9 @@ if [[ ! -x "$server_launcher" ]]; then
   echo "missing server launcher: $server_launcher" >&2
   exit 2
 fi
-if [[ ${RIVF26_SKIP_SMOKE_GATE:-0} == 1 ]]; then
+if [[ "$model" == "gpt-oss-120b" ]]; then
+  : # Not part of the Qwen weight/KV precision matrix; no smoke-matrix entry exists for it.
+elif [[ ${RIVF26_SKIP_SMOKE_GATE:-0} == 1 ]]; then
   echo "WARNING: RIVF26_SKIP_SMOKE_GATE=1 -- bypassing the four-precision scheduler-budget smoke gate. No fresh MI250 smoke-matrix PASS backs this run." >&2
 elif [[ ! -f "$smoke_gate" ]]; then
   echo "missing four-precision scheduler-budget smoke gate: $smoke_gate" >&2
@@ -239,13 +265,18 @@ if ! "$RIVF26_VENV_BIN/python" -c \
   exit 2
 fi
 
-"$RIVF26_VENV_BIN/python" "$script_dir/probe_thinking_budget.py" \
-  --workload "$workload" \
-  --base-url "http://127.0.0.1:$port" \
-  --model Qwen3.6-35B-A3B \
-  --model-path "${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B}" \
-  --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET" \
-  --output "$run_dir/thinking_budget_probe.json"
+if [[ "$model" != "gpt-oss-120b" ]]; then
+  # gpt-oss's harmony reasoning format has no <think>/</think> budget-forcing
+  # mechanism to probe -- see finalize_pubmed_run.py, which skips requiring
+  # this artifact for gpt-oss-120b.
+  "$RIVF26_VENV_BIN/python" "$script_dir/probe_thinking_budget.py" \
+    --workload "$workload" \
+    --base-url "http://127.0.0.1:$port" \
+    --model "$served_model_name" \
+    --model-path "${RIVF26_BF16_MODEL_PATH:-/dev/shm/Qwen3.6-35B-A3B}" \
+    --thinking-token-budget "$RIVF26_THINKING_TOKEN_BUDGET" \
+    --output "$run_dir/thinking_budget_probe.json"
+fi
 
 {
   printf 'BENCH_ARRIVAL_RATE=azure '
@@ -260,9 +291,35 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark arrival mode: azure"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Benchmark requests: $request_count"
 started_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
 set +e
-BENCH_ARRIVAL_RATE=azure "${client_cmd[@]}" \
-  2>&1 | tee "$client_log"
-client_rc=${PIPESTATUS[0]}
+if [[ "$profiler_enabled" == "1" || "$profiler_enabled" == "2" ]]; then
+  # Start the workload first. The optional delay is a warm-up interval under
+  # real load, not an idle wait after server readiness -- the profiler should
+  # capture steady-state iterations, not startup/compile transients.
+  client_status_file="$client_log.exit"
+  (
+    set +e
+    BENCH_ARRIVAL_RATE=azure "${client_cmd[@]}" \
+      2>&1 | tee "$client_log"
+    printf '%s\n' "${PIPESTATUS[0]}" > "$client_status_file"
+  ) &
+  client_pid=$!
+  if (( profiler_start_delay > 0 )); then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Workload started (pid=$client_pid); waiting ${profiler_start_delay}s before starting Torch Profiler"
+    sleep "$profiler_start_delay"
+  fi
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Torch Profiler via /start_profile"
+  curl -fsS -X POST "http://127.0.0.1:$port/start_profile" >/dev/null 2>&1 || true
+  wait "$client_pid"
+  if [[ -s "$client_status_file" ]]; then
+    client_rc=$(<"$client_status_file")
+  else
+    client_rc=2
+  fi
+else
+  BENCH_ARRIVAL_RATE=azure "${client_cmd[@]}" \
+    2>&1 | tee "$client_log"
+  client_rc=${PIPESTATUS[0]}
+fi
 set -e
 ended_epoch_s=$("$RIVF26_VENV_BIN/python" -c 'import time; print(time.time())')
 if (( client_rc != 0 )); then
@@ -295,7 +352,8 @@ plot_cmd=(
   --hbm "$hbm_csv"
   --output "$run_dir/plot_data.json"
   --run-id "$run_id"
-  --precision "$precision"
+  --model "$served_model_name"
+  --precision "$full_precision"
   --mode performance
   --max-num-seqs "$max_num_seqs"
   --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
@@ -307,24 +365,31 @@ if [[ -n "$kv_capacity" ]]; then
 fi
 "${plot_cmd[@]}"
 
-"$RIVF26_VENV_BIN/python" "$script_dir/finalize_pubmed_run.py" \
-  --workload "$workload" \
-  --trace-csv "$trace_csv" \
-  --client-summary "$run_dir/summary.json" \
-  --responses "$bulk_run_dir/raw/responses.jsonl" \
-  --preflight "$preflight" \
-  --post-server "$post_server" \
-  --thinking-budget-probe "$run_dir/thinking_budget_probe.json" \
-  --server-command "$run_dir/logs/server_command.txt" \
-  --client-command "$run_dir/client_command.txt" \
-  --bulk-run-dir "$bulk_run_dir" \
-  --output-manifest "$run_dir/manifest.json" \
-  --run-id "$run_id" \
-  --precision "$precision" \
-  --max-num-seqs "$max_num_seqs" \
-  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS" \
-  --started-epoch-s "$started_epoch_s" \
+finalize_cmd=(
+  "$RIVF26_VENV_BIN/python" "$script_dir/finalize_pubmed_run.py"
+  --workload "$workload"
+  --trace-csv "$trace_csv"
+  --client-summary "$run_dir/summary.json"
+  --responses "$bulk_run_dir/raw/responses.jsonl"
+  --preflight "$preflight"
+  --post-server "$post_server"
+  --server-command "$run_dir/logs/server_command.txt"
+  --client-command "$run_dir/client_command.txt"
+  --bulk-run-dir "$bulk_run_dir"
+  --output-manifest "$run_dir/manifest.json"
+  --run-id "$run_id"
+  --precision "$full_precision"
+  --model "$served_model_name"
+  --variant "$precision"
+  --max-num-seqs "$max_num_seqs"
+  --max-num-batched-tokens "$RIVF26_MAX_NUM_BATCHED_TOKENS"
+  --started-epoch-s "$started_epoch_s"
   --ended-epoch-s "$ended_epoch_s"
+)
+if [[ "$model" != "gpt-oss-120b" ]]; then
+  finalize_cmd+=(--thinking-budget-probe "$run_dir/thinking_budget_probe.json")
+fi
+"${finalize_cmd[@]}"
 
 run_completed=1
 echo "RIVF26 PubMed/Azure run completed: $run_dir"

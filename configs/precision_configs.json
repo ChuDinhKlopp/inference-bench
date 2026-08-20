@@ -53,6 +53,26 @@
       "kv_cache_dtype_runtime_a100": "float8_e4m3fn",
       "kv_scale_policy": "vllm_default_1.0_explicitly_accepted_2026-08-15",
       "long_run_gate": "PASS when Stage B records --accept-fp8-kv-scale-one; vLLM 0.27 disables runtime calculation for this hybrid GDN model"
+    },
+    "gpt-oss-120b_w16kv16": {
+      "model_logical_id": "openai/gpt-oss-120b",
+      "model_path_default": "/home/tuan/models/gpt-oss-120b/gpt-oss-120b",
+      "model_revision": "b5c939de8f754692c1647ca79fbf85e8c1e70f8a",
+      "weight_format": "mxfp4 (native checkpoint quantization, not a study-selected arm)",
+      "activation_scheme": "bf16",
+      "quantization": "mxfp4",
+      "kv_cache_dtype_cli": "bfloat16",
+      "notes": "Not part of the Qwen weight/KV precision matrix -- ships a single native mxfp4 weight checkpoint, so only the KV-cache axis (kv16/kv8) varies. See scripts/servers/run_server_common.sh."
+    },
+    "gpt-oss-120b_w16kv8": {
+      "model_logical_id": "openai/gpt-oss-120b",
+      "model_path_default": "/home/tuan/models/gpt-oss-120b/gpt-oss-120b",
+      "model_revision": "b5c939de8f754692c1647ca79fbf85e8c1e70f8a",
+      "weight_format": "mxfp4 (native checkpoint quantization, not a study-selected arm)",
+      "activation_scheme": "bf16",
+      "quantization": "mxfp4",
+      "kv_cache_dtype_cli": "fp8",
+      "notes": "Not part of the Qwen weight/KV precision matrix -- ships a single native mxfp4 weight checkpoint, so only the KV-cache axis (kv16/kv8) varies. See scripts/servers/run_server_common.sh."
     }
   }
 }

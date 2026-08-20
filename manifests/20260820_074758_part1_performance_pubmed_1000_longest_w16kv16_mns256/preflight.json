@@ -1,0 +1,308 @@
+{
+  "schema_version": "rivf26.preflight.v1",
+  "stage": "A",
+  "status": "PASS",
+  "timestamp_epoch_s": 1787212087.104739,
+  "timestamp_iso": "2026-08-20T07:48:07.104739+00:00",
+  "run": {
+    "run_id": "20260820_074758_part1_performance_pubmed_1000_longest_w16kv16_mns256",
+    "mode": "performance",
+    "precision": "gpt-oss-120b_w16kv16",
+    "max_num_seqs": 256,
+    "max_num_batched_tokens": 32768,
+    "estimated_output_gib": 5.0,
+    "safety_reserve_gib": 5.0
+  },
+  "git_commit": "a882dd83a4675b6b0b74b8fd56f510640da9b97a",
+  "model": {
+    "logical_id": "openai/gpt-oss-120b",
+    "revision": "b5c939de8f754692c1647ca79fbf85e8c1e70f8a",
+    "local_path": "/home/tuan/models/gpt-oss-120b/gpt-oss-120b",
+    "size_bytes": 65276871745,
+    "weight_files": [
+      {
+        "name": "model-00000-of-00014.safetensors",
+        "size_bytes": 4625017896
+      },
+      {
+        "name": "model-00001-of-00014.safetensors",
+        "size_bytes": 4115586736
+      },
+      {
+        "name": "model-00002-of-00014.safetensors",
+        "size_bytes": 4625017888
+      },
+      {
+        "name": "model-00003-of-00014.safetensors",
+        "size_bytes": 4115586752
+      },
+      {
+        "name": "model-00004-of-00014.safetensors",
+        "size_bytes": 4625017896
+      },
+      {
+        "name": "model-00005-of-00014.safetensors",
+        "size_bytes": 4115586696
+      },
+      {
+        "name": "model-00006-of-00014.safetensors",
+        "size_bytes": 4625017856
+      },
+      {
+        "name": "model-00007-of-00014.safetensors",
+        "size_bytes": 4060267176
+      },
+      {
+        "name": "model-00008-of-00014.safetensors",
+        "size_bytes": 4625017896
+      },
+      {
+        "name": "model-00009-of-00014.safetensors",
+        "size_bytes": 4170906304
+      },
+      {
+        "name": "model-00010-of-00014.safetensors",
+        "size_bytes": 4625017896
+      },
+      {
+        "name": "model-00011-of-00014.safetensors",
+        "size_bytes": 4115586752
+      },
+      {
+        "name": "model-00012-of-00014.safetensors",
+        "size_bytes": 4064660808
+      },
+      {
+        "name": "model-00013-of-00014.safetensors",
+        "size_bytes": 4625017896
+      },
+      {
+        "name": "model-00014-of-00014.safetensors",
+        "size_bytes": 4115586736
+      }
+    ]
+  },
+  "resources": {
+    "result_filesystem": {
+      "path": "/home/tuan/rivf26-bulk",
+      "bytes_total": 469825110016,
+      "bytes_free": 59452874752,
+      "inodes_total": 29204480,
+      "inodes_free": 27929366,
+      "mount": "/home/tuan /dev/sda2[/home/tuan] ext4",
+      "filesystem_type": "ext4"
+    },
+    "dev_shm": {
+      "path": "/dev/shm",
+      "bytes_total": 270420238336,
+      "bytes_free": 16855277568,
+      "inodes_total": 66020566,
+      "inodes_free": 66015560
+    },
+    "host": {
+      "memory_total_bytes": 540840480768,
+      "memory_available_bytes": 211069943808,
+      "swap_total_bytes": 8589930496,
+      "swap_free_bytes": 0
+    },
+    "gpus": [
+      {
+        "index": 0,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 53291,
+        "memory_free_mib": 12229,
+        "utilization_gpu_percent": 6,
+        "temperature_c": 41,
+        "power_w": 125.0
+      },
+      {
+        "index": 1,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 53291,
+        "memory_free_mib": 12229,
+        "utilization_gpu_percent": 10,
+        "temperature_c": 43,
+        "power_w": 0.0
+      },
+      {
+        "index": 2,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 11,
+        "memory_free_mib": 65509,
+        "utilization_gpu_percent": 9,
+        "temperature_c": 37,
+        "power_w": 119.0
+      },
+      {
+        "index": 3,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 11,
+        "memory_free_mib": 65509,
+        "utilization_gpu_percent": 10,
+        "temperature_c": 42,
+        "power_w": 0.0
+      },
+      {
+        "index": 4,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 11,
+        "memory_free_mib": 65509,
+        "utilization_gpu_percent": 7,
+        "temperature_c": 38,
+        "power_w": 131.0
+      },
+      {
+        "index": 5,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 11,
+        "memory_free_mib": 65509,
+        "utilization_gpu_percent": 7,
+        "temperature_c": 40,
+        "power_w": 0.0
+      },
+      {
+        "index": 6,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 11,
+        "memory_free_mib": 65509,
+        "utilization_gpu_percent": 10,
+        "temperature_c": 31,
+        "power_w": 121.0
+      },
+      {
+        "index": 7,
+        "name": "AMD Instinct MI250X/MI250",
+        "memory_total_mib": 65520,
+        "memory_used_mib": 11,
+        "memory_free_mib": 65509,
+        "utilization_gpu_percent": 7,
+        "temperature_c": 35,
+        "power_w": 0.0
+      }
+    ],
+    "gpu_processes": [
+      "gpu=0 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=0 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=1 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=1 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=2 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=2 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=3 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=3 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=4 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=4 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=5 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=5 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=6 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=6 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=7 {'name': 'N/A', 'pid': 3270416, 'mem': 55544905728, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 55544905728}, 'cu_occupancy': 0, 'evicted_time': 1632}",
+      "gpu=7 {'name': 'N/A', 'pid': 3270417, 'mem': 0, 'engine_usage': {'gfx': 0, 'enc': 0}, 'memory_usage': {'gtt_mem': 0, 'cpu_mem': 0, 'vram_mem': 0}, 'cu_occupancy': 0, 'evicted_time': 1632}"
+    ]
+  },
+  "checks": [
+    {
+      "name": "git_worktree",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "a882dd83a4675b6b0b74b8fd56f510640da9b97a"
+    },
+    {
+      "name": "result_filesystem_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=55.4 GiB; required=10.0 GiB"
+    },
+    {
+      "name": "result_filesystem_inodes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free_fraction=0.956"
+    },
+    {
+      "name": "host_ram",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "available=196.6 GiB; minimum=150.0 GiB"
+    },
+    {
+      "name": "swap_usage",
+      "result": "FAIL",
+      "mandatory": false,
+      "detail": "used_fraction=1.000; host available RAM is the mandatory pressure gate"
+    },
+    {
+      "name": "dev_shm_capacity",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "free=15.7 GiB; minimum=5.0 GiB"
+    },
+    {
+      "name": "local_model",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "path=/home/tuan/models/gpt-oss-120b/gpt-oss-120b; safetensors=15; missing=[]"
+    },
+    {
+      "name": "gpu_inventory",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "found=[(0, 'AMD Instinct MI250X/MI250'), (1, 'AMD Instinct MI250X/MI250'), (2, 'AMD Instinct MI250X/MI250'), (3, 'AMD Instinct MI250X/MI250'), (4, 'AMD Instinct MI250X/MI250'), (5, 'AMD Instinct MI250X/MI250'), (6, 'AMD Instinct MI250X/MI250'), (7, 'AMD Instinct MI250X/MI250')]; stderr="
+    },
+    {
+      "name": "gpu_hbm_before_server",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "expected_replica_size=2; free_gpu_count=6; free_mib=[(0, 12229), (1, 12229), (2, 65509), (3, 65509), (4, 65509), (5, 65509), (6, 65509), (7, 65509)]"
+    },
+    {
+      "name": "gpu_processes",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "expected_replica_size=2; process_free_gpu_count=8; busy=none"
+    },
+    {
+      "name": "stale_vllm_servers",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "none"
+    },
+    {
+      "name": "other_benchmark_clients",
+      "result": "PASS",
+      "mandatory": false,
+      "detail": "none"
+    },
+    {
+      "name": "server_port",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "127.0.0.1:8000"
+    },
+    {
+      "name": "vllm_runtime",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "WARNING 08-20 07:48:00 [rocm.py:123] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.\n2.13.0+rocm7.2\n0.27.0"
+    },
+    {
+      "name": "vllm_compiled_extension_api",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "WARNING 08-20 07:48:04 [rocm.py:123] Using CUDA_VISIBLE_DEVICES on ROCm is deprecated and support will be removed in vLLM v0.26.0. Please use HIP_VISIBLE_DEVICES instead.\n_moe_C::topk_softmax(Tensor($0! -> ) topk_weights, Tensor($1! -> ) topk_indices, Tensor($2! -> ) token_expert_indices, Tensor gating_output, bool renormalize, Tensor? bias, Tensor? is_padding) -> ()\n(topk_weights: torch.Tensor, topk_ids: torch.Tensor, token_expert_indices: torch.Tensor, gating_output: torch.Tensor, renormalize: bool = False, e_score_correction_bias: torch.Tensor | None = None, is_padding: torch.Tensor | None = None) -> None"
+    },
+    {
+      "name": "hbm_sampler",
+      "result": "PASS",
+      "mandatory": true,
+      "detail": "amdsmi=available"
+    }
+  ],
+  "mandatory_failures": []
+}

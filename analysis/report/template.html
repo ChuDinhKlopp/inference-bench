@@ -287,7 +287,7 @@
           quantization axes each move it, and do they compound?</li>
         <li><strong>Token throughput</strong> — does the extra cache convert into work done, or only into residency?</li>
         <li><strong>Throughput against latency</strong> — is there a trade-off at all, or does one arm dominate?
-          Plotted as Pareto charts in §5.1: throughput vs TTFT and throughput vs TPOT.</li>
+          Plotted as Pareto charts in §5.2: throughput vs TTFT and throughput vs TPOT.</li>
       </ul></div>
 
     <div class="obs kv"><span class="tag">2 · KV cache and scheduler behaviour</span>
@@ -384,7 +384,7 @@
       ramp: <strong>25 % of the workload lands in the first 35 s</strong>, the middle of the window is comparatively
       quiet, and then <strong>44 % arrives in the final 60 s</strong> (22 % in the final 30 s alone, with the densest
       10 s starting at t = 251 s). The queue is therefore being filled hardest at the exact moment the trace ends, which
-      is why the backlog in Section 5.4 peaks just after 303 s and then takes hours to drain.</div>
+      is why the backlog in Section 5.5 peaks just after 303 s and then takes hours to drain.</div>
 
     <h4 class="minor">Prompt and output lengths <span class="unit">the 1,000 PubMed articles as actually served</span></h4>
     <p class="lede">Measured per request from each run's <code class="mono">raw/per_request.csv</code>, not from a
@@ -417,7 +417,7 @@
           byte-identical to the one behind an earlier run of this report on other hardware — its own SHA-256 is
           recorded in Section 4 — so absolute ISL figures are not directly comparable across machines; the four MI250
           arms below all serve this exact same file). A handful of large prefills still compete with the decode batch,
-          contributing to the ITL tails in Section 5.2.</li>
+          contributing to the ITL tails in Section 5.3.</li>
         <li><strong>OSL is tightly clustered and nearly arm-invariant</strong> — every arm sits at a median of
           2,390–2,404 tokens with p99 ≈ 3,360–3,430. The 6,144-token thinking budget and 10,240 output cap are almost
           never the binding constraint; the highest single-arm maximum is w8kv16's 4,056 tokens. The total-output-mean
@@ -499,7 +499,7 @@
       PubMed workload JSONL's hash differs from an earlier run of this report made on other hardware — this is a
       different frozen selection of the same source dataset, not a corrupted file — so absolute ISL/input-token figures
       here are specific to this MI250 run and not directly comparable across machines. The shared prompt-length
-      distribution is plotted in Section 5.6.</p>
+      distribution is plotted in Section 5.7.</p>
 
     <h3 class="sect-sub">Measurement stack</h3>
     <ul class="setup">
@@ -560,7 +560,9 @@ python analysis/plot_stacked_timeline.py \
       arm pills to isolate or compare arms — the selection is shared across all charts in this section.</p>
     <ul class="armtoggles" id="arm-toggles"></ul>
 
-    <h3 class="sect-sub">5.1 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
+    __BATCH_SECTION__
+
+    <h3 class="sect-sub">5.2 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
     <div class="controls">
       <label>throughput <select id="pf-thru">
         <option value="tot">total token (in + out)</option>
@@ -599,11 +601,11 @@ python analysis/plot_stacked_timeline.py \
           1.8 % behind w16kv16 on total throughput and second-closest on every latency statistic — a real but modest
           cost. w8kv16 (weights alone) loses 57 % of total throughput and pays a 15.1 × TPOT-mean penalty for the same
           single-axis change. The two axes are not comparable in cost on MI250, unlike the roughly symmetric ≈ 1.8 ×
-          penalty each axis paid independently on A100 — see §5.4 for why (the missing tuned FP8 GEMM kernel config
+          penalty each axis paid independently on A100 — see §5.5 for why (the missing tuned FP8 GEMM kernel config
           only affects the weight axis).</li>
       </ul></div>
 
-    <h3 class="sect-sub">5.2 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
+    <h3 class="sect-sub">5.3 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="tpot-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
       <label>x range <select id="tpot-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
@@ -627,17 +629,17 @@ python analysis/plot_stacked_timeline.py \
           733.5 ms, p99 986.9 ms. w8kv8: median 779.7 ms, p99 1,192.4 ms. Both miss the server SLO by an order of
           magnitude regardless of statistic. The gap between the two clusters (733.5 ms vs 73.2 ms medians) is far
           larger than the gap between either KV variant within a cluster (73.2 vs 48.6 ms, or 779.7 vs 733.5 ms) — this
-          is the same pattern as §5.1: the weight axis, not the KV axis, is what breaks decode speed here.</li>
+          is the same pattern as §5.2: the weight axis, not the KV axis, is what breaks decode speed here.</li>
       </ul>
       The ITL figures are consistent but not uniform across arms the way A100's were: median ITL is 41.8 / 433.0 / 56.6 /
       489.5 ms (w16kv16 / w8kv16 / w16kv8 / w8kv8), while p99 ITL is 430 ms / 6,519 ms / 749 ms / 4,433 ms — notably,
-      w8kv16's p99 ITL tail is <em>longer</em> than w8kv8's despite a similar median, which lines up with §5.4:
+      w8kv16's p99 ITL tail is <em>longer</em> than w8kv8's despite a similar median, which lines up with §5.5:
       w8kv16 suffers 111 preemptions across the run and w8kv8 suffers none, and a preemption reappears in the ITL trace
       as one very long multi-second gap. Against the borrowed SLOs: the two FP8-weight arms miss the server TPOT target
       by roughly 9–15 ×, but the two BF16-weight arms come close to or clear it — a materially different outcome from
       the earlier A100 measurement, where every arm missed the TPOT SLO by 4 × or more.</div>
 
-    <h3 class="sect-sub">5.3 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
+    <h3 class="sect-sub">5.4 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="ttft-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
       <label>x range <select id="ttft-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
@@ -656,10 +658,10 @@ python analysis/plot_stacked_timeline.py \
         <li><strong>Unlike the A100 measurement, precision is clearly visible here — TTFT follows the same
           weight-precision split as TPOT.</strong> Mean TTFT is 1,723.3 s / 1,815.9 s for the BF16-weight arms versus
           3,826.1 s / 3,734.6 s for the FP8-weight arms — roughly <strong>double</strong>, not a 4.6 % spread. Because
-          the FP8-weight arms decode so much slower per request (§5.2), their queues also drain more slowly, so TTFT
+          the FP8-weight arms decode so much slower per request (§5.3), their queues also drain more slowly, so TTFT
           inherits the same split even though TTFT itself measures queue wait, not decode speed.</li>
         <li><strong>Within each cluster the ordering is tight</strong>: w16kv16 vs w16kv8 differ by only 5.4 % on mean
-          TTFT, and w8kv16 vs w8kv8 by only 2.5 % — consistent with §5.1's finding that the KV axis alone costs little
+          TTFT, and w8kv16 vs w8kv8 by only 2.5 % — consistent with §5.2's finding that the KV axis alone costs little
           compared to the weight axis.</li>
         <li><strong>Both FP8-weight arms show a genuine multi-hundred-second plateau</strong>, not just w8kv8: w8kv16
           has a 928 s gap with no first token issued between roughly t = 911 s and t = 1,839 s (at CDF ≈ 0.19), and
@@ -670,10 +672,10 @@ python analysis/plot_stacked_timeline.py \
       </ul>
       <strong>Against the borrowed SLOs, every arm still fails the P99 TTFT target by orders of magnitude</strong> — p99
       TTFT of 3,250.7–7,340.1 s against a 2–3 s target — even though the BF16-weight arms' TPOT now clears or nearly
-      clears its own SLO (§5.2). TTFT here is dominated by this workload's 12×-oversubscribed queue, not by precision;
+      clears its own SLO (§5.3). TTFT here is dominated by this workload's 12×-oversubscribed queue, not by precision;
       that part of the A100 finding still holds.</div>
 
-    <h3 class="sect-sub">5.4 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
+    <h3 class="sect-sub">5.5 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
     <div class="controls">
       <label>y scale <select id="ts-scale"><option value="shared">shared across arms</option><option value="free">per-panel fit</option></select></label>
       <label>smoothing <select id="ts-smooth"><option value="1">none (5 s bins)</option><option value="6">30 s</option><option value="12">60 s</option></select></label>
@@ -700,7 +702,7 @@ python analysis/plot_stacked_timeline.py \
           for that arm specifically. For the two FP8-weight arms, effective concurrency (278.4 and 548.6) <em>exceeds</em>
           256 — both hit the scheduler cap directly, running pinned at exactly 256 for most of the trace.</li>
         <li><strong>Total throughput does not decline smoothly with more quantization — it splits in two, matching
-          §5.1/§5.2.</strong> Total token throughput is 3,074.6 / 1,321.7 / 3,018.0 / 1,314.7 tok/s: the two
+          §5.2/§5.3.</strong> Total token throughput is 3,074.6 / 1,321.7 / 3,018.0 / 1,314.7 tok/s: the two
           BF16-weight arms cluster near 3,000–3,075 tok/s, the two FP8-weight arms near 1,315–1,322 tok/s — a
           <strong>2.3 ×</strong> gap between clusters and almost no gap within one. Wall-clock duration follows the same
           split (3,675 s / 8,560 s / 3,742 s / 8,600 s). This is not the smooth monotonic decline the A100 measurement
@@ -725,7 +727,7 @@ python analysis/plot_stacked_timeline.py \
       Qwen3.6-35B-A3B were <em>capacity</em> optimizations, not <em>speed</em> optimizations, for a <em>structural</em>
       reason: the A100 has no FP8 tensor cores at all, so weight-only Marlin dequantization is the only path available
       and permanently pays a fixed, unavoidable cost. On MI250 the story is different in kind. <strong>KV-cache
-      quantization alone is close to free here</strong> — see §5.1/§5.2 — and, combined with genuine FP8 weight storage,
+      quantization alone is close to free here</strong> — see §5.2/§5.3 — and, combined with genuine FP8 weight storage,
       buys dramatically more cache (14.5 × vs A100's 3.84 ×) with a real, near-total elimination of preemptions.
       <strong>The severe cost sits entirely on the weight axis, and — unlike A100 — the evidence points to a fixable
       cause rather than a hardware ceiling:</strong> every FP8-weight worker logs that vLLM found no tuned block-quant
@@ -734,9 +736,9 @@ python analysis/plot_stacked_timeline.py \
       — so there is no structural reason it should cost 15–17 × in TPOT rather than something much closer to the KV-only
       axis's modest premium. Whether tuning that kernel config would close most of this gap, and whether MI250's actual
       FP8 arithmetic ceiling then looks more like A100's "capacity, not speed" story or something else entirely, is an
-      open, testable follow-up (§5.6) — this report's data supports the caveat, not yet the answer.</div>
+      open, testable follow-up (§5.7) — this report's data supports the caveat, not yet the answer.</div>
 
-    <h3 class="sect-sub">5.5 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
+    <h3 class="sect-sub">5.6 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Metric</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
@@ -788,7 +790,7 @@ python analysis/plot_stacked_timeline.py \
       differ sharply: MI250's capacity advantage is roughly 4 × larger (14.47 × vs 3.84 ×) and its latency penalty is
       roughly 6 × larger (up to 16.7 × vs 2.8 × on TPOT mean) than the same comparison on A100.</p>
 
-    <h3 class="sect-sub">5.6 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
+    <h3 class="sect-sub">5.7 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
     <div class="controls">
       <label>distribution <select id="len-metric">
         <option value="isl">prompt length (ISL)</option>
@@ -808,7 +810,7 @@ python analysis/plot_stacked_timeline.py \
     <div class="note"><strong>Scope of these conclusions.</strong> They hold for this hardware (8 × AMD MI250, TP=2 per
       replica, TRITON_ATTN), this model, and this deliberately saturating workload — long prompts, bursty arrivals,
       <code>max-num-seqs=256</code>. Two concrete, testable follow-ups fall directly out of this run:
-      <strong>(1) the missing FP8 GEMM kernel config (§3, §5.4).</strong> Generating a tuned block/tile configuration
+      <strong>(1) the missing FP8 GEMM kernel config (§3, §5.5).</strong> Generating a tuned block/tile configuration
       for this device+shape via vLLM's kernel autotuning benchmark, then re-running <code>w8kv16</code>/<code>w8kv8</code>,
       would separate "MI250 FP8 weights are inherently this much slower" from "an untuned kernel made them look that
       way" — the evidence here supports the latter but does not yet measure how much of the gap it closes.
@@ -854,6 +856,12 @@ python analysis/plot_stacked_timeline.py \
   // happens at draw time so the bin size stays a control rather than a baked-in
   // choice, and the burst structure can be inspected at several resolutions.
   const TRACE = __TRACE__;
+
+  // Per-arm counts of vLLM engine iterations classified by server.log
+  // Iteration(...) lines: full prefill (context>0, generation=0), mixed (both
+  // nonzero), full decode (context=0, generation>0). See build_report.py's
+  // extract_batch_stats for the exact classification.
+  const BATCH = __BATCH__;
 
   const SERIES = [
     { key: "w16kv16", label: "w16kv16", desc: "BF16 weights · BF16 KV", color: "--s1" },
@@ -1556,6 +1564,109 @@ python analysis/plot_stacked_timeline.py \
     }
   }
 
+  // ===================== engine step-type bars ===============================
+  // Grouped vertical bars: one x tick per precision arm, three bars per tick for
+  // the step types. Colour encodes step type here (arm identity is on the axis),
+  // so the chart carries its own legend. The y axis is log: full prefill is a
+  // handful of steps against tens of thousands of full-decode steps, and a
+  // linear axis would erase two of the three series.
+  const STEP_TYPES = [
+    { key: "full_prefill", label: "full prefill", color: "--s1" },
+    { key: "mixed",        label: "mixed",        color: "--s2" },
+    { key: "full_decode",  label: "full decode",  color: "--s3" }
+  ];
+
+  function drawStepTypes() {
+    const host = document.getElementById("batch-steps");
+    host.innerHTML = "";
+    const arms = activeSeries().filter((s) => BATCH[s.key]);
+    if (!arms.length) { host.innerHTML = '<p class="note">No arm selected.</p>'; return; }
+
+    const W = 1000, H = 380, M = { t: 18, r: 20, b: 56, l: 68 };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    let hi = 0;
+    for (const s of arms) for (const g of STEP_TYPES) hi = Math.max(hi, BATCH[s.key].groups[g.key]);
+    const sc = logScale(1, hi);
+    const py = (v) => M.t + ih - (Math.log10(Math.max(v, 1)) - Math.log10(sc.lo)) /
+      (Math.log10(sc.hi) - Math.log10(sc.lo)) * ih;
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Engine step counts by type for each precision arm, log scale" });
+
+    for (const tk of sc.ticks) {
+      const y = py(tk);
+      svg.appendChild(svgEl("line", { x1: M.l, x2: M.l + iw, y1: y, y2: y,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x: M.l - 9, y: y + 3.5, "text-anchor": "end",
+        fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+      lab.textContent = fmtCompact(tk);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(svgEl("line", { x1: M.l, x2: M.l + iw, y1: M.t + ih, y2: M.t + ih,
+      stroke: css("--rule"), "stroke-width": 1 }));
+    const yc = svgEl("text", { x: 16, y: M.t + ih / 2, fill: css("--ink-2"), "font-size": 11,
+      "font-family": MONO, transform: `rotate(-90 16 ${M.t + ih / 2})`, "text-anchor": "middle" });
+    yc.textContent = "engine steps (log)";
+    svg.appendChild(yc);
+
+    const gw = iw / arms.length, bw = Math.min(48, gw * 0.66 / STEP_TYPES.length);
+    const hit = [];
+    arms.forEach((s, ai) => {
+      const cx = M.l + gw * (ai + 0.5);
+      STEP_TYPES.forEach((g, gi) => {
+        const v = BATCH[s.key].groups[g.key];
+        const x = cx + (gi - (STEP_TYPES.length - 1) / 2) * bw - bw / 2;
+        const y = py(v), h0 = M.t + ih - y;
+        svg.appendChild(svgEl("rect", { x, y, width: bw - 3, height: Math.max(h0, 1),
+          fill: css(g.color), rx: 2 }));
+        const lab = svgEl("text", { x: x + (bw - 3) / 2, y: y - 5, "text-anchor": "middle",
+          fill: css("--ink-2"), "font-size": 9.5, "font-family": MONO });
+        lab.textContent = fmtInt(v);
+        svg.appendChild(lab);
+        hit.push({ x: x + (bw - 3) / 2, y, s, g, v, col: css(g.color) });
+      });
+      const al = svgEl("text", { x: cx, y: M.t + ih + 20, "text-anchor": "middle",
+        fill: css("--ink"), "font-size": 12, "font-weight": 600, "font-family": MONO });
+      al.textContent = s.label;
+      svg.appendChild(al);
+    });
+    const xc = svgEl("text", { x: M.l + iw / 2, y: H - 8, "text-anchor": "middle",
+      fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+    xc.textContent = "precision arm";
+    svg.appendChild(xc);
+
+    host.appendChild(svg);
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+    svg.addEventListener("pointermove", (ev) => {
+      const r = svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * W, my = (ev.clientY - r.top) / r.height * H;
+      let best = null, bd = 1e9;
+      for (const c of hit) { const d = (c.x - mx) ** 2 + Math.max(0, c.y - my) ** 2; if (d < bd) { bd = d; best = c; } }
+      if (!best || Math.abs(best.x - mx) > bw) { tip.style.opacity = 0; return; }
+      const b = BATCH[best.s.key];
+      tip.innerHTML = `<span class="dot" style="background:${best.col}"></span>` +
+        `<span class="v">${best.s.label}</span> <span class="k">${best.g.label}</span><br>` +
+        `<span class="k">steps</span> <span class="v">${fmtInt(best.v)}</span> ` +
+        `<span class="k">of</span> ${fmtInt(b.iterations)} ` +
+        `<span class="k">(${(100 * best.v / b.iterations).toFixed(1)}%)</span>`;
+      tip.style.opacity = 1;
+      const bx = best.x / W * r.width, by = best.y / H * r.height;
+      tip.style.left = Math.min(Math.max(bx - tip.offsetWidth / 2, 4), r.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = Math.max(by - tip.offsetHeight - 12, 4) + "px";
+    });
+    svg.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
+
+    const leg = document.getElementById("steptype-legend");
+    leg.innerHTML = "";
+    for (const g of STEP_TYPES) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="swatch" style="background:${css(g.color)}"></span><code>${g.label}</code>`;
+      leg.appendChild(li);
+    }
+  }
+
   // ===================== Azure arrival window ===============================
   // Two panels on the 303 s trace clock: instantaneous rate (what the scheduler
   // is hit with) over cumulative arrivals (how much of the workload has landed).
@@ -1773,7 +1884,9 @@ python analysis/plot_stacked_timeline.py \
   onChange(renderLen); onChange(renderStack);
   listeners.push(renderTrace);
 
+  onChange(drawStepTypes);
   renderTraceStats(); renderTrace();
+  drawStepTypes();
   renderPareto(); renderTpot(); renderTtft(); renderLen(); renderStack();
 
   // Theme changes swap every CSS token, and the charts hold resolved colours,

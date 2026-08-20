@@ -287,7 +287,7 @@
           quantization axes each move it, and do they compound?</li>
         <li><strong>Token throughput</strong> — does the extra cache convert into work done, or only into residency?</li>
         <li><strong>Throughput against latency</strong> — is there a trade-off at all, or does one arm dominate?
-          Plotted as Pareto charts in §5.1: throughput vs TTFT and throughput vs TPOT.</li>
+          Plotted as Pareto charts in §5.2: throughput vs TTFT and throughput vs TPOT.</li>
       </ul></div>
 
     <div class="obs kv"><span class="tag">2 · KV cache and scheduler behaviour</span>
@@ -384,7 +384,7 @@
       ramp: <strong>25 % of the workload lands in the first 35 s</strong>, the middle of the window is comparatively
       quiet, and then <strong>44 % arrives in the final 60 s</strong> (22 % in the final 30 s alone, with the densest
       10 s starting at t = 251 s). The queue is therefore being filled hardest at the exact moment the trace ends, which
-      is why the backlog in Section 5.4 peaks just after 303 s and then takes hours to drain.</div>
+      is why the backlog in Section 5.5 peaks just after 303 s and then takes hours to drain.</div>
 
     <h4 class="minor">Prompt and output lengths <span class="unit">the 1,000 PubMed articles as actually served</span></h4>
     <p class="lede">Measured per request from each run's <code class="mono">raw/per_request.csv</code>, not from a
@@ -417,7 +417,7 @@
           byte-identical to the one behind an earlier run of this report on other hardware — its own SHA-256 is
           recorded in Section 4 — so absolute ISL figures are not directly comparable across machines; the four MI250
           arms below all serve this exact same file). A handful of large prefills still compete with the decode batch,
-          contributing to the ITL tails in Section 5.2.</li>
+          contributing to the ITL tails in Section 5.3.</li>
         <li><strong>OSL is tightly clustered and nearly arm-invariant</strong> — every arm sits at a median of
           2,390–2,404 tokens with p99 ≈ 3,360–3,430. The 6,144-token thinking budget and 10,240 output cap are almost
           never the binding constraint; the highest single-arm maximum is w8kv16's 4,056 tokens. The total-output-mean
@@ -499,7 +499,7 @@
       PubMed workload JSONL's hash differs from an earlier run of this report made on other hardware — this is a
       different frozen selection of the same source dataset, not a corrupted file — so absolute ISL/input-token figures
       here are specific to this MI250 run and not directly comparable across machines. The shared prompt-length
-      distribution is plotted in Section 5.6.</p>
+      distribution is plotted in Section 5.7.</p>
 
     <h3 class="sect-sub">Measurement stack</h3>
     <ul class="setup">
@@ -560,7 +560,45 @@ python analysis/plot_stacked_timeline.py \
       arm pills to isolate or compare arms — the selection is shared across all charts in this section.</p>
     <ul class="armtoggles" id="arm-toggles"></ul>
 
-    <h3 class="sect-sub">5.1 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
+    <h3 class="sect-sub">5.1 Engine batch-type counts <span class="unit">server-log Iteration(...) classification</span></h3>
+    <p class="lede">Each row is one vLLM engine iteration. Full prefill means
+      <code class="mono">context&gt;0, generation=0</code>, mixed means both are nonzero, and full decode means
+      <code class="mono">context=0, generation&gt;0</code>. The four arms process the same 1,000 requests; this section
+      verifies whether quantization completes them in fewer engine steps by carrying a larger decode batch.</p>
+    <div class="panelcard">
+      <ul class="legend" id="steptype-legend"></ul>
+      <div class="chartbox" id="batch-steps"></div>
+      <p class="cap">log scale — the three step types span several orders of magnitude
+        (full prefill is a handful of steps in every arm)</p>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>requests processed per step (avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>full prefill — context requests</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td><td>1.0 / 1.0 / 1.0 / 1.0</td></tr>
+<tr><td>mixed — context requests</td><td>1.1 / 1.0 / 1.0 / 2.0</td><td>1.5 / 1.0 / 1.0 / 3.0</td><td>1.1 / 1.0 / 1.0 / 2.0</td><td>1.4 / 1.0 / 1.0 / 3.0</td></tr>
+<tr><td>mixed — decode requests</td><td>30.7 / 28.0 / 32.0 / 36.0</td><td>219.0 / 210.0 / 243.0 / 255.0</td><td>49.0 / 46.0 / 51.0 / 55.0</td><td>237.7 / 255.0 / 255.0 / 255.0</td></tr>
+<tr><td>full decode — decode requests</td><td>29.6 / 27.0 / 32.0 / 37.0</td><td>158.8 / 63.0 / 186.0 / 256.0</td><td>44.6 / 42.0 / 50.0 / 56.0</td><td>181.7 / 61.0 / 256.0 / 256.0</td></tr></tbody>
+    </table></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration elapsed time (ms; avg / p25 / p50 / p90)</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>full prefill</td><td>1,501.3 / 1,157.9 / 1,157.9 / 1,157.9</td><td>5,851.7 / 2,826.0 / 2,826.0 / 2,826.0</td><td>2,373.7 / 1,144.6 / 1,144.6 / 1,144.6</td><td>10,721.1 / 10,140.5 / 10,140.5 / 10,140.5</td></tr>
+<tr><td>mixed</td><td>668.8 / 442.5 / 532.7 / 1,058.9</td><td>5,002.3 / 2,920.0 / 3,403.4 / 12,166.4</td><td>1,039.6 / 646.2 / 806.1 / 1,681.5</td><td>5,021.0 / 3,220.3 / 3,510.3 / 13,896.8</td></tr>
+<tr><td>full decode</td><td>37.4 / 34.0 / 35.0 / 42.7</td><td>352.6 / 147.2 / 419.0 / 434.2</td><td>52.3 / 54.7 / 55.3 / 56.2</td><td>383.1 / 155.6 / 478.5 / 500.8</td></tr></tbody>
+    </table></div>
+    <h4 class="minor">Mean engine iteration latency <span class="unit">all types, from server.log</span></h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>iteration type</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
+      <tbody><tr><td>all iterations</td><td>44.3 ms</td><td>576.2 ms</td><td>68.7 ms</td><td>662.5 ms</td></tr><tr><td>pure prefill</td><td>1,501.3 ms</td><td>5,851.7 ms</td><td>2,373.7 ms</td><td>10,721.1 ms</td></tr><tr><td>mixed</td><td>668.8 ms</td><td>5,002.3 ms</td><td>1,039.6 ms</td><td>5,021.0 ms</td></tr><tr><td>pure decode</td><td>37.4 ms</td><td>352.6 ms</td><td>52.3 ms</td><td>383.1 ms</td></tr></tbody>
+    </table></div>
+    <p class="cap">Each value is total logged <code>iteration elapsed time</code> divided by the number of iterations in that row; it is not request-level TPOT.</p>
+    <div class="obs kv"><span class="tag">Step-count interpretation</span>
+      Total engine iterations are <strong>82,249 / 15,142 / 54,282 / 13,189</strong> (w16kv16 / w8kv16 / w16kv8 / w8kv8), while pure-decode
+      iterations are <strong>81,346 / 14,414 / 53,382 / 12,397</strong>. Relative to w16kv16, the pure-decode step-count factors are
+      <strong>1.00× / 5.64× / 1.52× / 6.56×</strong>. Thus the KV8 arms do process substantially fewer decode steps, but that advantage must
+      be divided by per-step latency: a larger batch makes each step more expensive. These counts are derived directly
+      from <code class="mono">server.log</code>; they do not infer steps from end-to-end throughput.</div>
+    <p class="cap">source: server.log · vLLM <code>Iteration(...)</code> lines; batch counts are not Prometheus samples</p>
+
+    <h3 class="sect-sub">5.2 Throughput against latency <span class="unit">one point per arm · up and to the left is better</span></h3>
     <div class="controls">
       <label>throughput <select id="pf-thru">
         <option value="tot">total token (in + out)</option>
@@ -599,11 +637,11 @@ python analysis/plot_stacked_timeline.py \
           1.8 % behind w16kv16 on total throughput and second-closest on every latency statistic — a real but modest
           cost. w8kv16 (weights alone) loses 57 % of total throughput and pays a 15.1 × TPOT-mean penalty for the same
           single-axis change. The two axes are not comparable in cost on MI250, unlike the roughly symmetric ≈ 1.8 ×
-          penalty each axis paid independently on A100 — see §5.4 for why (the missing tuned FP8 GEMM kernel config
+          penalty each axis paid independently on A100 — see §5.5 for why (the missing tuned FP8 GEMM kernel config
           only affects the weight axis).</li>
       </ul></div>
 
-    <h3 class="sect-sub">5.2 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
+    <h3 class="sect-sub">5.3 TPOT CDF <span class="unit">per-request time per output token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="tpot-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
       <label>x range <select id="tpot-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
@@ -627,17 +665,17 @@ python analysis/plot_stacked_timeline.py \
           733.5 ms, p99 986.9 ms. w8kv8: median 779.7 ms, p99 1,192.4 ms. Both miss the server SLO by an order of
           magnitude regardless of statistic. The gap between the two clusters (733.5 ms vs 73.2 ms medians) is far
           larger than the gap between either KV variant within a cluster (73.2 vs 48.6 ms, or 779.7 vs 733.5 ms) — this
-          is the same pattern as §5.1: the weight axis, not the KV axis, is what breaks decode speed here.</li>
+          is the same pattern as §5.2: the weight axis, not the KV axis, is what breaks decode speed here.</li>
       </ul>
       The ITL figures are consistent but not uniform across arms the way A100's were: median ITL is 41.8 / 433.0 / 56.6 /
       489.5 ms (w16kv16 / w8kv16 / w16kv8 / w8kv8), while p99 ITL is 430 ms / 6,519 ms / 749 ms / 4,433 ms — notably,
-      w8kv16's p99 ITL tail is <em>longer</em> than w8kv8's despite a similar median, which lines up with §5.4:
+      w8kv16's p99 ITL tail is <em>longer</em> than w8kv8's despite a similar median, which lines up with §5.5:
       w8kv16 suffers 111 preemptions across the run and w8kv8 suffers none, and a preemption reappears in the ITL trace
       as one very long multi-second gap. Against the borrowed SLOs: the two FP8-weight arms miss the server TPOT target
       by roughly 9–15 ×, but the two BF16-weight arms come close to or clear it — a materially different outcome from
       the earlier A100 measurement, where every arm missed the TPOT SLO by 4 × or more.</div>
 
-    <h3 class="sect-sub">5.3 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
+    <h3 class="sect-sub">5.4 TTFT CDF <span class="unit">per-request time to first token · n = 1,000 per arm · left is better</span></h3>
     <div class="controls">
       <label>x scale <select id="ttft-scale"><option value="lin">linear</option><option value="log">log</option></select></label>
       <label>x range <select id="ttft-clip"><option value="1">full (to max)</option><option value="0.99">to p99</option><option value="0.95">to p95</option></select></label>
@@ -656,10 +694,10 @@ python analysis/plot_stacked_timeline.py \
         <li><strong>Unlike the A100 measurement, precision is clearly visible here — TTFT follows the same
           weight-precision split as TPOT.</strong> Mean TTFT is 1,723.3 s / 1,815.9 s for the BF16-weight arms versus
           3,826.1 s / 3,734.6 s for the FP8-weight arms — roughly <strong>double</strong>, not a 4.6 % spread. Because
-          the FP8-weight arms decode so much slower per request (§5.2), their queues also drain more slowly, so TTFT
+          the FP8-weight arms decode so much slower per request (§5.3), their queues also drain more slowly, so TTFT
           inherits the same split even though TTFT itself measures queue wait, not decode speed.</li>
         <li><strong>Within each cluster the ordering is tight</strong>: w16kv16 vs w16kv8 differ by only 5.4 % on mean
-          TTFT, and w8kv16 vs w8kv8 by only 2.5 % — consistent with §5.1's finding that the KV axis alone costs little
+          TTFT, and w8kv16 vs w8kv8 by only 2.5 % — consistent with §5.2's finding that the KV axis alone costs little
           compared to the weight axis.</li>
         <li><strong>Both FP8-weight arms show a genuine multi-hundred-second plateau</strong>, not just w8kv8: w8kv16
           has a 928 s gap with no first token issued between roughly t = 911 s and t = 1,839 s (at CDF ≈ 0.19), and
@@ -670,10 +708,10 @@ python analysis/plot_stacked_timeline.py \
       </ul>
       <strong>Against the borrowed SLOs, every arm still fails the P99 TTFT target by orders of magnitude</strong> — p99
       TTFT of 3,250.7–7,340.1 s against a 2–3 s target — even though the BF16-weight arms' TPOT now clears or nearly
-      clears its own SLO (§5.2). TTFT here is dominated by this workload's 12×-oversubscribed queue, not by precision;
+      clears its own SLO (§5.3). TTFT here is dominated by this workload's 12×-oversubscribed queue, not by precision;
       that part of the A100 finding still holds.</div>
 
-    <h3 class="sect-sub">5.4 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
+    <h3 class="sect-sub">5.5 Stacked timeline <span class="unit">six panels, one shared clock, all four arms overlaid</span></h3>
     <div class="controls">
       <label>y scale <select id="ts-scale"><option value="shared">shared across arms</option><option value="free">per-panel fit</option></select></label>
       <label>smoothing <select id="ts-smooth"><option value="1">none (5 s bins)</option><option value="6">30 s</option><option value="12">60 s</option></select></label>
@@ -700,7 +738,7 @@ python analysis/plot_stacked_timeline.py \
           for that arm specifically. For the two FP8-weight arms, effective concurrency (278.4 and 548.6) <em>exceeds</em>
           256 — both hit the scheduler cap directly, running pinned at exactly 256 for most of the trace.</li>
         <li><strong>Total throughput does not decline smoothly with more quantization — it splits in two, matching
-          §5.1/§5.2.</strong> Total token throughput is 3,074.6 / 1,321.7 / 3,018.0 / 1,314.7 tok/s: the two
+          §5.2/§5.3.</strong> Total token throughput is 3,074.6 / 1,321.7 / 3,018.0 / 1,314.7 tok/s: the two
           BF16-weight arms cluster near 3,000–3,075 tok/s, the two FP8-weight arms near 1,315–1,322 tok/s — a
           <strong>2.3 ×</strong> gap between clusters and almost no gap within one. Wall-clock duration follows the same
           split (3,675 s / 8,560 s / 3,742 s / 8,600 s). This is not the smooth monotonic decline the A100 measurement
@@ -725,7 +763,7 @@ python analysis/plot_stacked_timeline.py \
       Qwen3.6-35B-A3B were <em>capacity</em> optimizations, not <em>speed</em> optimizations, for a <em>structural</em>
       reason: the A100 has no FP8 tensor cores at all, so weight-only Marlin dequantization is the only path available
       and permanently pays a fixed, unavoidable cost. On MI250 the story is different in kind. <strong>KV-cache
-      quantization alone is close to free here</strong> — see §5.1/§5.2 — and, combined with genuine FP8 weight storage,
+      quantization alone is close to free here</strong> — see §5.2/§5.3 — and, combined with genuine FP8 weight storage,
       buys dramatically more cache (14.5 × vs A100's 3.84 ×) with a real, near-total elimination of preemptions.
       <strong>The severe cost sits entirely on the weight axis, and — unlike A100 — the evidence points to a fixable
       cause rather than a hardware ceiling:</strong> every FP8-weight worker logs that vLLM found no tuned block-quant
@@ -734,9 +772,9 @@ python analysis/plot_stacked_timeline.py \
       — so there is no structural reason it should cost 15–17 × in TPOT rather than something much closer to the KV-only
       axis's modest premium. Whether tuning that kernel config would close most of this gap, and whether MI250's actual
       FP8 arithmetic ceiling then looks more like A100's "capacity, not speed" story or something else entirely, is an
-      open, testable follow-up (§5.6) — this report's data supports the caveat, not yet the answer.</div>
+      open, testable follow-up (§5.7) — this report's data supports the caveat, not yet the answer.</div>
 
-    <h3 class="sect-sub">5.5 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
+    <h3 class="sect-sub">5.6 Measured values <span class="unit">all four arms, 1,000 / 1,000 requests, zero failures</span></h3>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Metric</th><th>w16kv16</th><th>w8kv16</th><th>w16kv8</th><th>w8kv8</th></tr></thead>
@@ -788,7 +826,7 @@ python analysis/plot_stacked_timeline.py \
       differ sharply: MI250's capacity advantage is roughly 4 × larger (14.47 × vs 3.84 ×) and its latency penalty is
       roughly 6 × larger (up to 16.7 × vs 2.8 × on TPOT mean) than the same comparison on A100.</p>
 
-    <h3 class="sect-sub">5.6 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
+    <h3 class="sect-sub">5.7 Workload identity check <span class="unit">the arms must be serving the same work</span></h3>
     <div class="controls">
       <label>distribution <select id="len-metric">
         <option value="isl">prompt length (ISL)</option>
@@ -808,7 +846,7 @@ python analysis/plot_stacked_timeline.py \
     <div class="note"><strong>Scope of these conclusions.</strong> They hold for this hardware (8 × AMD MI250, TP=2 per
       replica, TRITON_ATTN), this model, and this deliberately saturating workload — long prompts, bursty arrivals,
       <code>max-num-seqs=256</code>. Two concrete, testable follow-ups fall directly out of this run:
-      <strong>(1) the missing FP8 GEMM kernel config (§3, §5.4).</strong> Generating a tuned block/tile configuration
+      <strong>(1) the missing FP8 GEMM kernel config (§3, §5.5).</strong> Generating a tuned block/tile configuration
       for this device+shape via vLLM's kernel autotuning benchmark, then re-running <code>w8kv16</code>/<code>w8kv8</code>,
       would separate "MI250 FP8 weights are inherently this much slower" from "an untuned kernel made them look that
       way" — the evidence here supports the latter but does not yet measure how much of the gap it closes.
@@ -854,6 +892,12 @@ python analysis/plot_stacked_timeline.py \
   // happens at draw time so the bin size stays a control rather than a baked-in
   // choice, and the burst structure can be inspected at several resolutions.
   const TRACE = {"off":[0.0,0.103,0.251,0.485,0.735,0.751,0.987,1.342,1.499,1.499,1.542,1.738,1.983,1.999,2.09,2.288,2.292,2.607,2.732,2.733,2.749,2.749,2.789,3.09,3.235,3.537,3.539,3.57,3.751,4.112,4.124,4.731,4.789,5.126,5.252,5.252,5.634,5.788,5.789,5.861,5.988,6.044,6.291,6.483,6.502,7.482,7.502,7.538,7.587,7.605,7.783,7.986,8.28,8.484,8.813,9.291,9.539,9.54,9.591,9.732,9.856,9.907,10.091,10.297,10.374,10.54,11.539,11.593,11.795,11.854,12.038,12.092,12.484,12.532,12.629,13.034,13.046,13.289,13.407,13.485,13.539,13.69,14.0,14.044,14.191,14.286,14.286,14.346,14.372,14.603,14.657,14.758,14.785,15.092,15.103,15.233,15.372,15.657,16.036,16.104,16.194,16.285,16.286,16.355,16.603,17.093,17.19,17.407,17.535,18.16,18.355,18.373,18.381,18.439,18.533,18.689,19.034,19.062,19.132,19.193,19.439,19.485,19.531,19.607,19.629,20.287,20.389,20.408,20.694,20.855,20.855,20.882,21.236,21.784,21.854,22.592,22.782,22.785,22.785,22.793,23.188,23.189,23.251,23.287,23.355,23.381,23.531,23.531,24.036,24.289,24.34,24.34,24.543,24.543,24.622,24.658,24.733,24.809,24.872,25.03,25.059,25.193,25.384,25.536,25.545,25.603,26.0,26.354,26.438,26.537,26.603,26.815,26.855,26.984,27.123,27.289,27.355,27.373,27.603,27.738,27.844,27.908,28.108,28.108,28.624,28.855,28.856,28.872,28.873,29.003,29.003,29.103,29.103,29.538,29.546,29.603,29.605,29.737,29.792,29.862,29.986,30.004,30.037,30.037,30.253,30.488,30.53,30.569,30.605,30.859,31.359,31.589,31.589,31.782,32.03,32.093,32.108,32.374,32.489,32.54,32.608,32.752,32.82,32.836,32.836,32.857,33.106,33.535,33.567,33.593,33.856,33.857,33.857,34.04,34.359,34.49,34.594,34.627,34.733,34.781,34.847,34.986,35.003,35.03,35.085,35.235,35.236,35.281,35.347,35.385,35.53,35.631,37.131,37.236,37.31,37.378,37.629,38.752,39.004,39.037,39.131,39.536,39.595,39.982,40.136,40.627,40.781,40.786,40.786,41.03,41.531,41.784,41.844,42.035,42.038,42.129,42.238,42.285,42.317,42.486,42.627,42.78,43.38,43.488,43.489,43.515,43.877,44.532,44.749,44.749,44.785,44.91,44.985,45.41,45.486,45.786,45.999,46.0,46.0,46.164,46.165,46.486,46.499,46.736,46.752,46.836,46.928,47.0,47.0,47.035,47.035,47.235,47.253,47.253,48.235,48.288,48.344,48.489,48.749,48.792,49.484,49.531,49.541,50.0,50.236,50.255,50.503,50.503,50.66,51.031,51.16,51.16,51.254,51.408,52.798,52.798,52.837,52.908,53.296,53.795,53.908,54.046,54.547,54.658,54.797,54.91,55.192,55.26,55.296,55.689,56.046,56.046,56.166,56.297,56.298,56.437,56.535,58.006,58.049,59.165,59.909,60.162,60.283,62.437,62.937,63.032,63.264,63.283,63.535,63.845,64.164,65.19,65.687,66.439,66.69,66.939,66.989,67.284,67.687,68.084,68.189,68.857,69.003,69.188,69.536,69.938,70.111,71.002,71.299,71.311,71.338,71.338,73.598,73.856,74.034,74.937,75.835,76.697,77.035,78.503,79.942,80.786,80.837,82.591,82.787,83.086,83.587,84.293,85.284,85.839,85.856,85.893,86.394,87.785,89.537,91.198,91.762,91.785,93.865,95.014,95.358,97.047,102.659,104.533,108.383,109.348,109.638,112.84,113.298,113.637,113.84,113.885,114.064,115.043,115.136,124.039,124.741,125.096,125.118,125.124,128.739,131.784,132.313,132.798,135.285,136.16,139.388,139.787,140.357,140.57,141.366,143.042,145.395,145.436,149.874,150.855,150.887,151.873,155.137,155.161,155.346,155.742,156.53,156.567,157.614,157.732,165.347,165.984,169.386,169.447,171.5,174.253,174.841,178.694,179.107,181.372,184.548,184.785,185.126,185.79,186.037,186.586,187.017,189.285,189.686,192.037,195.642,195.855,197.062,198.312,199.909,205.231,208.062,209.607,210.784,211.126,211.555,212.696,214.234,215.087,216.063,217.697,218.662,221.041,221.103,221.193,222.538,222.691,223.358,224.236,225.24,226.847,227.385,228.357,229.28,229.739,229.812,229.857,230.486,231.087,231.236,231.236,231.285,231.603,231.659,232.03,233.043,233.124,233.233,233.353,233.49,233.834,233.835,233.987,234.595,235.356,236.108,236.316,237.886,238.607,238.835,238.835,239.084,239.192,239.484,240.16,240.938,241.105,241.158,241.338,241.628,242.059,242.191,242.408,242.408,242.482,242.482,242.737,242.737,243.377,243.408,243.627,243.983,244.091,244.13,244.344,244.377,244.548,244.586,244.595,244.595,245.104,245.485,245.627,245.811,245.877,245.878,245.945,246.311,246.311,246.336,246.337,247.085,247.313,247.563,247.628,247.785,248.003,248.092,248.145,248.562,248.812,249.378,249.624,249.732,249.793,250.623,250.739,250.883,251.357,251.378,251.491,251.508,251.74,251.793,251.986,252.129,252.133,252.239,252.348,252.403,252.594,253.24,253.241,253.658,253.787,253.853,254.093,254.282,254.311,254.345,254.403,254.489,255.134,255.285,255.383,255.536,255.563,255.587,255.74,255.877,255.877,255.883,256.001,256.293,256.337,256.342,256.613,256.633,256.647,256.757,256.809,256.809,256.84,256.897,256.937,256.985,257.035,257.062,257.133,257.484,257.84,257.896,257.896,257.949,258.115,258.132,258.297,258.31,258.537,258.55,258.688,258.84,259.236,259.237,259.26,259.298,259.361,259.377,259.377,259.411,259.545,259.659,259.697,259.731,259.84,259.948,259.949,260.103,260.129,260.136,260.195,260.338,260.448,260.488,260.514,260.537,260.553,260.569,260.57,260.637,260.784,260.794,260.902,261.315,261.377,261.488,261.624,261.863,261.878,262.009,262.105,262.536,262.564,262.665,262.796,262.986,263.194,263.758,263.793,264.099,264.297,264.609,265.035,265.035,265.758,265.793,265.884,265.885,266.087,266.167,266.258,266.346,266.446,266.575,266.601,266.844,267.036,267.135,267.38,267.537,267.548,267.632,267.66,268.044,268.061,268.134,268.34,268.562,268.637,268.812,268.812,268.986,269.339,269.384,269.39,269.587,269.814,269.937,270.012,270.036,270.037,270.059,270.264,270.284,270.563,270.636,270.811,270.897,270.988,271.26,271.344,271.356,271.384,271.563,271.596,271.633,271.633,271.636,271.753,271.794,271.812,271.839,271.91,272.314,272.637,272.638,272.736,272.786,272.818,272.879,273.286,273.384,273.59,274.143,274.486,274.536,274.563,274.645,274.837,274.886,274.916,274.937,275.046,275.089,275.133,275.133,275.232,275.298,275.358,275.547,275.629,275.81,275.874,276.128,276.162,276.386,276.535,276.55,276.55,276.566,276.647,276.647,276.815,276.839,277.066,277.388,277.484,277.503,277.503,277.878,277.887,277.985,278.003,278.003,278.065,278.237,278.347,278.546,278.637,278.858,278.883,279.09,279.135,279.138,279.295,279.343,279.394,279.798,279.875,279.986,280.063,280.234,280.589,280.589,280.637,280.752,280.84,281.064,281.366,281.637,281.733,281.881,281.883,282.134,282.138,282.736,282.813,282.879,282.889,283.089,283.094,283.285,283.386,283.598,283.604,283.759,283.838,283.864,283.985,284.035,284.193,284.585,284.891,284.893,285.131,285.362,285.363,285.388,285.388,285.486,285.591,285.628,285.879,286.14,286.14,286.249,286.388,286.615,286.863,287.084,287.132,287.284,287.338,287.834,287.884,287.892,287.985,288.134,288.191,288.346,288.749,289.104,289.237,289.288,289.312,289.339,289.441,289.885,290.14,290.141,290.375,290.589,290.595,290.837,290.837,291.086,291.135,291.136,291.385,291.595,291.61,291.843,292.0,292.037,292.252,292.253,292.385,292.688,292.787,293.232,293.534,293.688,293.783,293.815,293.936,294.035,294.035,294.315,294.402,294.499,294.584,294.734,294.785,294.835,294.938,295.084,295.233,295.379,295.395,295.688,295.939,296.064,296.108,296.314,296.492,296.493,296.514,296.605,296.751,296.885,297.287,297.346,297.536,297.545,297.735,297.792,298.0,298.249,298.348,298.865,299.01,299.045,299.295,299.316,299.54,299.565,299.734,300.615,300.751,300.784,300.864,300.885,301.13,301.296,301.367,301.883,302.106,302.13,302.134,302.286,302.297,302.606,302.627,302.639,302.753,302.816,302.816,303.135,303.145],"dur":303.145};
+
+  // Per-arm counts of vLLM engine iterations classified by server.log
+  // Iteration(...) lines: full prefill (context>0, generation=0), mixed (both
+  // nonzero), full decode (context=0, generation>0). See build_report.py's
+  // extract_batch_stats for the exact classification.
+  const BATCH = {"w16kv16":{"iterations":82249,"groups":{"full_prefill":2,"mixed":901,"full_decode":81346},"elapsed_ms":{"full_prefill":3002.7,"mixed":602622.08,"full_decode":3038831.29},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.1220865704772476,"p25":1.0,"p50":1.0,"p90":2.0},"mixed_generation":{"avg":30.708102108768035,"p25":28.0,"p50":32.0,"p90":36.0},"full_decode_generation":{"avg":29.578430408379024,"p25":27.0,"p50":32.0,"p90":37.0}},"latency":{"all":{"avg":44.310035015623285,"p25":34.02,"p50":35.04,"p90":42.71},"full_prefill":{"avg":1501.35,"p25":1157.91,"p50":1157.91,"p90":1157.91},"mixed":{"avg":668.8369367369589,"p25":442.5,"p50":532.71,"p90":1058.91},"full_decode":{"avg":37.356861923143114,"p25":34.0,"p50":35.01,"p90":42.66}}},"w8kv16":{"iterations":15142,"groups":{"full_prefill":2,"mixed":726,"full_decode":14414},"elapsed_ms":{"full_prefill":11703.380000000001,"mixed":3631674.05,"full_decode":5082095.73},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.480716253443526,"p25":1.0,"p50":1.0,"p90":3.0},"mixed_generation":{"avg":219.02203856749313,"p25":210.0,"p50":243.0,"p90":255.0},"full_decode_generation":{"avg":158.78215623699182,"p25":63.0,"p50":186.0,"p90":256.0}},"latency":{"all":{"avg":576.243109232598,"p25":334.11,"p50":421.38,"p90":436.03},"full_prefill":{"avg":5851.6900000000005,"p25":2826.03,"p50":2826.03,"p90":2826.03},"mixed":{"avg":5002.3058539944905,"p25":2920.0,"p50":3403.43,"p90":12166.39},"full_decode":{"avg":352.5805279589288,"p25":147.19,"p50":419.03,"p90":434.18}}},"w16kv8":{"iterations":54282,"groups":{"full_prefill":2,"mixed":898,"full_decode":53382},"elapsed_ms":{"full_prefill":4747.32,"mixed":933592.01,"full_decode":2789543.41},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.133630289532294,"p25":1.0,"p50":1.0,"p90":2.0},"mixed_generation":{"avg":49.03229398663697,"p25":46.0,"p50":51.0,"p90":55.0},"full_decode_generation":{"avg":44.62903225806452,"p25":42.0,"p50":50.0,"p90":56.0}},"latency":{"all":{"avg":68.67622305736708,"p25":54.69,"p50":55.36,"p90":56.31},"full_prefill":{"avg":2373.66,"p25":1144.62,"p50":1144.62,"p90":1144.62},"mixed":{"avg":1039.634755011136,"p25":646.23,"p50":806.1,"p90":1681.54},"full_decode":{"avg":52.25625510471695,"p25":54.68,"p50":55.34,"p90":56.25}}},"w8kv8":{"iterations":13189,"groups":{"full_prefill":2,"mixed":790,"full_decode":12397},"elapsed_ms":{"full_prefill":21442.28,"mixed":3966565.72,"full_decode":4749673.35},"batch":{"full_prefill_context":{"avg":1.0,"p25":1.0,"p50":1.0,"p90":1.0},"mixed_context":{"avg":1.3860759493670887,"p25":1.0,"p50":1.0,"p90":3.0},"mixed_generation":{"avg":237.68101265822784,"p25":255.0,"p50":255.0,"p90":255.0},"full_decode_generation":{"avg":181.67782528030975,"p25":61.0,"p50":256.0,"p90":256.0}},"latency":{"all":{"avg":662.4976381833345,"p25":347.81,"p50":479.6,"p90":511.89},"full_prefill":{"avg":10721.14,"p25":10140.47,"p50":10140.47,"p90":10140.47},"mixed":{"avg":5020.969265822785,"p25":3220.31,"p50":3510.26,"p90":13896.79},"full_decode":{"avg":383.13086633863026,"p25":155.58,"p50":478.53,"p90":500.84}}}};
 
   const SERIES = [
     { key: "w16kv16", label: "w16kv16", desc: "BF16 weights · BF16 KV", color: "--s1" },
@@ -1556,6 +1600,109 @@ python analysis/plot_stacked_timeline.py \
     }
   }
 
+  // ===================== engine step-type bars ===============================
+  // Grouped vertical bars: one x tick per precision arm, three bars per tick for
+  // the step types. Colour encodes step type here (arm identity is on the axis),
+  // so the chart carries its own legend. The y axis is log: full prefill is a
+  // handful of steps against tens of thousands of full-decode steps, and a
+  // linear axis would erase two of the three series.
+  const STEP_TYPES = [
+    { key: "full_prefill", label: "full prefill", color: "--s1" },
+    { key: "mixed",        label: "mixed",        color: "--s2" },
+    { key: "full_decode",  label: "full decode",  color: "--s3" }
+  ];
+
+  function drawStepTypes() {
+    const host = document.getElementById("batch-steps");
+    host.innerHTML = "";
+    const arms = activeSeries().filter((s) => BATCH[s.key]);
+    if (!arms.length) { host.innerHTML = '<p class="note">No arm selected.</p>'; return; }
+
+    const W = 1000, H = 380, M = { t: 18, r: 20, b: 56, l: 68 };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    let hi = 0;
+    for (const s of arms) for (const g of STEP_TYPES) hi = Math.max(hi, BATCH[s.key].groups[g.key]);
+    const sc = logScale(1, hi);
+    const py = (v) => M.t + ih - (Math.log10(Math.max(v, 1)) - Math.log10(sc.lo)) /
+      (Math.log10(sc.hi) - Math.log10(sc.lo)) * ih;
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Engine step counts by type for each precision arm, log scale" });
+
+    for (const tk of sc.ticks) {
+      const y = py(tk);
+      svg.appendChild(svgEl("line", { x1: M.l, x2: M.l + iw, y1: y, y2: y,
+        stroke: css("--grid"), "stroke-width": 1 }));
+      const lab = svgEl("text", { x: M.l - 9, y: y + 3.5, "text-anchor": "end",
+        fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+      lab.textContent = fmtCompact(tk);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(svgEl("line", { x1: M.l, x2: M.l + iw, y1: M.t + ih, y2: M.t + ih,
+      stroke: css("--rule"), "stroke-width": 1 }));
+    const yc = svgEl("text", { x: 16, y: M.t + ih / 2, fill: css("--ink-2"), "font-size": 11,
+      "font-family": MONO, transform: `rotate(-90 16 ${M.t + ih / 2})`, "text-anchor": "middle" });
+    yc.textContent = "engine steps (log)";
+    svg.appendChild(yc);
+
+    const gw = iw / arms.length, bw = Math.min(48, gw * 0.66 / STEP_TYPES.length);
+    const hit = [];
+    arms.forEach((s, ai) => {
+      const cx = M.l + gw * (ai + 0.5);
+      STEP_TYPES.forEach((g, gi) => {
+        const v = BATCH[s.key].groups[g.key];
+        const x = cx + (gi - (STEP_TYPES.length - 1) / 2) * bw - bw / 2;
+        const y = py(v), h0 = M.t + ih - y;
+        svg.appendChild(svgEl("rect", { x, y, width: bw - 3, height: Math.max(h0, 1),
+          fill: css(g.color), rx: 2 }));
+        const lab = svgEl("text", { x: x + (bw - 3) / 2, y: y - 5, "text-anchor": "middle",
+          fill: css("--ink-2"), "font-size": 9.5, "font-family": MONO });
+        lab.textContent = fmtInt(v);
+        svg.appendChild(lab);
+        hit.push({ x: x + (bw - 3) / 2, y, s, g, v, col: css(g.color) });
+      });
+      const al = svgEl("text", { x: cx, y: M.t + ih + 20, "text-anchor": "middle",
+        fill: css("--ink"), "font-size": 12, "font-weight": 600, "font-family": MONO });
+      al.textContent = s.label;
+      svg.appendChild(al);
+    });
+    const xc = svgEl("text", { x: M.l + iw / 2, y: H - 8, "text-anchor": "middle",
+      fill: css("--ink-3"), "font-size": 10.5, "font-family": MONO });
+    xc.textContent = "precision arm";
+    svg.appendChild(xc);
+
+    host.appendChild(svg);
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    host.appendChild(tip);
+    svg.addEventListener("pointermove", (ev) => {
+      const r = svg.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / r.width * W, my = (ev.clientY - r.top) / r.height * H;
+      let best = null, bd = 1e9;
+      for (const c of hit) { const d = (c.x - mx) ** 2 + Math.max(0, c.y - my) ** 2; if (d < bd) { bd = d; best = c; } }
+      if (!best || Math.abs(best.x - mx) > bw) { tip.style.opacity = 0; return; }
+      const b = BATCH[best.s.key];
+      tip.innerHTML = `<span class="dot" style="background:${best.col}"></span>` +
+        `<span class="v">${best.s.label}</span> <span class="k">${best.g.label}</span><br>` +
+        `<span class="k">steps</span> <span class="v">${fmtInt(best.v)}</span> ` +
+        `<span class="k">of</span> ${fmtInt(b.iterations)} ` +
+        `<span class="k">(${(100 * best.v / b.iterations).toFixed(1)}%)</span>`;
+      tip.style.opacity = 1;
+      const bx = best.x / W * r.width, by = best.y / H * r.height;
+      tip.style.left = Math.min(Math.max(bx - tip.offsetWidth / 2, 4), r.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = Math.max(by - tip.offsetHeight - 12, 4) + "px";
+    });
+    svg.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
+
+    const leg = document.getElementById("steptype-legend");
+    leg.innerHTML = "";
+    for (const g of STEP_TYPES) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="swatch" style="background:${css(g.color)}"></span><code>${g.label}</code>`;
+      leg.appendChild(li);
+    }
+  }
+
   // ===================== Azure arrival window ===============================
   // Two panels on the 303 s trace clock: instantaneous rate (what the scheduler
   // is hit with) over cumulative arrivals (how much of the workload has landed).
@@ -1773,7 +1920,9 @@ python analysis/plot_stacked_timeline.py \
   onChange(renderLen); onChange(renderStack);
   listeners.push(renderTrace);
 
+  onChange(drawStepTypes);
   renderTraceStats(); renderTrace();
+  drawStepTypes();
   renderPareto(); renderTpot(); renderTtft(); renderLen(); renderStack();
 
   // Theme changes swap every CSS token, and the charts hold resolved colours,

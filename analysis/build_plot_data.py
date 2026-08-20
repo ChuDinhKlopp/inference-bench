@@ -96,6 +96,7 @@ def main() -> int:
     parser.add_argument("--hbm", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--model", default="Qwen3.6-35B-A3B")
     parser.add_argument("--precision", required=True)
     parser.add_argument("--mode", required=True)
     parser.add_argument("--max-num-seqs", type=int, required=True)
@@ -192,7 +193,7 @@ def main() -> int:
         **stats_ms(tpot_s, "itl"),
     }
 
-    series_key = f"Qwen3.6-35B-A3B|{args.precision}"
+    series_key = f"{args.model}|{args.precision}"
     ts_run = {
         "seqs": args.max_num_seqs,
         "tok": args.max_num_batched_tokens,

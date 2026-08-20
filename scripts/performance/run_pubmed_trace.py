@@ -92,9 +92,16 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
     sys.path.insert(0, str(repo_root))
     import bench  # Reuse the existing benchmark transport and metrics path.
 
+    # gpt-oss's harmony reasoning format has no <think>/</think> budget-forcing
+    # mechanism and its server is started without --reasoning-config, so vLLM
+    # rejects thinking_token_budget on every request. Only Qwen requests carry
+    # these Qwen-specific extra_body fields.
+    is_gptoss = args.model.startswith("gpt-oss")
+
     # bench.py passes this per-request vLLM sampling parameter through to the
     # OpenAI-compatible API when thinking is enabled.
-    os.environ["THINKING_TOKEN_BUDGET"] = str(args.thinking_token_budget)
+    if not is_gptoss:
+        os.environ["THINKING_TOKEN_BUDGET"] = str(args.thinking_token_budget)
 
     instances = []
     prompt_lengths = []
@@ -142,7 +149,8 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
         server_metrics_poll_interval_s=args.server_metrics_poll_interval,
         server_log_file=str(args.server_log_file) if args.server_log_file else None,
         iteration_metrics_artifact_prefix=str(metrics_prefix),
-        enable_thinking=True,
+        enable_thinking=not is_gptoss,
+        reasoning_effort="high" if is_gptoss else None,
         profile=False,
     )
 
@@ -185,9 +193,9 @@ async def run(args: argparse.Namespace, records: list[dict]) -> None:
         "trace_duration_s": offsets[-1],
         "max_gen_toks": 10240,
         "max_num_batched_tokens": args.max_num_batched_tokens,
-        "reasoning_effort": "low",
-        "enable_thinking": True,
-        "thinking_token_budget": args.thinking_token_budget,
+        "reasoning_effort": "high" if is_gptoss else "low",
+        "enable_thinking": None if is_gptoss else True,
+        "thinking_token_budget": None if is_gptoss else args.thinking_token_budget,
         "client_concurrency_limit": None,
         "client_open_file_soft_limit": resource.getrlimit(resource.RLIMIT_NOFILE)[0],
         "metrics_summary": dataclasses.asdict(metrics_summary) if metrics_summary else None,
@@ -200,13 +208,14 @@ def main() -> None:
     if args.expected_requests < 1:
         raise ValueError("--expected-requests must be positive")
     records = load_and_validate(args.workload, args.trace_csv, args.thinking_token_budget, args.expected_requests)
+    is_gptoss = args.model.startswith("gpt-oss")
     validation = {
         "request_count": len(records),
         "trace_duration_s": records[-1]["trace"]["arrival_offset_s"],
         "trace_csv": str(args.trace_csv),
         "max_gen_toks": 10240,
-        "reasoning_effort": "low",
-        "enable_thinking": True,
+        "reasoning_effort": "high" if is_gptoss else "low",
+        "enable_thinking": not is_gptoss,
         "thinking_token_budget": args.thinking_token_budget,
         "max_num_batched_tokens": args.max_num_batched_tokens,
         "min_prompt_tokens": min(record["request"]["prompt_tokens"] for record in records),

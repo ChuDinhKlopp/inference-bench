@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec "$script_dir/run_server_common.sh" w16kv8
+exec "$script_dir/run_server_common.sh" Qwen3.6-35B-A3B w16kv8

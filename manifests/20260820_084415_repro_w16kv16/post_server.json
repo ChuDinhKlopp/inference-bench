@@ -1,0 +1,82 @@
+{
+  "schema_version": "rivf26.post_server.v1",
+  "stage": "B",
+  "status": "PASS",
+  "timestamp_epoch_s": 1787215616.113977,
+  "timestamp_iso": "2026-08-20T08:46:56.113977+00:00",
+  "run_id": "20260820_084415_repro_w16kv16",
+  "precision": "w16kv16",
+  "max_num_batched_tokens": 32768,
+  "checks": [
+    {
+      "name": "server_health",
+      "result": "PASS",
+      "detail": "status=200; error="
+    },
+    {
+      "name": "prometheus_metrics",
+      "result": "PASS",
+      "detail": "resolved={'requests_running': 'vllm:num_requests_running', 'requests_waiting': 'vllm:num_requests_waiting', 'kv_cache_usage': 'vllm:kv_cache_usage_perc'}; missing=[]; error="
+    },
+    {
+      "name": "max_num_batched_tokens_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=32768; evidence=['--max-num-batched-tokens 32768']"
+    },
+    {
+      "name": "kv_dtype_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=bfloat16; evidence=['kv-cache-dtype bfloat16', \"kv_cache_dtype': 'bfloat16\", 'kv_cache_dtype=bfloat16', 'cache-dtype bfloat16', \"cache_dtype': 'bfloat16\"]"
+    },
+    {
+      "name": "attention_backend_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=TRITON_ATTN; evidence=['RIVF26 server command: /home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B --tokenizer /dev/shm/Qwen3.6-35B-A3B --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8010 --tensor-parallel-size 2 --max-model-len 262144 --max-num-seqs 384 --gpu-memory-utilization 0.90 --kv-cache-dtype bfloat16 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_str\\\\\":\\\\\"\\\\</think\\\\>\\\\\"', \"(APIServer pid=116612) INFO 08-20 08:44:32 [api_utils.py:273] non-default args: {'model_tag': '/dev/shm/Qwen3.6-35B-A3B', 'host': '127.0.0.1', 'port': 8010, 'model': '/dev/shm/Qwen3.6-35B-A3B', 'tokenizer': '/dev/shm/Qwen3.6-35B-A3B', 'max_model_len': 262144, 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'bfloat16', 'enable_logging_iteration_details': True, 'ma\", '(Worker_TP0 pid=117275) INFO 08-20 08:45:09 [rocm.py:606] Using TRITON_ATTN backend (selected via --attention-backend).']"
+    },
+    {
+      "name": "reasoning_parser_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=qwen3; evidence=[\"(APIServer pid=116612) INFO 08-20 08:44:32 [api_utils.py:273] non-default args: {'model_tag': '/dev/shm/Qwen3.6-35B-A3B', 'host': '127.0.0.1', 'port': 8010, 'model': '/dev/shm/Qwen3.6-35B-A3B', 'tokenizer': '/dev/shm/Qwen3.6-35B-A3B', 'max_model_len': 262144, 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'bfloat16', 'enable_logging_iteration_details': True, 'max_num_batched_tokens': 32768, 'max_num_seqs': 384, 'reasoning_config': ReasoningConfig(reasoning_parser='', reasoning_start_str='<think>', reasoning_end_str='</think>')}\", \"(EngineCore pid=117018) INFO 08-20 08:44:49 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/dev/shm/Qwen3.6-35B-A3B', speculative_config=None, tokenizer='/dev/shm/Qwen3.6-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=bfloat16, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='qwen3', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, \"]"
+    },
+    {
+      "name": "weight_format_runtime_evidence",
+      "result": "PASS",
+      "detail": "expected=BF16 directory; evidence=['RIVF26 server command: /home/tuan/repos/vllm/.venv/bin/python -m vllm.entrypoints.cli.main serve /dev/shm/Qwen3.6-35B-A3B --tokenizer /dev/shm/Qwen3.6-35B-A3B --served-model-name Qwen3.6-35B-A3B --host 127.0.0.1 --port 8010 --tensor-parallel-size 2 --max-model-len 262144 --max-num-seqs 384 --gpu-memory-utilization 0.90 --kv-cache-dtype bfloat16 --attention-backend TRITON_ATTN --reasoning-parser qwen3 --reasoning-config \\\\{\\\\\"reasoning_start_str\\\\\":\\\\\"\\\\<think\\\\>\\\\\"\\\\,\\\\\"reasoning_end_str\\\\\":\\\\\"\\\\</think\\\\>\\\\\"', '(APIServer pid=116612) INFO 08-20 08:44:32 [api_utils.py:345]   \u2588\u2584\u2588\u2580 \u2588     \u2588     \u2588     \u2588  model   /dev/shm/Qwen3.6-35B-A3B', \"(APIServer pid=116612) INFO 08-20 08:44:32 [api_utils.py:273] non-default args: {'model_tag': '/dev/shm/Qwen3.6-35B-A3B', 'host': '127.0.0.1', 'port': 8010, 'model': '/dev/shm/Qwen3.6-35B-A3B', 'tokenizer': '/dev/shm/Qwen3.6-35B-A3B', 'max_model_len': 262144, 'served_model_name': ['Qwen3.6-35B-A3B'], 'attention_backend': 'TRITON_ATTN', 'reasoning_parser': 'qwen3', 'tensor_parallel_size': 2, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'bfloat16', 'enable_logging_iteration_details': True, 'ma\", \"(EngineCore pid=117018) INFO 08-20 08:44:49 [core.py:121] Initializing a V1 LLM engine (v0.27.0) with config: model='/dev/shm/Qwen3.6-35B-A3B', speculative_config=None, tokenizer='/dev/shm/Qwen3.6-35B-A3B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=\", '(Worker_TP0 pid=117275) INFO 08-20 08:45:08 [gpu_model_runner.py:5308] Starting to load model /dev/shm/Qwen3.6-35B-A3B...']"
+    },
+    {
+      "name": "kv_capacity_runtime_evidence",
+      "result": "PASS",
+      "detail": "evidence=['GPU KV cache size: 435,866 tokens', 'Available KV cache memory: 4.25 GiB']"
+    },
+    {
+      "name": "tp2_hbm_after_load",
+      "result": "PASS",
+      "detail": "expected_replica_size=2; qualifying_busy_gpus=[{'index': 0, 'used_mib': 55546, 'free_mib': 9974}, {'index': 1, 'used_mib': 55546, 'free_mib': 9974}, {'index': 2, 'used_mib': 55548, 'free_mib': 9972}, {'index': 3, 'used_mib': 55548, 'free_mib': 9972}, {'index': 4, 'used_mib': 51546, 'free_mib': 13974}, {'index': 5, 'used_mib': 51546, 'free_mib': 13974}, {'index': 6, 'used_mib': 56119, 'free_mib': 9401}, {'index': 7, 'used_mib': 56119, 'free_mib': 9401}]; all_busy_gpus=[{'index': 0, 'used_mib': 55546, 'free_mib': 9974}, {'index': 1, 'used_mib': 55546, 'free_mib': 9974}, {'index': 2, 'used_mib': 55548, 'free_mib': 9972}, {'index': 3, 'used_mib': 55548, 'free_mib': 9972}, {'index': 4, 'used_mib': 51546, 'free_mib': 13974}, {'index': 5, 'used_mib': 51546, 'free_mib': 13974}, {'index': 6, 'used_mib': 56119, 'free_mib': 9401}, {'index': 7, 'used_mib': 56119, 'free_mib': 9401}]; idle_gpus=[]; stderr="
+    },
+    {
+      "name": "monitor_processes",
+      "result": "PASS",
+      "detail": "configured=[119315]; dead=[]"
+    },
+    {
+      "name": "output_writable_and_headroom",
+      "result": "PASS",
+      "detail": "path=/home/tuan/rivf26-bulk; writable=True; free=54.3 GiB"
+    },
+    {
+      "name": "max_num_batched_tokens_preflight_consistency",
+      "result": "PASS",
+      "detail": "expected=32768; preflight=32768"
+    },
+    {
+      "name": "model_path_identity",
+      "result": "PASS",
+      "detail": "path=/dev/shm/Qwen3.6-35B-A3B"
+    }
+  ],
+  "failures": [],
+  "warnings": [],
+  "blocking_warnings": [],
+  "fp8_kv_scale_policy": "not_applicable",
+  "long_run_eligible": true
+}
