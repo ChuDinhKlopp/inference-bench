@@ -765,7 +765,7 @@ python analysis/plot_stacked_timeline.py \
       <code class="mono">w16kv16</code> for every latency and throughput row and <code class="mono">w8kv8</code> for
       every capacity and stability row — the trade-off is that clean.</p>
 
-    <h3 class="sect-sub">5.7 Part 2 kernel characterization <span class="unit">short PyTorch Profiler captures · all four arms</span></h3>
+    <h3 class="sect-sub">5.7 Part 2 kernel profiling <span class="unit">short PyTorch Profiler captures · all four arms</span></h3>
     <p class="lede">These captures are rank-0 summaries from all four completed precision arms. They are not a
       full-run accounting: CUDA times are summed across asynchronous operations and can overlap. The profiler was
       enabled for a short window after workload warm-up, with the server in <code class="mono">--enforce-eager</code>

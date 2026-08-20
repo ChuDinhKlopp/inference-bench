@@ -164,6 +164,13 @@ for artifact_kind in logs raw; do
     ln -s "$target_path" "$link_path"
   fi
 done
+
+# Event-only scheduler telemetry.  vLLM writes one JSONL record per
+# preemption, immediately before it resets the request's computed-token count.
+# Keep this opt-out configurable so legacy/non-RIVF26 launches are unaffected.
+if [[ ${RIVF26_ENABLE_PREEMPTION_EVENTS:-1} == 1 ]]; then
+  export VLLM_PREEMPTION_EVENTS_PATH=${RIVF26_PREEMPTION_EVENTS_PATH:-$bulk_run_dir/raw/preemption_events.jsonl}
+fi
 {
   printf '%q ' "${cmd[@]}"
   printf '\n'
@@ -180,6 +187,10 @@ if [[ "$calculate_kv_scales" == 1 ]]; then
   export RIVF26_KV_SCALE_AUDIT_DIR=${RIVF26_KV_SCALE_AUDIT_DIR:-$bulk_run_dir/raw/kv_scale_audit}
   mkdir -p "$RIVF26_KV_SCALE_AUDIT_DIR"
   export PYTHONPATH=$scale_audit_site${PYTHONPATH:+:$PYTHONPATH}
+fi
+
+if [[ -n ${VLLM_PREEMPTION_EVENTS_PATH:-} ]]; then
+  echo "Preemption event log: $VLLM_PREEMPTION_EVENTS_PATH"
 fi
 
 if [[ "$enable_torch_profiler" == "1" || "$enable_torch_profiler" == "2" ]] && [[ "${RIVF26_PROFILER_AUTO_SHUTDOWN:-0}" == "1" ]]; then

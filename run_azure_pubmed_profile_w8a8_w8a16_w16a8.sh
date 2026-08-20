@@ -11,8 +11,8 @@ run_one() {
   RIVF26_PROFILER_AUTO_SHUTDOWN=1 \
   RIVF26_ENABLE_TORCH_PROFILER=1 \
   RIVF26_PROFILER_START_DELAY_SECONDS=180 \
-  RIVF26_TORCH_PROFILER_DELAY_ITERS=20 \
-  RIVF26_TORCH_PROFILER_WARMUP_ITERS=10 \
+  RIVF26_TORCH_PROFILER_DELAY_ITERS=0 \
+  RIVF26_TORCH_PROFILER_WARMUP_ITERS=5 \
   RIVF26_TORCH_PROFILER_MAX_ITERS=10 \
   RIVF26_TORCH_PROFILER_WITH_STACK=0 \
   RIVF26_TORCH_PROFILER_DIR=/run/user/1009/ducct/rivf26/results/part2/${variant}/torch_profiler \
@@ -35,7 +35,7 @@ run_one() {
 }
 
 # Sequential order: w8kv8 (w8a8), w8kv16 (w8a16), w16kv8 (w16a8), w16kv16.
-run_one w8kv8 ./scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w8kv8.sh
+# run_one w8kv8 ./scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w8kv8.sh
 run_one w8kv16 ./scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w8kv16.sh
 run_one w16kv8 ./scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w16kv8.sh
 run_one w16kv16 ./scripts/performance/run_trace_azure_pubmed_Qwen3.6-35B-A3B_w16kv16.sh

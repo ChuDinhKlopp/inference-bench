@@ -135,6 +135,25 @@ aggregates about five Prometheus samples, while each HBM point aggregates about
 ten GA100 samples. Override this with
 `RIVF26_PLOT_BIN_SECONDS=<seconds>`; raw telemetry remains the source of truth.
 
+## Event-only preemption telemetry
+
+The server launcher enables compact preemption-event logging by default. The
+vLLM scheduler writes one JSON object immediately before resetting a preempted
+request's computed-token count:
+
+```text
+<run>/raw/preemption_events.jsonl
+```
+
+Each event records the request ID, prompt/decode/computed tokens discarded,
+already-emitted and in-flight output tokens, running/waiting counts, KV-cache
+utilization, and the KV-cache capacity. This is event-driven and does not add a
+record on ordinary scheduler steps. Set
+`RIVF26_ENABLE_PREEMPTION_EVENTS=0` to disable it, or set
+`RIVF26_PREEMPTION_EVENTS_PATH` to choose another path. The telemetry requires
+the matching patched vLLM scheduler in `/home/ducct/repos/vllm`; runs made
+before this instrumentation cannot recover discarded-token counts.
+
 This sampler is intentionally separate from Part 2: no kernel trace or PyTorch
 Profiler is enabled in Part 1.
 
