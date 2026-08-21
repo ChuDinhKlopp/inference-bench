@@ -1,0 +1,154 @@
+{
+  "schema_version": "rivf26.kvquant.v1",
+  "study": "part3_kvquant_attention_architectures",
+  "question": "When does a KV-cache quantization method pay off for a given attention architecture?",
+  "common": {
+    "tensor_parallel_size": 2,
+    "attention_backend": "TRITON_ATTN",
+    "max_num_batched_tokens": 8192,
+    "gpu_memory_utilization": 0.9,
+    "max_model_len": 49152,
+    "notes": [
+      "TRITON_ATTN is pinned for every primary arm. It is the only backend that validates for bfloat16, fp8 AND int4_per_token_head across all three models on SM80, SM90 and gfx90a, including GPT-OSS attention sinks. Pinning it removes the kernel confound: under default selection the backend changes with kv-cache-dtype (A100: bf16 -> FLASH_ATTN, fp8 -> FLASHINFER, turboquant -> TURBOQUANT).",
+      "Model WEIGHT precision is held at each checkpoint's native format and never swept. Only kv-cache-dtype varies. GPT-OSS-120B ships MXFP4 and cannot run BF16 weights on 4x40GB, so weight format differs BETWEEN models but is constant WITHIN a model. Cross-model comparison is therefore about attention architecture, not about weights.",
+      "max_model_len 49152 covers prefill_heavy (32768+256) and decode_heavy (1024+16384) with headroom, identically for every arm.",
+      "The decode-heavy regime uses LiveCodeBench under the Azure bursty trace, matching the existing scripts/performance/run_trace_azure_livecodebench_* contract. Synthetic fixed-length prompts were rejected: the natural length distribution is part of what the study observes.",
+      "Every arm runs with --reasoning-parser. bench.py sends thinking_token_budget only when --enable-thinking is set, and vLLM can only honour it with a reasoning parser configured -- without one the server returns 200 with empty content and zero decode iterations. Qwen uses 'qwen3' with explicit <think>/</think> delimiters; GPT-OSS uses 'openai_gptoss' (harmony channels, no delimiter config)."
+    ]
+  },
+  "models": {
+    "qwen36_35b": {
+      "label": "Qwen3.6-35B-A3B",
+      "path_default": "/remote/vast0/share-mv/Qwen/Qwen3.6-35B-A3B",
+      "attention_architecture": "hybrid Gated DeltaNet + full attention",
+      "total_layers": 40,
+      "growing_kv_layers": 10,
+      "num_kv_heads": 2,
+      "head_dim": 256,
+      "kv_bytes_per_token_bf16": 20480,
+      "has_sink": false,
+      "has_sliding_window": false,
+      "weight_format": "bfloat16",
+      "quantization": null,
+      "reasoning_parser": "qwen3",
+      "reasoning_config": "{\"reasoning_start_str\":\"<think>\",\"reasoning_end_str\":\"</think>\"}",
+      "kv_backends": {"kv16": "FLASH_ATTN", "kv8": "FLASH_ATTN", "kv4": "TRITON_ATTN", "kvtq4": "TURBOQUANT"}
+    },
+    "gptoss_120b": {
+      "label": "GPT-OSS-120B",
+      "path_default": "/remote/vast0/share-mv/gpt-oss-120b",
+      "attention_architecture": "dense + attention sink + sliding window (128)",
+      "total_layers": 36,
+      "growing_kv_layers": 18,
+      "sliding_window_layers": 18,
+      "num_kv_heads": 8,
+      "head_dim": 64,
+      "kv_bytes_per_token_bf16": 36864,
+      "has_sink": true,
+      "has_sliding_window": true,
+      "weight_format": "mxfp4",
+      "quantization": "mxfp4",
+      "notes": "Sinks make TRITON_ATTN the only viable backend on SM80/gfx90a regardless of kv dtype; there is no second kernel to cross-check against.",
+      "reasoning_parser": "openai_gptoss",
+      "reasoning_config": null,
+      "reasoning_effort": "high",
+      "kv_backends": {"kv16": "FLASH_ATTN", "kv8": "FLASH_ATTN", "kv4": "TRITON_ATTN"}
+    },
+    "qwen3_30b": {
+      "label": "Qwen3-30B-A3B-Thinking-2507",
+      "path_default": "/remote/vast0/share-mv/Qwen/Qwen3-30B-A3B-Thinking-2507",
+      "attention_architecture": "dense GQA",
+      "total_layers": 48,
+      "growing_kv_layers": 48,
+      "num_kv_heads": 4,
+      "head_dim": 128,
+      "kv_bytes_per_token_bf16": 98304,
+      "has_sink": false,
+      "has_sliding_window": false,
+      "weight_format": "bfloat16",
+      "quantization": null,
+      "reasoning_parser": "qwen3",
+      "reasoning_config": "{\"reasoning_start_str\":\"<think>\",\"reasoning_end_str\":\"</think>\"}",
+      "kv_backends": {"kv16": "FLASH_ATTN", "kv8": "FLASH_ATTN", "kv4": "TRITON_ATTN", "kvtq4": "TURBOQUANT"}
+    }
+  },
+  "kv_dtypes": {
+    "kv16": {
+      "cli": "bfloat16",
+      "compression": 1.0,
+      "backend": "FLASH_ATTN",
+      "role": "baseline"
+    },
+    "kv8": {
+      "cli": "fp8",
+      "compression": 2.0,
+      "backend": "FLASH_ATTN",
+      "role": "primary"
+    },
+    "kv4": {
+      "cli": "int4_per_token_head",
+      "compression": 4.0,
+      "backend": "TRITON_ATTN",
+      "role": "primary"
+    },
+    "kvtq4": {
+      "cli": "turboquant_4bit_nc",
+      "compression": 3.8,
+      "backend": "TURBOQUANT",
+      "role": "secondary",
+      "models": [
+        "qwen36_35b",
+        "qwen3_30b"
+      ],
+      "notes": "TurboQuant supports neither sinks nor sliding window, so GPT-OSS is structurally excluded. Different kernel from the primary arms: read it as a quantization-SCHEME comparison at 4 bits, never as a same-kernel dtype step."
+    }
+  },
+  "workloads": {
+    "decode_heavy": {
+      "status": "implemented",
+      "dataset": "livecodebench",
+      "release": "release_v6",
+      "num_requests": 1055,
+      "arrival_mode": "azure",
+      "trace": "traces/processed/azure_multimodal_bursty_1055.csv",
+      "max_gen_toks": 32768,
+      "measured_isl_avg": 602,
+      "measured_osl_avg": 22670,
+      "runner": "scripts/kvquant/run_azure_livecodebench_<model_key>_<kv_dtype_key>.sh",
+      "observes": "KV growth per decode step, KV utilization, preemption, TPOT",
+      "notes": "LiveCodeBench is naturally decode-heavy: ~37 output tokens per input token, confirmed on the MI250 arms (ISL avg 602, OSL avg 22,670). Real prompts, not synthetic -- the request-length distribution is part of the workload."
+    },
+    "prefill_heavy": {
+      "status": "not_yet_specified",
+      "target_isl": 32768,
+      "target_osl": 256,
+      "observes": "large one-shot KV allocation, KV write/read traffic, long-context retention",
+      "notes": "Needs a real long-context dataset (candidates in the parent bench.py: mrcr, longproc, repobench). No runner yet."
+    }
+  },
+  "sweep": {
+    "max_num_seqs": [
+      64,
+      128,
+      256
+    ],
+    "refine": "add points bracketing the observed saturation/preemption knee, i.e. around KV_capacity_tokens / (ISL+OSL)"
+  },
+  "metrics": [
+    "output_token_throughput",
+    "total_token_throughput",
+    "request_throughput",
+    "ttft_ms_mean_p50_p90_p99",
+    "tpot_ms_mean_p50_p90_p99",
+    "itl_ms",
+    "kv_cache_capacity_tokens",
+    "kv_cache_utilization",
+    "num_requests_running",
+    "num_requests_waiting",
+    "num_preemptions",
+    "effective_concurrency",
+    "measured_batch_width",
+    "hbm_read_write_utilization",
+    "accuracy_vs_bf16"
+  ]
+}

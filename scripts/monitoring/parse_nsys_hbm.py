@@ -35,6 +35,22 @@ def main() -> int:
     parser.add_argument("--metadata-json", type=Path)
     parser.add_argument("--experiment-start-epoch-s", type=float)
     parser.add_argument("--keep-sqlite", action="store_true")
+    parser.add_argument(
+        "--gpu-ids",
+        help="comma-separated GPU count/labels for a capture scoped to a subset of the "
+             "system's GPUs (concurrent per-model captures, e.g. the capture's "
+             "CUDA_VISIBLE_DEVICES): TARGET_INFO_GPU in the exported report still lists "
+             "every installed GPU regardless of what was actually profiled, so without "
+             "this the type_id<->gpu_id count check fails. NOTE: TARGET_INFO_GPU.id is "
+             "NOT verified to equal the nvidia-smi/CUDA device index (spot-checked on "
+             "this host and it does not), so the gpu_index/gpu_bus_id/gpu_uuid columns "
+             "this produces for a scoped capture are best-effort labels, not a proven "
+             "identity match -- fine when every GPU in the system is the same model (the "
+             "read/write percentages and derived GB/s, which are what the study actually "
+             "measures, are correct regardless of the label), but don't trust the label "
+             "on a heterogeneous GPU host. Defaults to every system GPU, matching a "
+             "capture that used --gpu-metrics-devices=all.",
+    )
     args = parser.parse_args()
 
     source = args.input.resolve()
@@ -60,14 +76,39 @@ def main() -> int:
         "SELECT id, name, busLocation, uuid, totalMemory, memoryBandwidth "
         "FROM TARGET_INFO_GPU ORDER BY id"
     ).fetchall()
-    type_ids = [row[0] for row in connection.execute(
-        "SELECT DISTINCT typeId FROM TARGET_INFO_GPU_METRICS ORDER BY typeId"
-    ).fetchall()]
-    gpu_ids = [int(row["id"]) for row in gpu_rows]
-    if len(type_ids) != len(gpu_ids):
-        raise RuntimeError(f"cannot map metric sources ({len(type_ids)}) to GPUs ({len(gpu_ids)})")
-    type_to_gpu = dict(zip(type_ids, gpu_ids, strict=True))
     gpu_info = {int(row["id"]): dict(row) for row in gpu_rows}
+    if args.gpu_ids:
+        gpu_ids = [int(x) for x in args.gpu_ids.split(",")]
+        unknown = [g for g in gpu_ids if g not in gpu_info]
+        if unknown:
+            raise RuntimeError(f"--gpu-ids {unknown} not in TARGET_INFO_GPU {sorted(gpu_info)}")
+    else:
+        gpu_ids = [int(row["id"]) for row in gpu_rows]
+
+    # DISTINCT typeId picks up more than one real per-GPU stream: long captures have shown
+    # extra typeIds with only 1-2 total samples appearing briefly mid-session (observed
+    # around a CUDA context event on a concurrently-running sibling stream), alongside the
+    # real per-GPU streams which have tens of thousands+ samples spanning the full capture.
+    # Rank by sample count and keep only the top len(gpu_ids) -- the magnitude gap between
+    # real device streams and this transient noise is large enough (thousands to millions
+    # of samples vs. 1-2) that this is not a close call.
+    counted = connection.execute(
+        "SELECT typeId, COUNT(*) AS n FROM GPU_METRICS GROUP BY typeId ORDER BY n DESC"
+    ).fetchall()
+    if len(counted) < len(gpu_ids):
+        raise RuntimeError(
+            f"cannot map metric sources ({len(counted)}) to GPUs ({len(gpu_ids)}); "
+            "pass --gpu-ids matching the CUDA_VISIBLE_DEVICES the capture used if it "
+            "was scoped to fewer than all system GPUs")
+    dropped = counted[len(gpu_ids):]
+    if dropped:
+        print(
+            f"ignoring {len(dropped)} low-sample-count metric source(s) as noise: "
+            + ", ".join(f"typeId={row['typeId']} n={row['n']}" for row in dropped),
+            file=sys.stderr,
+        )
+    type_ids = sorted(row["typeId"] for row in counted[: len(gpu_ids)])
+    type_to_gpu = dict(zip(type_ids, gpu_ids, strict=True))
 
     samples: dict[tuple[int, int], dict[str, float]] = {}
     query = """
@@ -136,9 +177,9 @@ def main() -> int:
         "session_start_epoch_s": start_epoch_s,
         "session_start_utc": session["utcTime"],
         "sample_rows": written,
-        "gpu_count": len(gpu_rows),
+        "gpu_count": len(gpu_ids),
         "normalization": "read and write percentages are summed, bounded to [0,100], then multiplied by the per-device peak memoryBandwidth from TARGET_INFO_GPU",
-        "devices": list(gpu_info.values()),
+        "devices": [gpu_info[g] for g in gpu_ids],
     }
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n")
     if temporary_sqlite and not args.keep_sqlite:
